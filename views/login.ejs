@@ -1,0 +1,34 @@
+<%- include('partials/header', { title: 'Login', hideNav: true }) %>
+<div class="login-bg">
+  <div class="login-card card p-4 p-md-5 mx-3">
+    <div class="text-center mb-4">
+      <div class="login-logo">Trampo<span>·</span>Score</div>
+      <p class="text-muted mt-1 small">Tournament Scoring System</p>
+    </div>
+    <% if (error) { %>
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+    <% } %>
+    <form method="POST" action="/login">
+      <div class="mb-3">
+        <label class="form-label fw-600 small text-muted text-uppercase">Email</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+          <input type="email" name="email" class="form-control border-start-0" placeholder="you@example.com" required autofocus>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-600 small text-muted text-uppercase">Password</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
+          <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-brand w-100 py-2 rounded-pill">
+        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+      </button>
+    </form>
+  </div>
+</div>
+<%- include('partials/footer') %>

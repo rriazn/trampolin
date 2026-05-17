@@ -1,0 +1,86 @@
+<%- include('partials/header', { title: 'Leaderboard – ' + round.name, autoRefresh: true }) %>
+
+<div class="lb-hero">
+  <div class="container">
+    <p class="text-white-50 small mb-1"><i class="bi bi-trophy me-1"></i><%= round.competition_name %></p>
+    <h1 class="fw-900 mb-1" style="font-size:2.2rem"><%= round.name %></h1>
+    <p class="text-white-50 small mb-0">
+      <i class="bi bi-arrow-repeat me-1"></i>Live · refreshes every 10s
+      &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
+    </p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:3rem">
+<% if (leaderboard.length === 0) { %>
+<div class="card p-5 text-center text-muted mt-4">
+  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
+  <h5>No athletes scored yet</h5>
+</div>
+<% } else { %>
+<div class="lb-table-wrap mt-0">
+  <table class="table table-hover mb-0" style="background:#fff">
+    <thead>
+      <tr>
+        <th style="width:70px;background:var(--brand)" class="text-white text-center">Rank</th>
+        <th style="background:var(--brand)" class="text-white">Athlete</th>
+        <th style="background:var(--brand)" class="text-white">Club</th>
+        <th style="background:var(--brand)" class="text-white">Category</th>
+        <th style="background:var(--brand)" class="text-white text-center">Attempt 1</th>
+        <th style="background:var(--brand)" class="text-white text-center">Attempt 2</th>
+        <th style="background:var(--brand);width:130px" class="text-white text-end">Best Score</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% leaderboard.forEach((row, idx) => {
+         const a1 = row.attempts.find(a => a.number === 1);
+         const a2 = row.attempts.find(a => a.number === 2);
+         const rankClass = row.rank === 1 ? 'gold' : row.rank === 2 ? 'silver' : row.rank === 3 ? 'bronze' : '';
+         const rowBg = row.rank === 1 ? 'style="background:#fffbea"' : row.rank === 2 ? 'style="background:#f8f9fa"' : row.rank === 3 ? 'style="background:#fff8f3"' : '';
+    %>
+    <tr <%- rowBg %>>
+      <td class="text-center align-middle">
+        <% if (row.rank === 1) { %>
+          <span class="lb-rank gold"><i class="bi bi-trophy-fill"></i></span>
+        <% } else if (row.rank === 2) { %>
+          <span class="lb-rank silver"><i class="bi bi-trophy-fill"></i></span>
+        <% } else if (row.rank === 3) { %>
+          <span class="lb-rank bronze"><i class="bi bi-trophy-fill"></i></span>
+        <% } else { %>
+          <span class="text-muted fw-700"><%= row.rank %></span>
+        <% } %>
+      </td>
+      <td class="align-middle">
+        <span class="fw-700 <%= row.rank === 1 ? 'fs-6' : '' %>"><%= row.name %></span>
+      </td>
+      <td class="align-middle text-muted"><%= row.club || '–' %></td>
+      <td class="align-middle">
+        <% if (row.category) { %>
+        <span class="badge bg-light text-dark border"><%= row.category %></span>
+        <% } else { %><span class="text-muted">–</span><% } %>
+      </td>
+      <td class="text-center align-middle">
+        <% if (a1 && a1.finalScore !== null) { %>
+          <span class="fw-600"><%= a1.finalScore.toFixed(3) %></span>
+          <span class="text-muted small d-block">(<%= a1.scoreCount %> judges)</span>
+        <% } else { %><span class="text-muted">–</span><% } %>
+      </td>
+      <td class="text-center align-middle">
+        <% if (a2 && a2.finalScore !== null) { %>
+          <span class="fw-600"><%= a2.finalScore.toFixed(3) %></span>
+          <span class="text-muted small d-block">(<%= a2.scoreCount %> judges)</span>
+        <% } else { %><span class="text-muted">–</span><% } %>
+      </td>
+      <td class="text-end align-middle">
+        <% if (row.bestScore !== null) { %>
+          <span class="lb-score <%= rankClass %>"><%= row.bestScore.toFixed(3) %></span>
+        <% } else { %><span class="text-muted">–</span><% } %>
+      </td>
+    </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+</div>
+<%- include('partials/footer') %>

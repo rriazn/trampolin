@@ -1,0 +1,70 @@
+<%- include('../partials/header', { title: 'Dashboard', activePage: 'admin' }) %>
+
+<div class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+    <p>Manage your tournament from here</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stat-card stat-blue">
+        <i class="bi bi-person-badge stat-icon"></i>
+        <div class="stat-num"><%= stats.users %></div>
+        <div class="stat-label">Referees</div>
+        <a href="/admin/users" class="btn btn-sm btn-light mt-3 rounded-pill">Manage <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card stat-green">
+        <i class="bi bi-people stat-icon"></i>
+        <div class="stat-num"><%= stats.sportsmen %></div>
+        <div class="stat-label">Sportsmen</div>
+        <a href="/admin/sportsmen" class="btn btn-sm btn-light mt-3 rounded-pill">Manage <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card stat-orange">
+        <i class="bi bi-trophy stat-icon"></i>
+        <div class="stat-num"><%= stats.competitions %></div>
+        <div class="stat-label">Competitions</div>
+        <a href="/admin/competitions" class="btn btn-sm btn-light mt-3 rounded-pill">Manage <i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="section-title mb-0"><i class="bi bi-calendar3 me-2"></i>Recent Competitions</h5>
+    <a href="/admin/competitions/new" class="btn btn-brand btn-sm rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>New</a>
+  </div>
+
+  <% if (competitions.length === 0) { %>
+  <div class="card p-4 text-center text-muted">
+    <i class="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+    No competitions yet. <a href="/admin/competitions/new">Create one</a>.
+  </div>
+  <% } else { %>
+  <div class="table-card card">
+    <table class="table mb-0">
+      <thead><tr><th>Name</th><th>Date</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      <% competitions.forEach(c => { %>
+        <tr>
+          <td class="fw-600"><%= c.name %></td>
+          <td><%= c.date || '–' %></td>
+          <td><span class="badge rounded-pill status-<%= c.status %>"><%= c.status %></span></td>
+          <td class="text-end">
+            <a href="/admin/competitions/<%= c.id %>/rounds" class="btn btn-sm btn-brand rounded-pill">
+              <i class="bi bi-list-ul me-1"></i>Rounds
+            </a>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

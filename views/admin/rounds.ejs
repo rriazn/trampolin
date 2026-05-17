@@ -1,0 +1,65 @@
+<%- include('../partials/header', { title: 'Rounds – ' + competition.name, activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
+        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
+        <li class="breadcrumb-item active text-white"><%= competition.name %></li>
+      </ol>
+    </nav>
+    <h1><i class="bi bi-list-ol me-2"></i>Rounds</h1>
+    <p><%= competition.name %> &nbsp;·&nbsp; <span class="badge rounded-pill status-<%= competition.status %>"><%= competition.status %></span></p>
+  </div>
+</div>
+
+<div class="container">
+  <% if (rounds.length === 0) { %>
+  <div class="card p-4 text-center text-muted mb-4">
+    <i class="bi bi-list-ol fs-1 mb-2 d-block"></i>No rounds yet. Add one below.
+  </div>
+  <% } else { %>
+  <div class="table-card card mb-4">
+    <table class="table mb-0">
+      <thead><tr><th style="width:80px">Order</th><th>Round Name</th><th></th></tr></thead>
+      <tbody>
+      <% rounds.forEach(r => { %>
+      <tr>
+        <td><span class="badge bg-secondary rounded-pill"><%= r.round_order %></span></td>
+        <td class="fw-600"><i class="bi bi-flag me-2 text-muted"></i><%= r.name %></td>
+        <td class="text-end">
+          <a href="/admin/rounds/<%= r.id %>/entries" class="btn btn-sm btn-brand rounded-pill me-1">
+            <i class="bi bi-people me-1"></i>Entries
+          </a>
+          <a href="/leaderboard/<%= r.id %>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill me-1">
+            <i class="bi bi-bar-chart me-1"></i>Leaderboard
+          </a>
+          <form method="POST" action="/admin/rounds/<%= r.id %>/delete" class="d-inline"
+                onsubmit="return confirm('Delete round and all entries/scores?')">
+            <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+
+  <div class="card p-4">
+    <h5 class="fw-700 mb-3"><i class="bi bi-plus-circle me-2"></i>Add Round</h5>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/rounds" class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small fw-600 text-muted text-uppercase">Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Qualification" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-600 text-muted text-uppercase">Order</label>
+        <input type="number" name="round_order" class="form-control" value="<%= rounds.length + 1 %>">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

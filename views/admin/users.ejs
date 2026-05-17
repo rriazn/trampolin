@@ -1,0 +1,59 @@
+<%- include('../partials/header', { title: 'Users', activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div>
+      <h1><i class="bi bi-person-badge me-2"></i>Referees &amp; Admins</h1>
+      <p>Manage user accounts and access</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-light rounded-pill" data-bs-toggle="collapse" data-bs-target="#uploadForm">
+        <i class="bi bi-file-earmark-excel me-1"></i>Import Excel
+      </button>
+      <a href="/admin/users/export" class="btn btn-outline-light rounded-pill">
+        <i class="bi bi-download me-1"></i>Export Excel
+      </a>
+      <a href="/admin/users/new" class="btn btn-accent rounded-pill"><i class="bi bi-plus-lg me-1"></i>Add User</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="collapse mb-4" id="uploadForm">
+    <div class="upload-panel">
+      <h6 class="fw-700 mb-1"><i class="bi bi-cloud-upload me-2"></i>Import from Excel</h6>
+      <p class="text-muted small mb-3">Required: <strong>Name</strong>, <strong>Email</strong> &nbsp;·&nbsp; Optional: <strong>Password</strong> (default: <code>referee123</code>), <strong>Role</strong> (default: <code>referee</code>)</p>
+      <form method="POST" action="/admin/users/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+        <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.ods,.csv" required style="max-width:320px">
+        <button type="submit" class="btn btn-brand rounded-pill"><i class="bi bi-upload me-1"></i>Upload</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-card card">
+    <table class="table mb-0">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th><th></th></tr>
+      </thead>
+      <tbody>
+      <% users.forEach(u => { %>
+      <tr>
+        <td class="fw-600"><i class="bi bi-person-circle me-2 text-muted"></i><%= u.name %></td>
+        <td class="text-muted"><%= u.email %></td>
+        <td><span class="badge rounded-pill bg-<%= u.role==='admin'?'danger':'primary' %>"><%= u.role %></span></td>
+        <td class="text-muted small"><%= u.created_at.substring(0,10) %></td>
+        <td class="text-end">
+          <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="POST" action="/admin/users/<%= u.id %>/delete" class="d-inline"
+                onsubmit="return confirm('Delete user <%= u.name %>?')">
+            <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

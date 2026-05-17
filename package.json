@@ -1,0 +1,20 @@
+{
+  "name": "trampolin",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.0.0",
+    "connect-sqlite3": "^0.9.16",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.1.1",
+    "xlsx": "^0.18.5"
+  }
+}

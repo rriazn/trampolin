@@ -1,0 +1,62 @@
+<%- include('../partials/header', { title: 'Sportsmen', activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div>
+      <h1><i class="bi bi-people me-2"></i>Sportsmen</h1>
+      <p>Registered athletes for this tournament</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-light rounded-pill" data-bs-toggle="collapse" data-bs-target="#uploadForm">
+        <i class="bi bi-file-earmark-excel me-1"></i>Import Excel
+      </button>
+      <a href="/admin/sportsmen/export" class="btn btn-outline-light rounded-pill">
+        <i class="bi bi-download me-1"></i>Export Excel
+      </a>
+      <a href="/admin/sportsmen/new" class="btn btn-accent rounded-pill"><i class="bi bi-plus-lg me-1"></i>Add Athlete</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="collapse mb-4" id="uploadForm">
+    <div class="upload-panel">
+      <h6 class="fw-700 mb-1"><i class="bi bi-cloud-upload me-2"></i>Import from Excel</h6>
+      <p class="text-muted small mb-3">Required: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Club</strong>, <strong>Category</strong></p>
+      <form method="POST" action="/admin/sportsmen/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
+        <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.ods,.csv" required style="max-width:320px">
+        <button type="submit" class="btn btn-brand rounded-pill"><i class="bi bi-upload me-1"></i>Upload</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-card card">
+    <table class="table mb-0">
+      <thead>
+        <tr><th>Athlete</th><th>Club</th><th>Category</th><th></th></tr>
+      </thead>
+      <tbody>
+      <% sportsmen.forEach(s => { %>
+      <tr>
+        <td class="fw-600"><i class="bi bi-person me-2 text-muted"></i><%= s.name %></td>
+        <td><%= s.club || '<span class="text-muted">–</span>' %></td>
+        <td>
+          <% if (s.category) { %>
+          <span class="badge rounded-pill bg-light text-dark border"><%= s.category %></span>
+          <% } else { %><span class="text-muted">–</span><% } %>
+        </td>
+        <td class="text-end">
+          <a href="/admin/sportsmen/<%= s.id %>/edit" class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="POST" action="/admin/sportsmen/<%= s.id %>/delete" class="d-inline"
+                onsubmit="return confirm('Delete <%= s.name %>?')">
+            <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

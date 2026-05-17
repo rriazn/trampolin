@@ -1,0 +1,178 @@
+:root {
+  --brand: #1a1f3a;
+  --brand-light: #2d3561;
+  --accent: #e84393;
+  --accent2: #f7c948;
+  --surface: #f4f6fb;
+  --card-shadow: 0 2px 12px rgba(26,31,58,.10);
+}
+
+body {
+  background: var(--surface);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────── */
+.navbar-main {
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-light) 100%);
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  padding: .75rem 0;
+}
+.navbar-main .navbar-brand {
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -.5px;
+  color: #fff !important;
+}
+.navbar-main .navbar-brand span.dot {
+  color: var(--accent);
+}
+.navbar-main .nav-link {
+  color: rgba(255,255,255,.8) !important;
+  font-weight: 500;
+  transition: color .15s;
+}
+.navbar-main .nav-link:hover { color: #fff !important; }
+.navbar-main .nav-link.active { color: #fff !important; }
+.nav-user-chip {
+  background: rgba(255,255,255,.12);
+  border-radius: 20px;
+  padding: .2rem .75rem;
+  color: rgba(255,255,255,.7);
+  font-size: .82rem;
+}
+
+/* ── Page hero strip ─────────────────────────────────────────────────── */
+.page-hero {
+  background: linear-gradient(135deg, var(--brand) 0%, #3a4080 100%);
+  color: #fff;
+  padding: 2rem 0 1.5rem;
+  margin-bottom: 2rem;
+}
+.page-hero h1 { font-weight: 800; font-size: 1.8rem; margin: 0; }
+.page-hero p  { opacity: .75; margin: .3rem 0 0; font-size: .95rem; }
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+.card {
+  border: none;
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 1rem 1.25rem .75rem;
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────── */
+.stat-card {
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card .stat-icon {
+  font-size: 3rem;
+  opacity: .2;
+  position: absolute;
+  right: 1rem;
+  top: .75rem;
+}
+.stat-card .stat-num  { font-size: 2.8rem; font-weight: 800; line-height: 1; }
+.stat-card .stat-label{ font-size: .85rem; opacity: .85; margin-top: .25rem; }
+.stat-blue   { background: linear-gradient(135deg,#1a73e8,#0d47a1); }
+.stat-green  { background: linear-gradient(135deg,#00c853,#1b5e20); }
+.stat-orange { background: linear-gradient(135deg,#ff6d00,#bf360c); }
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+.table-card { border-radius: 14px; overflow: hidden; box-shadow: var(--card-shadow); }
+.table-card table { margin: 0; }
+.table thead th {
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border: none;
+  padding: .85rem 1rem;
+}
+.table tbody td { padding: .8rem 1rem; vertical-align: middle; border-color: rgba(0,0,0,.05); }
+.table tbody tr:hover { background: rgba(26,31,58,.03); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn-brand {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+}
+.btn-brand:hover { color: #fff; filter: brightness(1.1); }
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent) 0%, #c2185b 100%);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+}
+.btn-accent:hover { color: #fff; filter: brightness(1.1); }
+
+/* ── Login page ──────────────────────────────────────────────────────── */
+.login-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--brand) 0%, #3a4080 60%, #6a1a6a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.login-logo {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--brand);
+  letter-spacing: -1px;
+}
+.login-logo span { color: var(--accent); }
+
+/* ── Leaderboard ─────────────────────────────────────────────────────── */
+.lb-rank { font-size: 1.3rem; font-weight: 800; }
+.lb-rank.gold   { color: #f7c948; }
+.lb-rank.silver { color: #a8b2c1; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-score { font-size: 1.15rem; font-weight: 800; color: var(--brand); }
+.lb-hero { background: linear-gradient(135deg, var(--brand), #3a4080); color: #fff; padding: 2rem 0 3rem; margin-bottom: -2rem; }
+.lb-table-wrap { border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.12); position: relative; z-index: 1; }
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+.status-planned { background:#fff3cd; color:#856404; }
+.status-active  { background:#d1e7dd; color:#0a3622; }
+.status-closed  { background:#e2e3e5; color:#41464b; }
+
+/* ── Upload panel ────────────────────────────────────────────────────── */
+.upload-panel {
+  background: linear-gradient(135deg,#f0f4ff,#fdf0ff);
+  border: 2px dashed #b0b8d4;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+/* ── Flash messages ──────────────────────────────────────────────────── */
+.flash-bar {
+  border-radius: 10px;
+  border: none;
+  font-weight: 500;
+}
+
+/* ── Section headings ────────────────────────────────────────────────── */
+.section-title {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--brand);
+}
