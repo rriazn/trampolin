@@ -90,3 +90,4 @@ router.get('/:roundId', (req, res) => {
 });
 
 module.exports = router;
+module.exports.trimmedMean = trimmedMean;

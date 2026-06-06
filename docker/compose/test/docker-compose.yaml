@@ -1,0 +1,9 @@
+services:
+  test-runner:
+    image: ${IMAGE_NAME:-trampolin-judge}:${IMAGE_TAG:-latest}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../../tests:/app/tests
+    command:
+      ${TEST_COMMAND:-npm test}
