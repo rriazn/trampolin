@@ -52,14 +52,23 @@ router.get('/users/new', (req, res) => {
 
 router.post('/users', async (req, res) => {
   const { name, email, password, role } = req.body;
-  const hash = await bcrypt.hash(password, 12);
+  if (!name || !email || !password) {
+    return res.status(400).render('admin/user-form', {
+      user: null, action: '/admin/users',
+      error: 'Name, email and password are required.',
+    });
+  }
   try {
+    const hash = await bcrypt.hash(password, 12);
     db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
       .run(name, email, hash, role === 'admin' ? 'admin' : 'referee');
-    req.session.flash = { success: `User "${name}" created.` };
   } catch {
-    req.session.flash = { error: 'Email already in use.' };
+    return res.status(422).render('admin/user-form', {
+      user: null, action: '/admin/users',
+      error: 'Email already in use.',
+    });
   }
+  req.session.flash = { success: `User "${name}" created.` };
   res.redirect('/admin/users');
 });
 
@@ -67,26 +76,6 @@ router.get('/users/:id/edit', (req, res) => {
   const user = db.prepare('SELECT id,name,email,role FROM users WHERE id=?').get(req.params.id);
   if (!user) return res.status(404).send('Not found');
   res.render('admin/user-form', { user, action: `/admin/users/${user.id}` });
-});
-
-router.post('/users/:id', async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (password) {
-    const hash = await bcrypt.hash(password, 12);
-    db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?')
-      .run(name, email, hash, role === 'admin' ? 'admin' : 'referee', req.params.id);
-  } else {
-    db.prepare('UPDATE users SET name=?,email=?,role=? WHERE id=?')
-      .run(name, email, role === 'admin' ? 'admin' : 'referee', req.params.id);
-  }
-  req.session.flash = { success: 'User updated.' };
-  res.redirect('/admin/users');
-});
-
-router.post('/users/:id/delete', (req, res) => {
-  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
-  req.session.flash = { success: 'User deleted.' };
-  res.redirect('/admin/users');
 });
 
 router.post('/users/upload', upload.single('file'), async (req, res) => {
@@ -111,6 +100,40 @@ router.post('/users/upload', upload.single('file'), async (req, res) => {
     info.changes ? created++ : skipped++;
   }
   req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (duplicate/invalid).` };
+  res.redirect('/admin/users');
+});
+
+router.post('/users/:id/delete', (req, res) => {
+  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
+  req.session.flash = { success: 'User deleted.' };
+  res.redirect('/admin/users');
+});
+
+router.post('/users/:id', async (req, res) => {
+  const { name, email, password, role } = req.body;
+  const action = `/admin/users/${req.params.id}`;
+  const user = db.prepare('SELECT id,name,email,role FROM users WHERE id=?').get(req.params.id);
+  if (!user) return res.status(404).send('Not found');
+  if (!name || !email) {
+    return res.status(400).render('admin/user-form', {
+      user, action, error: 'Name and email are required.',
+    });
+  }
+  try {
+    if (password) {
+      const hash = await bcrypt.hash(password, 12);
+      db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?')
+        .run(name, email, hash, role === 'admin' ? 'admin' : 'referee', req.params.id);
+    } else {
+      db.prepare('UPDATE users SET name=?,email=?,role=? WHERE id=?')
+        .run(name, email, role === 'admin' ? 'admin' : 'referee', req.params.id);
+    }
+  } catch {
+    return res.status(422).render('admin/user-form', {
+      user, action, error: 'Email already in use.',
+    });
+  }
+  req.session.flash = { success: 'User updated.' };
   res.redirect('/admin/users');
 });
 
@@ -144,7 +167,13 @@ router.get('/sportsmen/new', (req, res) => {
 
 router.post('/sportsmen', (req, res) => {
   const { name, club, category } = req.body;
-  db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)').run(name, club || null, category || null);
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman: null, action: '/admin/sportsmen',
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)').run(name.trim(), club || null, category || null);
   req.session.flash = { success: `Sportsman "${name}" added.` };
   res.redirect('/admin/sportsmen');
 });
@@ -155,16 +184,11 @@ router.get('/sportsmen/:id/edit', (req, res) => {
   res.render('admin/sportsman-form', { sportsman, action: `/admin/sportsmen/${sportsman.id}` });
 });
 
-router.post('/sportsmen/:id', (req, res) => {
-  const { name, club, category } = req.body;
-  db.prepare('UPDATE sportsmen SET name=?,club=?,category=? WHERE id=?')
-    .run(name, club || null, category || null, req.params.id);
-  req.session.flash = { success: 'Sportsman updated.' };
-  res.redirect('/admin/sportsmen');
-});
-
 router.post('/sportsmen/:id/delete', (req, res) => {
-  db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.id);
+  db.transaction(() => {
+    db.prepare('DELETE FROM entries WHERE sportsman_id=?').run(req.params.id);
+    db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.id);
+  })();
   req.session.flash = { success: 'Sportsman deleted.' };
   res.redirect('/admin/sportsmen');
 });
@@ -174,7 +198,16 @@ router.post('/sportsmen/upload', upload.single('file'), (req, res) => {
     req.session.flash = { error: 'No file uploaded.' };
     return res.redirect('/admin/sportsmen');
   }
-  const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+  // XLSX files are ZIP archives — first two bytes must be PK (0x50 0x4B)
+  if (req.file.buffer[0] !== 0x50 || req.file.buffer[1] !== 0x4B) {
+    return res.status(400).send('Invalid file: not a valid XLSX file.');
+  }
+  let wb;
+  try {
+    wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+  } catch {
+    return res.status(400).send('Invalid file: could not parse as XLSX.');
+  }
   const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
   const insert = db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)');
   const insertAll = db.transaction(() => {
@@ -194,6 +227,20 @@ router.post('/sportsmen/upload', upload.single('file'), (req, res) => {
   res.redirect('/admin/sportsmen');
 });
 
+router.post('/sportsmen/:id', (req, res) => {
+  const { name, club, category } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman: null, action: '/admin/sportsmen',
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('UPDATE sportsmen SET name=?,club=?,category=? WHERE id=?')
+    .run(name, club || null, category || null, req.params.id);
+  req.session.flash = { success: 'Sportsman updated.' };
+  res.redirect('/admin/sportsmen');
+});
+
 // ── Competitions ─────────────────────────────────────────────────────────────
 
 router.get('/competitions', (req, res) => {
@@ -207,7 +254,13 @@ router.get('/competitions/new', (req, res) => {
 
 router.post('/competitions', (req, res) => {
   const { name, date } = req.body;
-  db.prepare('INSERT INTO competitions (name,date) VALUES (?,?)').run(name, date || null);
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/competition-form', {
+      competition: null, action: '/admin/competitions',
+      error: 'Competition name is required.',
+    });
+  }
+  db.prepare('INSERT INTO competitions (name,date) VALUES (?,?)').run(name.trim(), date || null);
   req.session.flash = { success: `Competition "${name}" created.` };
   res.redirect('/admin/competitions');
 });
@@ -220,6 +273,12 @@ router.get('/competitions/:id/edit', (req, res) => {
 
 router.post('/competitions/:id', (req, res) => {
   const { name, date } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/competition-form', {
+      competition: null, action: '/admin/competitions',
+      error: 'Competition name is required.',
+    });
+  }
   db.prepare('UPDATE competitions SET name=?,date=? WHERE id=?').run(name, date || null, req.params.id);
   req.session.flash = { success: 'Competition updated.' };
   res.redirect('/admin/competitions');
@@ -250,7 +309,16 @@ router.get('/competitions/:id/rounds', (req, res) => {
 
 router.post('/competitions/:id/rounds', (req, res) => {
   const { name, round_order } = req.body;
-  db.prepare('INSERT INTO rounds (competition_id,name,round_order) VALUES (?,?,?)').run(req.params.id, name, parseInt(round_order) || 0);
+  const renderWithError = (error) => {
+    const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+    if (!competition) return res.status(404).send('Not found');
+    const rounds = db.prepare('SELECT * FROM rounds WHERE competition_id=? ORDER BY round_order').all(req.params.id);
+    return res.status(400).render('admin/rounds', { competition, rounds, error });
+  };
+  if (!name || !name.trim()) return renderWithError('Round name is required.');
+  if (round_order !== undefined && round_order !== '' && (isNaN(round_order) || Number(round_order) < 0))
+    return renderWithError('Round order must be a non-negative number.');
+  db.prepare('INSERT INTO rounds (competition_id,name,round_order) VALUES (?,?,?)').run(req.params.id, name.trim(), parseInt(round_order) || 0);
   req.session.flash = { success: `Round "${name}" added.` };
   res.redirect(`/admin/competitions/${req.params.id}/rounds`);
 });

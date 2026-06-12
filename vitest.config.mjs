@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./tests/setup.js'],
-    include: ['tests/unit/**/*.test.js'],
+    include: ['tests/**/*.test.js'],
     server: {
       deps: {
         external: ['better-sqlite3'],
