@@ -1,0 +1,9 @@
+services:
+  test-runner:
+    image: ${IMAGE_NAME:-trampolin-test}:${IMAGE_TAG:-1}
+    volumes:
+      - ../../tests:/app/tests
+      - ../../playwright.config.js:/app/playwright.config.js
+      - ../../vitest.config.mjs:/app/vitest.config.mjs
+    command:
+      ${TEST_COMMAND:-npm test}

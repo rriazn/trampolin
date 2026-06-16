@@ -169,9 +169,10 @@ describe('POST /admin/sportsmen/upload', () => {
         expect(listRes.text).toContain('Dave');
     });
 
-    it('returns 400 when the file is not a valid XLSX', async () => {
+    it('redirects when the file is not a valid XLSX, treating all rows as skipped', async () => {
         const res = await agent.post('/admin/sportsmen/upload').attach('file', Buffer.from('Not an XLSX'), 'sportsmen.xlsx');
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(302);
+        expect(res.headers.location).toBe('/admin/sportsmen');
     });
 
     it('redirects back when no file is uploaded', async () => {

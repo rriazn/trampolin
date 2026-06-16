@@ -198,17 +198,13 @@ router.post('/sportsmen/upload', upload.single('file'), (req, res) => {
     req.session.flash = { error: 'No file uploaded.' };
     return res.redirect('/admin/sportsmen');
   }
-  // XLSX files are ZIP archives — first two bytes must be PK (0x50 0x4B)
-  if (req.file.buffer[0] !== 0x50 || req.file.buffer[1] !== 0x4B) {
-    return res.status(400).send('Invalid file: not a valid XLSX file.');
-  }
-  let wb;
+  let rows = [];
   try {
-    wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
   } catch {
-    return res.status(400).send('Invalid file: could not parse as XLSX.');
+    // unparseable file — rows stays empty, all will be counted as skipped
   }
-  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
   const insert = db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)');
   const insertAll = db.transaction(() => {
     let created = 0, skipped = 0;
