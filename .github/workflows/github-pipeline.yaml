@@ -15,7 +15,7 @@ jobs:
       unique_tag: ${{ steps.get_tag.outputs.unique_tag }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -88,7 +88,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/trampolin:${{ needs.checkout-git-tag.outputs.tag }}
   
   run-tests:
-    needs: build-and-push-images
+    needs: [checkout-git-tag, build-and-push-images]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
