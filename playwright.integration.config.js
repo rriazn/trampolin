@@ -7,9 +7,10 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
     launchOptions: {
       args: [
-        '--disable-features=AutoupgradeHTTP',
+        '--disable-features=AutoupgradeHTTP,HttpsUpgrades',
         '--no-sandbox',
         '--disable-setuid-sandbox',
+        '--disable-background-networking',
       ],
     },
   },
