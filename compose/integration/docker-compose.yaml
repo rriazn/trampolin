@@ -1,0 +1,25 @@
+services:
+  app:
+    image: ${PRODUCTION_IMAGE:-trampolin:latest-production}
+    environment:
+      - ENABLE_TEST_SEED=true
+      - SESSION_SECRET=integration-test-secret
+    ports:
+      - 3000:3000
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/login', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  test-runner:
+    image: ${TEST_IMAGE:-trampolin:latest-test}
+    volumes:
+      - ../../tests:/app/tests
+      - ../../playwright.integration.config.js:/app/playwright.integration.config.js
+    environment:
+      - BASE_URL=http://app:3000
+    command: ${TEST_COMMAND:-npx playwright test tests/integration --config playwright.integration.config.js}
+    depends_on:
+      app:
+        condition: service_healthy

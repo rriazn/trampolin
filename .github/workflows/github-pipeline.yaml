@@ -123,3 +123,9 @@ jobs:
           export TEST_COMMAND="npx playwright test tests/component"
           cd compose/test
           docker compose -f docker-compose.yaml run --rm test-runner
+      - name: Run Integration tests
+        run: |
+          chmod +x scripts/run-integration-tests.sh 
+          ./scripts/run-integration-tests.sh  --production-image \
+          ${{ secrets.DOCKER_USERNAME }}/trampolin:${{ needs.checkout-git-tag.outputs.unique_tag }}-production \
+          --test-image ${{ secrets.DOCKER_USERNAME }}/trampolin:${{ needs.checkout-git-tag.outputs.unique_tag }}-integration

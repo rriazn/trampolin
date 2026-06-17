@@ -34,6 +34,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', require('./routes/auth'));
+if (process.env.ENABLE_TEST_SEED === 'true') {
+  app.use('/', require('./routes/test-seed'));
+}
 app.use('/admin', require('./routes/admin'));
 app.use('/referee', require('./routes/referee'));
 app.use('/leaderboard', require('./routes/leaderboard'));

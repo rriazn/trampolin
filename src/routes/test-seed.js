@@ -1,0 +1,46 @@
+'use strict';
+const router = require('express').Router();
+const bcrypt = require('bcryptjs');
+const db = require('../db/database');
+
+router.post('/test/seed', (req, res) => {
+  db.prepare('DELETE FROM scores').run();
+  db.prepare('DELETE FROM attempts').run();
+  db.prepare('DELETE FROM entries').run();
+  db.prepare('DELETE FROM sportsmen').run();
+  db.prepare('DELETE FROM rounds').run();
+  db.prepare('DELETE FROM competitions').run();
+  db.prepare("DELETE FROM users WHERE role != 'admin'").run();
+
+  const refHash = bcrypt.hashSync('referee123', 10);
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Maria Schmidt', 'maria@example.com', refHash, 'referee');
+
+  const comp = db.prepare("INSERT INTO competitions (name, status) VALUES (?, ?)")
+    .run('Spring Championship', 'active');
+  const round = db.prepare("INSERT INTO rounds (competition_id, name, round_order) VALUES (?, ?, ?)")
+    .run(comp.lastInsertRowid, 'Qualifications', 1);
+
+  const sp1 = db.prepare("INSERT INTO sportsmen (name, club, category) VALUES (?, ?, ?)")
+    .run('Leon Weber', 'TSV München', 'Junior Men');
+  const sp2 = db.prepare("INSERT INTO sportsmen (name, club, category) VALUES (?, ?, ?)")
+    .run('Emma Fischer', 'SV Hamburg', 'Junior Women');
+
+  const e1 = db.prepare("INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)")
+    .run(round.lastInsertRowid, sp1.lastInsertRowid, 1);
+  const e2 = db.prepare("INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)")
+    .run(round.lastInsertRowid, sp2.lastInsertRowid, 2);
+
+  db.prepare("INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)").run(e1.lastInsertRowid, 1);
+  db.prepare("INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)").run(e1.lastInsertRowid, 2);
+  db.prepare("INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)").run(e2.lastInsertRowid, 1);
+  db.prepare("INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)").run(e2.lastInsertRowid, 2);
+
+  res.json({
+    ok: true,
+    competitionId: Number(comp.lastInsertRowid),
+    roundId: Number(round.lastInsertRowid),
+  });
+});
+
+module.exports = router;

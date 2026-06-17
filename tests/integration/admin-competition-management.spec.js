@@ -1,0 +1,88 @@
+const { test, expect } = require('@playwright/test');
+
+async function loginAsAdmin(page) {
+  await page.goto('/login');
+  await page.locator('input[name=email]').fill('admin@example.com');
+  await page.locator('input[name=password]').fill('admin123');
+  await page.locator('button[type=submit]').click();
+  await page.waitForURL('/admin');
+}
+
+async function loginAsReferee(page) {
+  await page.goto('/login');
+  await page.locator('input[name=email]').fill('maria@example.com');
+  await page.locator('input[name=password]').fill('referee123');
+  await page.locator('button[type=submit]').click();
+  await page.waitForURL('/referee');
+}
+
+test.beforeAll(async ({ request }) => {
+  const res = await request.post('/test/seed');
+  expect(res.ok()).toBeTruthy();
+});
+
+test('admin creates and fully sets up a competition, and a referee can score it', async ({ page }) => {
+  await loginAsAdmin(page);
+
+  // Create a new competition
+  await page.goto('/admin/competitions');
+  await page.getByRole('link', { name: /New Competition/ }).click();
+  await page.locator('input[name=name]').fill('Winter Cup');
+  await page.getByRole('button', { name: /Create/ }).click();
+  await page.waitForURL('/admin/competitions');
+
+  // Activate it
+  const compRow = page.getByRole('row').filter({ hasText: 'Winter Cup' });
+  await compRow.getByRole('button', { name: /Activate/ }).click();
+  await expect(compRow.getByRole('cell', { name: 'active' })).toBeVisible();
+
+  // Add a round
+  await compRow.getByRole('link', { name: /Rounds/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/rounds/);
+  await page.locator('input[name=name]').fill('Finals');
+  await page.locator('input[name=round_order]').fill('1');
+  await page.locator('button[type=submit]').click();
+
+  // Add an entry
+  const roundRow = page.getByRole('row').filter({ hasText: 'Finals' });
+  await roundRow.getByRole('link', { name: /Entries/ }).click();
+  await page.waitForURL(/\/admin\/rounds\/\d+\/entries/);
+  await page.locator('select[name=sportsman_id]').selectOption({ label: 'Leon Weber · TSV München' });
+  await page.locator('button[type=submit]').click();
+
+  // Create attempts for all entries
+  page.once('dialog', dialog => dialog.accept());
+  await Promise.all([
+    page.waitForURL(/\/admin\/rounds\/\d+\/entries/),
+    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+  ]);
+
+  // Switch to referee and verify the round appears on the scoring dashboard
+  await page.getByRole('button', { name: /Logout/ }).click();
+  await page.waitForURL('/login');
+  await loginAsReferee(page);
+  await expect(page.getByText('Finals')).toBeVisible();
+  await expect(page.getByText('Winter Cup')).toBeVisible();
+});
+
+test('admin closes a competition and it disappears from the referee scoring dashboard', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto('/admin/competitions');
+  const row = page.getByRole('row').filter({ hasText: 'Spring Championship' });
+  await row.getByRole('button', { name: /Close/ }).click();
+  await expect(row.getByRole('cell', { name: 'closed' })).toBeVisible();
+
+  await page.getByRole('button', { name: /Logout/ }).click();
+  await page.waitForURL('/login');
+  await loginAsReferee(page);
+  await expect(page.getByText('Spring Championship')).not.toBeVisible();
+});
+
+test('admin deletes a competition and it is removed from the list', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto('/admin/competitions');
+  const row = page.getByRole('row').filter({ hasText: 'Winter Cup' });
+  page.once('dialog', dialog => dialog.accept());
+  await row.locator('button.btn-outline-danger').click();
+  await expect(page.getByRole('cell', { name: 'Winter Cup' })).not.toBeVisible();
+});
