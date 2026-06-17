@@ -1,6 +1,6 @@
 services:
   app:
-    image: ${PRODUCTION_IMAGE:-trampolin:latest-production}
+    image: ${PRODUCTION_IMAGE:-trampolin-test:1}
     environment:
       - ENABLE_TEST_SEED=true
       - SESSION_SECRET=integration-test-secret
@@ -13,7 +13,7 @@ services:
       retries: 12
 
   test-runner:
-    image: ${TEST_IMAGE:-trampolin:latest-test}
+    image: ${TEST_IMAGE:-trampolin-test:1}
     network_mode: "service:app"
     volumes:
       - ../../tests:/app/tests

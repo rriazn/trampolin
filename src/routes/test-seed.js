@@ -10,7 +10,11 @@ router.post('/test/seed', (req, res) => {
   db.prepare('DELETE FROM sportsmen').run();
   db.prepare('DELETE FROM rounds').run();
   db.prepare('DELETE FROM competitions').run();
-  db.prepare("DELETE FROM users WHERE role != 'admin'").run();
+  db.prepare('DELETE FROM users').run();
+
+  const adminHash = bcrypt.hashSync('admin123', 10);
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Admin', 'admin@example.com', adminHash, 'admin');
 
   const refHash = bcrypt.hashSync('referee123', 10);
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
