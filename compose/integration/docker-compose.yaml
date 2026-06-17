@@ -14,11 +14,12 @@ services:
 
   test-runner:
     image: ${TEST_IMAGE:-trampolin:latest-test}
+    network_mode: "service:app"
     volumes:
       - ../../tests:/app/tests
       - ../../playwright.integration.config.js:/app/playwright.integration.config.js
     environment:
-      - BASE_URL=http://app:3000
+      - BASE_URL=http://localhost:3000
     command: ${TEST_COMMAND:-npx playwright test tests/integration --config playwright.integration.config.js}
     depends_on:
       app:

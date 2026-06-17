@@ -6,12 +6,7 @@ module.exports = defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     launchOptions: {
-      args: [
-        '--disable-features=AutoupgradeHTTP,HttpsUpgrades',
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-background-networking',
-      ],
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     },
   },
   workers: 1,
