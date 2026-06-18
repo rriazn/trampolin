@@ -137,105 +137,6 @@ router.post('/users/:id', async (req, res) => {
   res.redirect('/admin/users');
 });
 
-// ── Sportsmen ────────────────────────────────────────────────────────────────
-
-router.get('/sportsmen', (req, res) => {
-  const sportsmen = db.prepare('SELECT * FROM sportsmen ORDER BY name').all();
-  res.render('admin/sportsmen', { sportsmen });
-});
-
-router.get('/sportsmen/export', (req, res) => {
-  const sportsmen = db.prepare('SELECT name, club, category, created_at FROM sportsmen ORDER BY name').all();
-  const ws = XLSX.utils.json_to_sheet(sportsmen.map(s => ({
-    Name: s.name,
-    Club: s.club || '',
-    Category: s.category || '',
-    'Created At': s.created_at.substring(0, 10),
-  })));
-  ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 18 }, { wch: 14 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="sportsmen.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buf);
-});
-
-router.get('/sportsmen/new', (req, res) => {
-  res.render('admin/sportsman-form', { sportsman: null, action: '/admin/sportsmen' });
-});
-
-router.post('/sportsmen', (req, res) => {
-  const { name, club, category } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).render('admin/sportsman-form', {
-      sportsman: null, action: '/admin/sportsmen',
-      error: 'Name is required.',
-    });
-  }
-  db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)').run(name.trim(), club || null, category || null);
-  req.session.flash = { success: `Sportsman "${name}" added.` };
-  res.redirect('/admin/sportsmen');
-});
-
-router.get('/sportsmen/:id/edit', (req, res) => {
-  const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.id);
-  if (!sportsman) return res.status(404).send('Not found');
-  res.render('admin/sportsman-form', { sportsman, action: `/admin/sportsmen/${sportsman.id}` });
-});
-
-router.post('/sportsmen/:id/delete', (req, res) => {
-  db.transaction(() => {
-    db.prepare('DELETE FROM entries WHERE sportsman_id=?').run(req.params.id);
-    db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.id);
-  })();
-  req.session.flash = { success: 'Sportsman deleted.' };
-  res.redirect('/admin/sportsmen');
-});
-
-router.post('/sportsmen/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    req.session.flash = { error: 'No file uploaded.' };
-    return res.redirect('/admin/sportsmen');
-  }
-  let rows = [];
-  try {
-    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
-    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-  } catch {
-    // unparseable file — rows stays empty, all will be counted as skipped
-  }
-  const insert = db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)');
-  const insertAll = db.transaction(() => {
-    let created = 0, skipped = 0;
-    for (const row of rows) {
-      const name = String(row['Name'] || row['name'] || '').trim();
-      if (!name) { skipped++; continue; }
-      const club = String(row['Club'] || row['club'] || '').trim() || null;
-      const category = String(row['Category'] || row['category'] || '').trim() || null;
-      insert.run(name, club, category);
-      created++;
-    }
-    return { created, skipped };
-  });
-  const { created, skipped } = insertAll();
-  req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (missing name).` };
-  res.redirect('/admin/sportsmen');
-});
-
-router.post('/sportsmen/:id', (req, res) => {
-  const { name, club, category } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).render('admin/sportsman-form', {
-      sportsman: null, action: '/admin/sportsmen',
-      error: 'Name is required.',
-    });
-  }
-  db.prepare('UPDATE sportsmen SET name=?,club=?,category=? WHERE id=?')
-    .run(name, club || null, category || null, req.params.id);
-  req.session.flash = { success: 'Sportsman updated.' };
-  res.redirect('/admin/sportsmen');
-});
 
 // ── Competitions ─────────────────────────────────────────────────────────────
 
@@ -292,6 +193,118 @@ router.post('/competitions/:id/delete', (req, res) => {
   db.prepare('DELETE FROM competitions WHERE id=?').run(req.params.id);
   req.session.flash = { success: 'Competition and all associated data deleted.' };
   res.redirect('/admin/competitions');
+});
+
+
+// ── Sportsmen ────────────────────────────────────────────────────────────────
+
+router.get('/competitions/:id/sportsmen', (req, res) => {
+  const sportsmen = db.prepare('SELECT * FROM sportsmen WHERE competition_id = ? ORDER BY name').get(req.params.id);
+  res.render('admin/sportsmen', { sportsmen });
+});
+
+router.get('/competitions/:id/sportsmen/export', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id = ?').get(req.params.id);
+  const clean_comp_name = competition.name
+                          .toLowerCase()
+                          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                          .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+                          .replace(/\s+/g, '-')
+                          .replace(/\.+$/, '')
+                          .trim();
+  const sportsmen = db.prepare('SELECT name, club, category, created_at FROM sportsmen ORDER BY name').get(req.params.id);
+  const ws = XLSX.utils.json_to_sheet(sportsmen.map(s => ({
+    Name: s.name,
+    Club: s.club || '',
+    Gender: s.gender || '',
+    Birthyear: s.birth_year || '',
+    Routine: s.routine || '',
+  })));
+  ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${clean_comp_name}.xlsx"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
+});
+
+router.get('/competitions/:id/sportsmen/new', (req, res) => {
+  res.render('admin/sportsman-form', { sportsman: null, action: '/admin/sportsmen' });
+});
+
+router.post('/competitions/:id/sportsmen', (req, res) => {
+  const { name, club, gender, birth_year, routine } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman: null, action: '/admin/sportsmen',
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('INSERT INTO sportsmen (name,club,gender, birth_year, routine) VALUES (?,?,?,?,?)').run(name.trim(), club || null, gender || 'f', birth_year || 2000, routine || '');
+  req.session.flash = { success: `Sportsman "${name}" added.` };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.get('/competitions/:id/sportsmen/:sid/edit', (req, res) => {
+  const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.sid);
+  if (!sportsman) return res.status(404).send('Not found');
+  res.render('admin/sportsman-form', { sportsman, action: `/admin/competitions/${req.params.id}/sportsmen/${sportsman.id}` });
+});
+
+router.post('/competitions/:id/sportsmen/:sid/delete', (req, res) => {
+  db.transaction(() => {
+    db.prepare('DELETE FROM entries WHERE sportsman_id=?').run(req.params.sid);
+    db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.sid);
+  })();
+  req.session.flash = { success: 'Sportsman deleted.' };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.post('/competitions/:id/sportsmen/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    req.session.flash = { error: 'No file uploaded.' };
+    return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+  }
+  let rows = [];
+  try {
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  } catch {
+    // unparseable file — rows stays empty, all will be counted as skipped
+  }
+  const insert = db.prepare('INSERT INTO sportsmen (name,club,gender, birth_year, routine) VALUES (?,?,?,?,?)');
+  const insertAll = db.transaction(() => {
+    let created = 0, skipped = 0;
+    for (const row of rows) {
+      const name = String(row['Name'] || row['name'] || '').trim();
+      if (!name) { skipped++; continue; }
+      const club = String(row['Club'] || row['club'] || '').trim() || null;
+      const gender = String(row['Gender'] || row['gender'] || '').trim() || 'f';
+      const birth_year = String(row['Birth year'] || row['birth year'] || row['Birth Year'] || '').trim() || 2000;
+      const routine = String(row['Routine'] || row['routine'] || '').trim() || null;
+      insert.run(name, club, gender, birth_year, routine);
+      created++;
+    }
+    return { created, skipped };
+  });
+  const { created, skipped } = insertAll();
+  req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (missing name).` };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.post('/competitions/:id/sportsmen/:sid', (req, res) => {
+  const { name, club, gender, birth_year, routine } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman: null, action: `/admin/competitions/${req.params.id}/sportsmen`,
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('UPDATE sportsmen SET name=?,club=?,gender=?,birth_year=?,routine=? WHERE sid=?')
+    .run(name, club || null, gender || 'f', birth_year || 2000, routine || null, req.params.id);
+  req.session.flash = { success: 'Sportsman updated.' };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 });
 
 // ── Rounds ───────────────────────────────────────────────────────────────────

@@ -10,14 +10,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
-CREATE TABLE IF NOT EXISTS sportsmen (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT NOT NULL,
-    club       TEXT,
-    category   TEXT,
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-);
-
 CREATE TABLE IF NOT EXISTS competitions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT NOT NULL,
@@ -26,17 +18,33 @@ CREATE TABLE IF NOT EXISTS competitions (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS sportsmen (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    club       TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    gender      TEXT CHECK(gender IN ('m','f')),
+    birth_year  INTEGER,
+    routine     TEXT,
+    competition_id  INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS groups (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL,
+    competition_id  INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS rounds (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
-    name           TEXT    NOT NULL,
-    round_order    INTEGER NOT NULL DEFAULT 0
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id        INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    name            TEXT    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS entries (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     round_id     INTEGER NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
-    sportsman_id INTEGER NOT NULL REFERENCES sportsmen(id),
+    sportsman_id INTEGER NOT NULL REFERENCES sportsmen(id) ON DELETE CASCADE,
     start_order  INTEGER NOT NULL DEFAULT 0,
     UNIQUE(round_id, sportsman_id)
 );
@@ -52,7 +60,7 @@ CREATE TABLE IF NOT EXISTS attempts (
 CREATE TABLE IF NOT EXISTS scores (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     attempt_id  INTEGER NOT NULL REFERENCES attempts(id) ON DELETE CASCADE,
-    referee_id  INTEGER NOT NULL REFERENCES users(id),
+    referee_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     score       REAL    NOT NULL CHECK(score >= 0 AND score <= 10),
     created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     UNIQUE(attempt_id, referee_id)
