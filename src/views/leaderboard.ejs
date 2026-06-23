@@ -25,7 +25,7 @@
         <th style="width:70px;background:var(--brand)" class="text-white text-center">Rank</th>
         <th style="background:var(--brand)" class="text-white">Athlete</th>
         <th style="background:var(--brand)" class="text-white">Club</th>
-        <th style="background:var(--brand)" class="text-white">Category</th>
+        <th style="background:var(--brand)" class="text-white">Group</th>
         <th style="background:var(--brand)" class="text-white text-center">Attempt 1</th>
         <th style="background:var(--brand)" class="text-white text-center">Attempt 2</th>
         <th style="background:var(--brand);width:130px" class="text-white text-end">Best Score</th>
@@ -55,8 +55,8 @@
       </td>
       <td class="align-middle text-muted"><%= row.club || '–' %></td>
       <td class="align-middle">
-        <% if (row.category) { %>
-        <span class="badge bg-light text-dark border"><%= row.category %></span>
+        <% if (row.group) { %>
+        <span class="badge bg-light text-dark border"><%= row.group %></span>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
       <td class="text-center align-middle">

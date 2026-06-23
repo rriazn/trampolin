@@ -9,24 +9,29 @@ function trimmedMean(scores) {
   return trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
 }
 
-router.get('/:roundId', (req, res) => {
-  const { roundId } = req.params;
+router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
+  const roundId = req.params.rid;
 
   const round = db.prepare(`
-    SELECT r.*, c.name AS competition_name
-    FROM rounds r JOIN competitions c ON c.id=r.competition_id
-    WHERE r.id=?
-  `).get(roundId);
+    SELECT r.*, g.id AS group_id, g.name AS group_name,
+           c.id AS competition_id, c.name AS competition_name
+    FROM rounds r
+    JOIN groups g ON g.id = r.group_id
+    JOIN competitions c ON c.id = g.competition_id
+    WHERE r.id = ? AND g.id = ? AND c.id = ?
+  `).get(roundId, req.params.gid, req.params.cid);
   if (!round) return res.status(404).send('Round not found');
 
   const rows = db.prepare(`
     SELECT
-      sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club, sp.category,
+      sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club,
+      g.name AS group_name,
       e.start_order,
       a.id AS attempt_id, a.attempt_number,
       s.score
     FROM entries e
     JOIN sportsmen sp ON sp.id = e.sportsman_id
+    LEFT JOIN groups g ON g.id = sp.group_id
     JOIN attempts a ON a.entry_id = e.id
     LEFT JOIN scores s ON s.attempt_id = a.id
     WHERE e.round_id = ?
@@ -39,7 +44,7 @@ router.get('/:roundId', (req, res) => {
       map.set(row.sportsman_id, {
         name: row.sportsman_name,
         club: row.club,
-        category: row.category,
+        group: row.group_name,
         startOrder: row.start_order,
         attempts: new Map()
       });
@@ -65,7 +70,7 @@ router.get('/:roundId', (req, res) => {
     const bestScore = scored.length > 0 ? Math.max(...scored.map(a => a.finalScore)) : null;
     const secondScore = scored.length > 1 ? scored.map(a => a.finalScore).filter(s => s !== bestScore)[0] ?? null : null;
 
-    leaderboard.push({ sportsmanId: id, name: sp.name, club: sp.club, category: sp.category, startOrder: sp.startOrder, attempts: attemptScores, bestScore, secondScore });
+    leaderboard.push({ sportsmanId: id, name: sp.name, club: sp.club, group: sp.group, startOrder: sp.startOrder, attempts: attemptScores, bestScore, secondScore });
   }
 
   leaderboard.sort((a, b) => {

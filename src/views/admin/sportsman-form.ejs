@@ -3,7 +3,9 @@
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5)">
-        <li class="breadcrumb-item"><a href="/admin/sportsmen" class="text-white-50">Sportsmen</a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/groups" class="text-white-50"><%= competition.name %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/sportsmen" class="text-white-50">Athletes</a></li>
         <li class="breadcrumb-item active text-white"><%= sportsman ? 'Edit' : 'New Athlete' %></li>
       </ol>
     </nav>
@@ -26,13 +28,38 @@
     <label class="form-label small fw-600 text-muted text-uppercase">Club <span class="text-muted fw-normal">(optional)</span></label>
     <input type="text" name="club" class="form-control" value="<%= sportsman ? (sportsman.club || '') : '' %>">
   </div>
-  <div class="mb-4">
-    <label class="form-label small fw-600 text-muted text-uppercase">Category <span class="text-muted fw-normal">(optional)</span></label>
-    <input type="text" name="category" class="form-control" value="<%= sportsman ? (sportsman.category || '') : '' %>" placeholder="e.g. Junior Men, Senior Women">
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label class="form-label small fw-600 text-muted text-uppercase">Gender</label>
+      <select name="gender" class="form-select">
+        <option value="">– not set –</option>
+        <option value="m" <%= sportsman && sportsman.gender === 'm' ? 'selected' : '' %>>Male</option>
+        <option value="f" <%= sportsman && sportsman.gender === 'f' ? 'selected' : '' %>>Female</option>
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small fw-600 text-muted text-uppercase">Birth Year</label>
+      <input type="number" name="birth_year" class="form-control" value="<%= sportsman ? (sportsman.birth_year || '') : '' %>" placeholder="e.g. 2008" min="1900" max="2099">
+    </div>
   </div>
+  <div class="mb-3">
+    <label class="form-label small fw-600 text-muted text-uppercase">Routine <span class="text-muted fw-normal">(optional)</span></label>
+    <input type="text" name="routine" class="form-control" value="<%= sportsman ? (sportsman.routine || '') : '' %>" placeholder="e.g. DMT, Trampoline">
+  </div>
+  <% if (groups && groups.length > 0) { %>
+  <div class="mb-4">
+    <label class="form-label small fw-600 text-muted text-uppercase">Group <span class="text-muted fw-normal">(optional)</span></label>
+    <select name="group_id" class="form-select">
+      <option value="">– unassigned –</option>
+      <% groups.forEach(g => { %>
+      <option value="<%= g.id %>" <%= sportsman && sportsman.group_id === g.id ? 'selected' : '' %>><%= g.name %></option>
+      <% }) %>
+    </select>
+  </div>
+  <% } %>
   <div class="d-flex gap-2">
     <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= sportsman ? 'Save' : 'Create' %></button>
-    <a href="/admin/sportsmen" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+    <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
   </div>
 </form>
 </div>

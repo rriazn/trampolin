@@ -1,10 +1,12 @@
 <%- include('../partials/header', { title: 'Entries – ' + round.name, activePage: 'admin' }) %>
+<% const baseUrl = '/admin/competitions/' + round.competition_id + '/groups/' + round.group_id + '/rounds/' + round.id %>
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
         <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
-        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/rounds" class="text-white-50"><%= round.competition_name %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups" class="text-white-50"><%= round.competition_name %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds" class="text-white-50"><%= round.group_name %></a></li>
         <li class="breadcrumb-item active text-white"><%= round.name %></li>
       </ol>
     </nav>
@@ -14,12 +16,15 @@
         <p><%= round.name %></p>
       </div>
       <div class="d-flex gap-2">
-        <form method="POST" action="/admin/rounds/<%= round.id %>/attempts/bulk">
-          <button class="btn btn-accent rounded-pill" onclick="return confirm('Create attempt 1 & 2 for all entries?')">
+        <form method="POST" action="<%= baseUrl %>/attempts/bulk" class="d-flex gap-2 align-items-center">
+          <div style="width:90px">
+            <input type="number" name="attempt_count" class="form-control form-control-sm text-center" value="2" min="1" max="20" title="Attempts per athlete">
+          </div>
+          <button class="btn btn-accent rounded-pill" onclick="return confirm('Create attempts for all entries?')">
             <i class="bi bi-lightning-fill me-1"></i>Create All Attempts
           </button>
         </form>
-        <a href="/leaderboard/<%= round.id %>" target="_blank" class="btn btn-outline-light rounded-pill">
+        <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-light rounded-pill">
           <i class="bi bi-bar-chart me-1"></i>Leaderboard
         </a>
       </div>
@@ -35,20 +40,21 @@
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th style="width:60px">Start #</th><th>Athlete</th><th>Club</th><th>Attempts</th><th></th></tr></thead>
+      <thead><tr><th style="width:60px">Start #</th><th>Athlete</th><th>Club</th><th>Routine</th><th>Attempts</th><th></th></tr></thead>
       <tbody>
       <% entries.forEach(e => { %>
       <tr>
         <td><span class="badge bg-secondary rounded-pill"><%= e.start_order %></span></td>
         <td class="fw-600"><i class="bi bi-person me-2 text-muted"></i><%= e.sportsman_name %></td>
         <td class="text-muted"><%= e.club || '–' %></td>
+        <td class="text-muted"><%= e.routine || '–' %></td>
         <td>
           <span class="badge rounded-pill <%= e.attempt_count > 0 ? 'bg-success' : 'bg-light text-muted border' %>">
-            <i class="bi bi-lightning-fill me-1"></i><%= e.attempt_count %> attempts
+            <i class="bi bi-lightning-fill me-1"></i><%= e.attempt_count %> attempt<%= e.attempt_count !== 1 ? 's' : '' %>
           </span>
         </td>
         <td class="text-end">
-          <form method="POST" action="/admin/entries/<%= e.id %>/delete" class="d-inline"
+          <form method="POST" action="<%= baseUrl %>/entries/<%= e.id %>/delete" class="d-inline"
                 onsubmit="return confirm('Remove this entry and all its scores?')">
             <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
           </form>
@@ -62,15 +68,18 @@
 
   <div class="card p-4">
     <h5 class="fw-700 mb-3"><i class="bi bi-person-plus me-2"></i>Add Entry</h5>
+    <% if (locals.flash && locals.flash.error) { %>
+    <div class="alert alert-danger mb-3"><%= locals.flash.error %></div>
+    <% } %>
     <% if (available.length === 0) { %>
-    <p class="text-muted mb-0"><i class="bi bi-check-circle me-1"></i>All registered sportsmen are already in this round.</p>
+    <p class="text-muted mb-0"><i class="bi bi-check-circle me-1"></i>All registered athletes are already in this round.</p>
     <% } else { %>
-    <form method="POST" action="/admin/rounds/<%= round.id %>/entries" class="row g-3 align-items-end">
+    <form method="POST" action="<%= baseUrl %>/entries" class="row g-3 align-items-end">
       <div class="col-md-5">
         <label class="form-label small fw-600 text-muted text-uppercase">Athlete</label>
         <select name="sportsman_id" class="form-select" required>
           <% available.forEach(s => { %>
-          <option value="<%= s.id %>"><%= s.name %><%= s.club ? ' · ' + s.club : '' %></option>
+          <option value="<%= s.id %>"><%= s.name %><%= s.club ? ' · ' + s.club : '' %><%= s.group_name ? ' (' + s.group_name + ')' : '' %></option>
           <% }) %>
         </select>
       </div>

@@ -18,27 +18,29 @@ CREATE TABLE IF NOT EXISTS competitions (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
-CREATE TABLE IF NOT EXISTS sportsmen (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    name       TEXT NOT NULL,
-    club       TEXT,
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-    gender      TEXT CHECK(gender IN ('m','f')),
-    birth_year  INTEGER,
-    routine     TEXT,
-    competition_id  INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS groups (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    name           TEXT    NOT NULL,
+    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS groups (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL,
-    competition_id  INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS sportsmen (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    name           TEXT    NOT NULL,
+    club           TEXT,
+    gender         TEXT    CHECK(gender IN ('m','f')),
+    birth_year     INTEGER,
+    routine        TEXT,
+    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+    group_id       INTEGER REFERENCES groups(id) ON DELETE SET NULL,
+    created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
 CREATE TABLE IF NOT EXISTS rounds (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    group_id        INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    name            TEXT    NOT NULL
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id    INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    name        TEXT    NOT NULL,
+    round_order INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS entries (
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS entries (
 CREATE TABLE IF NOT EXISTS attempts (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     entry_id       INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
-    attempt_number INTEGER NOT NULL CHECK(attempt_number IN (1,2)),
+    attempt_number INTEGER NOT NULL CHECK(attempt_number > 0),
     status         TEXT    NOT NULL CHECK(status IN ('pending','scored')) DEFAULT 'pending',
     UNIQUE(entry_id, attempt_number)
 );
@@ -66,6 +68,9 @@ CREATE TABLE IF NOT EXISTS scores (
     UNIQUE(attempt_id, referee_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_entries_round  ON entries(round_id);
-CREATE INDEX IF NOT EXISTS idx_attempts_entry ON attempts(entry_id);
-CREATE INDEX IF NOT EXISTS idx_scores_attempt ON scores(attempt_id);
+CREATE INDEX IF NOT EXISTS idx_entries_round    ON entries(round_id);
+CREATE INDEX IF NOT EXISTS idx_attempts_entry   ON attempts(entry_id);
+CREATE INDEX IF NOT EXISTS idx_scores_attempt   ON scores(attempt_id);
+CREATE INDEX IF NOT EXISTS idx_sportsmen_comp   ON sportsmen(competition_id);
+CREATE INDEX IF NOT EXISTS idx_groups_comp      ON groups(competition_id);
+CREATE INDEX IF NOT EXISTS idx_rounds_group     ON rounds(group_id);
