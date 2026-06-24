@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
-import * as XLSX from 'xlsx';
 import { createApp, loginAdmin, seedCompetitionData, seedReferee } from '../helpers/createApp.js';
 
 const app = createApp();

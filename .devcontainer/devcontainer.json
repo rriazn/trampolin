@@ -1,0 +1,19 @@
+{
+  "name": "Trampolin",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install && npx playwright install --with-deps chromium",
+  "postStartCommand": "npm rebuild",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "DigitalBrainstem.javascript-ejs-support"
+      ]
+    }
+  },
+  "remoteUser": "node"
+}

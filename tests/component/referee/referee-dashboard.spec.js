@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
 
-let seed;
-
 async function loginAsReferee(page) {
   await page.goto('/login');
   await page.locator('input[name=email]').fill('referee1@test.com');
@@ -17,8 +15,7 @@ test('returns 403 when not logged in', async ({ request }) => {
 
 test.describe('when logged in as referee', () => {
   test.beforeAll(async ({ request }) => {
-    const res = await request.post('/test/seed');
-    seed = await res.json();
+    await request.post('/test/seed');
   });
 
   test.beforeEach(async ({ page }) => {

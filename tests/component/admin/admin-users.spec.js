@@ -89,7 +89,7 @@ test.describe('when logged in as admin', () => {
   });
 
   test('clicking "Export Excel" initiates a file download', async ({ page }) => {
-    const [download] = await Promise.all([
+    await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('link', { name: /Export Excel/ }).click()
     ]);
