@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Test: Unit",
+      "type": "shell",
+      "command": "npx vitest run tests/unit",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: API",
+      "type": "shell",
+      "command": "npx vitest run tests/api",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Component",
+      "type": "shell",
+      "command": "npx playwright test tests/component --config playwright.config.js",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Integration (local)",
+      "type": "shell",
+      "command": "ENABLE_TEST_SEED=true npx playwright test tests/integration --config playwright.integration.config.js",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
