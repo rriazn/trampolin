@@ -5,11 +5,10 @@ import { createApp, loginAdmin, seedCompetitionData, seedReferee } from '../help
 
 const app = createApp();
 let agent;
-let data;
 
 beforeAll(async () => {
   agent = await loginAdmin(app);
-  data = seedCompetitionData();
+  seedCompetitionData();
   seedReferee();
 });
 

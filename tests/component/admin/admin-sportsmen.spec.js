@@ -1,7 +1,5 @@
 const { test, expect } = require('@playwright/test');
 
-let seed;
-
 async function loginAsAdmin(page) {
   await page.goto('/login');
   await page.locator('input[name=email]').fill('admin@test.com');
@@ -17,8 +15,7 @@ test('returns 403 when not logged in', async ({ request }) => {
 
 test.describe('when logged in as admin', () => {
   test.beforeAll(async ({ request }) => {
-    const res = await request.post('/test/seed');
-    seed = await res.json();
+    await request.post('/test/seed');
   });
 
   test.beforeEach(async ({ page }) => {
@@ -77,7 +74,7 @@ test.describe('when logged in as admin', () => {
   });
 
   test('clicking "Export Excel" initiates a file download', async ({ page }) => {
-    const [download] = await Promise.all([
+    await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('link', { name: /Export Excel/ }).click()
     ]);

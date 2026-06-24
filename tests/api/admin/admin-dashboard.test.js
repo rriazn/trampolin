@@ -4,11 +4,10 @@ import { createApp, loginAdmin, seedCompetitionData } from '../helpers/createApp
 
 const app = createApp();
 let agent;
-let data;
 
 beforeAll(async () => {
   agent = await loginAdmin(app);
-  data = seedCompetitionData();
+  seedCompetitionData();
 });
 
 describe('GET /admin/', () => {

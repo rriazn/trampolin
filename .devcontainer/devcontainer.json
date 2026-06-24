@@ -6,6 +6,7 @@
   },
   "forwardPorts": [3000],
   "postCreateCommand": "npm install && npx playwright install --with-deps chromium",
+  "postStartCommand": "npm rebuild",
   "customizations": {
     "vscode": {
       "extensions": [
