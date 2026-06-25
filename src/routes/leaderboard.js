@@ -10,7 +10,13 @@ function trimmedMean(scores) {
 }
 
 router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
-  const roundId = req.params.rid;
+  const { cid, gid, rid } = req.params;
+
+  const competition = db.prepare('SELECT id FROM competitions WHERE id = ?').get(cid);
+  if (!competition) return res.status(404).send('Competition not found');
+
+  const group = db.prepare('SELECT id FROM groups WHERE id = ? AND competition_id = ?').get(gid, cid);
+  if (!group) return res.status(404).send('Group not found');
 
   const round = db.prepare(`
     SELECT r.*, g.id AS group_id, g.name AS group_name,
@@ -18,8 +24,8 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     FROM rounds r
     JOIN groups g ON g.id = r.group_id
     JOIN competitions c ON c.id = g.competition_id
-    WHERE r.id = ? AND g.id = ? AND c.id = ?
-  `).get(roundId, req.params.gid, req.params.cid);
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
   if (!round) return res.status(404).send('Round not found');
 
   const rows = db.prepare(`
@@ -36,7 +42,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     LEFT JOIN scores s ON s.attempt_id = a.id
     WHERE e.round_id = ?
     ORDER BY sp.id, a.attempt_number
-  `).all(roundId);
+  `).all(rid);
 
   const map = new Map();
   for (const row of rows) {

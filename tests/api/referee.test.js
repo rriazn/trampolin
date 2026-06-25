@@ -30,20 +30,28 @@ describe('GET /referee/', () => {
   });
 });
 
-describe('GET /referee/round/:roundId', () => {
+describe('GET /referee/competitions/:competitionId/groups/:groupId/rounds/:roundId', () => {
   it('returns 403 when unauthenticated', async () => {
-    const res = await request(app).get('/referee/round/1');
+    const res = await request(app).get(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(403);
   });
 
-  it('returns 404 for a non-existent round', async () => {
-    const res = await agent.get('/referee/round/999999');
+  it('returns 404 for a non-existent round, group or competition', async () => {
+    const res = await agent.get(`/referee/competitions/999/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Round not found');
+    expect(res.text).toBe('Competition not found');
+
+    const res2 = await agent.get(`/referee/competitions/${data.competitionId}/groups/999/rounds/${data.roundId}`);
+    expect(res2.status).toBe(404);
+    expect(res2.text).toBe('Group not found');
+
+    const res3 = await agent.get(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/999`);
+    expect(res3.status).toBe(404);
+    expect(res3.text).toBe('Round not found');
   });
 
   it('returns 200 and renders the scoring view for a valid round', async () => {
-    const res = await agent.get(`/referee/round/${data.roundId}`);
+    const res = await agent.get(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(200);
     expect(res.text).toContain('Round A');
     expect(res.text).toContain('Alice');
@@ -73,6 +81,6 @@ describe('POST /referee/score', () => {
     const res = await agent.post('/referee/score').type('form')
       .send({ attemptId: data.attemptId, score: '8.5' });
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe(`/referee/round/${data.roundId}`);
+    expect(res.headers.location).toBe(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
   });
 });

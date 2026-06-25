@@ -12,75 +12,79 @@ beforeAll(async () => {
   seedReferee();
 });
 
-describe('GET /admin/rounds/:id/entries', () => {
+describe('GET /admin/competitions/:cid/groups/:gid/rounds/:rid/entries', () => {
     it('returns 403 when unauthenticated', async () => {
-        const res = await request(app).get(`/admin/rounds/${data.roundId}/entries`);
+        const res = await request(app).get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(res.status).toBe(403);
     });
 
     it('returns 200 and renders the entries management page', async () => {
-        const res = await agent.get(`/admin/rounds/${data.roundId}/entries`);
+        const res = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(res.status).toBe(200);
         expect(res.text).toContain('Entries');
     });
 
     it('shows existing entries on the page', async () => {
-        const res = await agent.get(`/admin/rounds/${data.roundId}/entries`);
+        const res = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(res.status).toBe(200);
         expect(res.text).toContain('Alice');
     });
 
-    it('returns 404 for non-existent round', async () => {
-        const res = await agent.get(`/admin/rounds/99999/entries`);
+    it('returns 404 for non-existent competition, group or round', async () => {
+        const res = await agent.get(`/admin/competitions/99999/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(res.status).toBe(404);
+        expect(res.text).toBe('Competition not found');
+
+        const res2 = await agent.get(`/admin/competitions/${data.competitionId}/groups/99999/rounds/${data.roundId}/entries`);
+        expect(res2.status).toBe(404);
+        expect(res2.text).toBe('Group not found');
+
+        const res3 = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/99999/entries`);
+        expect(res3.status).toBe(404);
+        expect(res3.text).toBe('Round not found');
     });
 });
 
-describe('POST /admin/rounds/:id/entries', () => {
+describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/entries', () => {
     it('returns 403 when unauthenticated', async () => {
-        const res = await request(app).post(`/admin/rounds/${data.roundId}/entries`).type('form').send({ sportsman_id: data.sportsmanId });
+        const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`).type('form').send({ sportsman_id: data.sportsmanId });
         expect(res.status).toBe(403);
     });
 
     it('creates a new entry and redirects', async () => {
-        const res = await agent.post(`/admin/rounds/${data.roundId}/entries`).type('form').send({ sportsman_id: data.sportsman2Id });
+        const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`).type('form').send({ sportsman_id: data.sportsman2Id });
         expect(res.status).toBe(302);
-        expect(res.headers.location).toBe(`/admin/rounds/${data.roundId}/entries`);
-        const listRes = await agent.get(`/admin/rounds/${data.roundId}/entries`);
+        expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
+        const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(listRes.text).toContain('Bob');
     });
 });
 
-describe('POST /admin/entries/:id/delete', () => {
+describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/entries/:eid/delete', () => {
     it('returns 403 when unauthenticated', async () => {
-        const res = await request(app).post(`/admin/entries/${data.entryId}/delete`);
+        const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries/${data.entryId}/delete`);
         expect(res.status).toBe(403);
     });
 
     it('deletes the entry and redirects', async () => {
-        const res = await agent.post(`/admin/entries/${data.entryId}/delete`);
+        const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries/${data.entryId}/delete`);
         expect(res.status).toBe(302);
-        expect(res.headers.location).toBe(`/admin/rounds/${data.roundId}/entries`);
+        expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(entryExists(data.entryId)).toBe(false);
-    });
-
-    it('returns 404 for non-existent entry', async () => {
-        const res = await agent.post(`/admin/entries/99999/delete`);
-        expect(res.status).toBe(404);
     });
 });
 
-describe('POST /admin/rounds/:id/attempts/bulk', () => {
+describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/attempts/bulk', () => {
     it('returns 403 when unauthenticated', async () => {
-        const res = await request(app).post(`/admin/rounds/${data.roundId}/attempts/bulk`);
+        const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/attempts/bulk`);
         expect(res.status).toBe(403);
     });
 
     it('creates attempts 1 and 2 for all entries in the round and redirects', async () => {
-        const res = await agent.post(`/admin/rounds/${data.roundId}/attempts/bulk`);
+        const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/attempts/bulk`).type('form').send({ attempt_count: 2 });
         expect(res.status).toBe(302);
-        expect(res.headers.location).toBe(`/admin/rounds/${data.roundId}/entries`);
-        const listRes = await agent.get(`/admin/rounds/${data.roundId}/entries`);
+        expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
+        const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(listRes.text).toContain('2 attempts');
     });
 });

@@ -201,7 +201,7 @@ router.post('/competitions/:id/delete', (req, res) => {
 
 router.get('/competitions/:id/sportsmen', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const sportsmen = db.prepare(`
     SELECT s.*, g.name AS group_name
     FROM sportsmen s
@@ -214,7 +214,7 @@ router.get('/competitions/:id/sportsmen', (req, res) => {
 
 router.get('/competitions/:id/sportsmen/export', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id = ?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const clean_comp_name = competition.name
     .toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -249,7 +249,7 @@ router.get('/competitions/:id/sportsmen/export', (req, res) => {
 
 router.get('/competitions/:id/sportsmen/new', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
   res.render('admin/sportsman-form', {
     sportsman: null,
@@ -278,9 +278,9 @@ router.post('/competitions/:id/sportsmen', (req, res) => {
 
 router.get('/competitions/:id/sportsmen/:sid/edit', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.sid);
-  if (!sportsman) return res.status(404).send('Not found');
+  if (!sportsman) return res.status(404).send('Sportsman not found');
   const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
   res.render('admin/sportsman-form', {
     sportsman,
@@ -351,7 +351,7 @@ router.post('/competitions/:id/sportsmen/:sid', (req, res) => {
 
 router.get('/competitions/:id/groups', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const groups = db.prepare(`
     SELECT g.*, COUNT(r.id) AS round_count
     FROM groups g
@@ -366,7 +366,7 @@ router.get('/competitions/:id/groups', (req, res) => {
 router.post('/competitions/:id/groups', (req, res) => {
   const { name } = req.body;
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   if (!name || !name.trim()) {
     const groups = db.prepare(`
       SELECT g.*, COUNT(r.id) AS round_count
@@ -390,9 +390,9 @@ router.post('/competitions/:id/groups/:gid/delete', (req, res) => {
 
 router.get('/competitions/:cid/groups/:gid/rounds', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.cid);
-  if (!competition) return res.status(404).send('Not found');
+  if (!competition) return res.status(404).send('Competition not found');
   const group = db.prepare('SELECT * FROM groups WHERE id=? AND competition_id=?').get(req.params.gid, req.params.cid);
-  if (!group) return res.status(404).send('Not found');
+  if (!group) return res.status(404).send('Group not found');
   const rounds = db.prepare('SELECT * FROM rounds WHERE group_id=? ORDER BY round_order').all(req.params.gid);
   res.render('admin/rounds', { competition, group, rounds });
 });
@@ -428,15 +428,22 @@ router.post('/competitions/:cid/groups/:gid/rounds/:rid/delete', (req, res) => {
 // ── Entries ──────────────────────────────────────────────────────────────────
 
 router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
+  const { cid, gid, rid } = req.params;
+
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(cid);
+  if (!competition) return res.status(404).send('Competition not found');
+  const group = db.prepare('SELECT * FROM groups WHERE id=? AND competition_id=?').get(gid, cid);
+  if (!group) return res.status(404).send('Group not found');
+
   const round = db.prepare(`
     SELECT r.*, g.id AS group_id, g.name AS group_name,
            c.id AS competition_id, c.name AS competition_name
     FROM rounds r
     JOIN groups g ON g.id = r.group_id
     JOIN competitions c ON c.id = g.competition_id
-    WHERE r.id = ? AND g.id = ? AND c.id = ?
-  `).get(req.params.rid, req.params.gid, req.params.cid);
-  if (!round) return res.status(404).send('Not found');
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
 
   const entries = db.prepare(`
     SELECT e.*, sp.name AS sportsman_name, sp.club, sp.routine,
@@ -446,7 +453,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
     LEFT JOIN groups g ON g.id = sp.group_id
     WHERE e.round_id = ?
     ORDER BY e.start_order
-  `).all(req.params.rid);
+  `).all(rid);
 
   const available = db.prepare(`
     SELECT s.*, g.name AS group_name
@@ -455,7 +462,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
     WHERE s.competition_id = ?
       AND s.id NOT IN (SELECT sportsman_id FROM entries WHERE round_id = ?)
     ORDER BY s.name
-  `).all(round.competition_id, req.params.rid);
+  `).all(round.competition_id, rid);
 
   res.render('admin/entries', { round, entries, available });
 });
