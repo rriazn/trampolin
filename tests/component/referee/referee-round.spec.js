@@ -11,7 +11,7 @@ async function loginAsReferee(page) {
 }
 
 test('returns 403 when not logged in', async ({ request }) => {
-  const res = await request.get('/referee/round/1');
+  const res = await request.get('/referee/competitions/1/groups/1/rounds/1');
   expect(res.status()).toBe(403);
 });
 
@@ -23,7 +23,7 @@ test.describe('when logged in as referee', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsReferee(page);
-    page.goto(`/referee/round/${seed.roundId}`);
+    page.goto(`/referee/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   });
 
   // Page structure
@@ -44,6 +44,7 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('columnheader', { name: '#' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Athlete' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Club' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Attempt' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Your Score' })).toBeVisible();
   });

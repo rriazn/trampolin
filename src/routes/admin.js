@@ -218,7 +218,7 @@ router.get('/competitions/:id/sportsmen/export', (req, res) => {
   const clean_comp_name = competition.name
     .toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '') // eslint-disable-line no-control-regex
     .replace(/\s+/g, '-')
     .replace(/\.+$/, '')
     .trim();

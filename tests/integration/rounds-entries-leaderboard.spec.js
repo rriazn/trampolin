@@ -109,7 +109,7 @@ test('admin adds a second round to a group and referee sees both rounds on the d
   await finalsRow.getByRole('link', { name: /Entries/ }).click();
   await page.waitForURL(adminEntriesUrlPattern);
 
-  await page.locator('select[name=sportsman_id]').selectOption({ label: 'Leon Weber · TSV München' });
+  await page.locator('select[name=sportsman_id]').selectOption({ label: 'Leon Weber · TSV München (Junior)' });
   await page.locator('input[name=start_order]').fill('1');
   await page.locator('button[type=submit]').click();
   await page.waitForURL(adminEntriesUrlPattern);

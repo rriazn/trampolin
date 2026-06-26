@@ -48,6 +48,6 @@ test.describe('when logged in as referee', () => {
 
   test('clicking a round card navigates to the round scoring view', async ({ page }) => {
     await page.getByText('Qualifications').click();
-    await page.waitForURL(/\/referee\/round\/\d+/);
+    await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
   });
 });

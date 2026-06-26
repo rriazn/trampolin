@@ -40,7 +40,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
 
   const attempts = db.prepare(`
     SELECT a.id AS attempt_id, a.attempt_number, a.status,
-           e.start_order, sp.name AS sportsman_name, sp.club,
+           e.start_order, sp.name AS sportsman_name, sp.club, sp.routine,
            s.score AS my_score
     FROM entries e
     JOIN sportsmen sp ON sp.id = e.sportsman_id

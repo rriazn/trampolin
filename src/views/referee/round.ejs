@@ -29,6 +29,7 @@
         <th style="width:60px">#</th>
         <th>Athlete</th>
         <th>Club</th>
+        <th>Routine</th>
         <th style="width:80px" class="text-center">Attempt</th>
         <th style="width:220px">Your Score</th>
       </tr>
@@ -41,6 +42,7 @@
         <span class="fw-600"><%= a.sportsman_name %></span>
       </td>
       <td class="text-muted small"><%= a.club || '–' %></td>
+      <td class="text-muted small"><%= a.routine || '–' %></td>
       <td class="text-center">
         <span class="badge rounded-pill bg-primary">#<%= a.attempt_number %></span>
       </td>
