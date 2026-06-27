@@ -7,11 +7,38 @@ test.beforeAll(async ({ request }) => {
   seed = await res.json();
 });
 
-test('shows empty-state message when no athletes have been scored yet', async ({ page }) => {
-  await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
-  await expect(page.getByText('Qualifications')).toBeVisible();
-  await expect(page.getByText('No athletes scored yet')).toBeVisible();
+test.describe('hero and auto-refresh', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+  });
+
+  test('shows the round and group name as heading', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Qualifications · Group A' })).toBeVisible();
+  });
+
+  test('shows the competition name in the hero', async ({ page }) => {
+    await expect(page.locator('.lb-hero').getByText('Spring Cup')).toBeVisible();
+  });
+
+  test('shows the "Live · refreshes every 10s" indicator', async ({ page }) => {
+    await expect(page.getByText(/Live.*refreshes every 10s/)).toBeVisible();
+  });
+
+  test('displays the current time', async ({ page }) => {
+    // toLocaleTimeString() produces e.g. "14:05:32" or "2:05:32 PM"
+    await expect(page.locator('.lb-hero').getByText(/\d+:\d+/)).toBeVisible();
+  });
+
+  test('page has a 10-second auto-refresh meta tag', async ({ page }) => {
+    await expect(page.locator('meta[http-equiv="refresh"]')).toHaveAttribute('content', '10');
+  });
+
+  test('shows empty-state message when no athletes have been scored yet', async ({ page }) => {
+    await expect(page.getByText('No athletes scored yet')).toBeVisible();
+  });
 });
+
+
 
 test.describe('with scored athletes', () => {
   let scoredSeed;
@@ -40,8 +67,29 @@ test.describe('with scored athletes', () => {
 
   test('rank 1 receives the gold trophy icon', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    // Template renders <span class="lb-rank gold"> for rank 1
     await expect(page.locator('.lb-rank.gold')).toBeVisible();
+  });
+
+  test('rank 2 receives the silver trophy icon', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    await expect(page.locator('.lb-rank.silver')).toBeVisible();
+  });
+
+  test('rank 3 receives the bronze trophy icon', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    await expect(page.locator('.lb-rank.bronze')).toBeVisible();
+  });
+
+  test('shows the "Best Score" column header', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    await expect(page.getByRole('columnheader', { name: 'Best Score' })).toBeVisible();
+  });
+
+  test('shows group badges for athletes assigned to a group', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    // all three athletes are in "Group A" in the scored seed
+    const badges = page.locator('tbody .badge');
+    await expect(badges.first()).toContainText('Group A');
   });
 
   test('best scores are displayed with three decimal places', async ({ page }) => {
@@ -49,6 +97,21 @@ test.describe('with scored athletes', () => {
     await expect(page.locator('table')).toContainText('9.200');  // Bob's best
     await expect(page.locator('table')).toContainText('8.800');  // Charlie's best
     await expect(page.locator('table')).toContainText('8.500');  // Alice's best
+  });
+
+  test('individual attempt scores appear in their respective columns', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    // Bob: attempt 1 = 9.2, attempt 2 = 9.1
+    const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
+    await expect(bobRow.locator('td').nth(4)).toContainText('9.200');
+    await expect(bobRow.locator('td').nth(5)).toContainText('9.100');
+  });
+
+  test('shows judge count below each attempt score', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    // scored seed has 1 referee → each scored attempt shows "(1 judges)"
+    const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
+    await expect(bobRow.locator('td').nth(4)).toContainText('1 judges');
   });
 
   test('renders one attempt column per attempt number in the round', async ({ page }) => {

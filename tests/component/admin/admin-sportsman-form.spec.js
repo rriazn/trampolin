@@ -35,7 +35,10 @@ test.describe('when logged in as admin', () => {
   test('has the correct form fields', async ({ page }) => {
     await expect(page.locator('input[name=name]')).toBeVisible();
     await expect(page.locator('input[name=club]')).toBeVisible();
+    await expect(page.locator('select[name=gender]')).toBeVisible();
+    await expect(page.locator('input[name=birth_year]')).toBeVisible();
     await expect(page.locator('input[name=routine]')).toBeVisible();
+    await expect(page.locator('select[name=group_id]')).toBeVisible();
   });
 
   test('has a "Create" button', async ({ page }) => {
@@ -69,6 +72,23 @@ test.describe('when logged in as admin', () => {
     await page.locator(`form[action="/admin/competitions/${seed.competitionId}/sportsmen"]`).evaluate(form => form.setAttribute('novalidate', ''));
     await page.getByRole('button', { name: 'Create' }).click();
     await expect(page.getByText('Name is required.')).toBeVisible();
+  });
+
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
+  });
+
+  test('"Athletes" breadcrumb navigates to the sportsmen list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Athletes' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   });
 
   //------------- Editing athletes --------------

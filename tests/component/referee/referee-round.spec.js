@@ -32,8 +32,8 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('heading', { name: 'Finals' })).toBeVisible();
   });
 
-  test('shows the competition name as subtitle', async ({ page }) => {
-    await expect(page.locator('.page-hero p').getByText('Championship')).toBeVisible();
+  test('shows the competition name and group name as subtitle', async ({ page }) => {
+    await expect(page.locator('.page-hero p').getByText('Championship · Group A')).toBeVisible();
   });
 
   test('shows a "Back" button', async ({ page }) => {
@@ -47,6 +47,19 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Attempt' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Your Score' })).toBeVisible();
+  });
+
+  // Athlete data
+
+  test('shows the routine for athletes who have one set', async ({ page }) => {
+    const bobRow = page.getByRole('row').filter({ hasText: 'Bob' }).first();
+    await expect(bobRow).toContainText('DMT');
+  });
+
+  test('shows "–" for athletes without a routine', async ({ page }) => {
+    const charlieRow = page.getByRole('row').filter({ hasText: 'Charlie' }).first();
+    const routineCell = charlieRow.locator('td').nth(3); // #, Athlete, Club, Routine
+    await expect(routineCell).toContainText('–');
   });
 
   // Attempt rows

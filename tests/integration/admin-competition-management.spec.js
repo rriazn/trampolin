@@ -86,6 +86,24 @@ test('admin creates and fully sets up a competition, and a referee can score it'
   await expect(page.getByText('Winter Cup')).toBeVisible();
 });
 
+test('admin deletes a group and its rounds disappear from the referee scoring dashboard', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto('/admin/competitions');
+  const compRow = page.getByRole('row').filter({ hasText: 'Spring Championship' });
+  await compRow.getByRole('link', { name: /Groups/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
+
+  const groupRow = page.getByRole('row').filter({ hasText: 'Junior' });
+  page.once('dialog', dialog => dialog.accept());
+  await groupRow.locator('button.btn-outline-danger').click();
+  await expect(groupRow).not.toBeVisible();
+
+  await page.getByRole('button', { name: /Logout/ }).click();
+  await page.waitForURL('/login');
+  await loginAsReferee(page);
+  await expect(page.getByText('Qualifications')).not.toBeVisible();
+});
+
 test('admin closes a competition and it disappears from the referee scoring dashboard', async ({ page }) => {
   await loginAsAdmin(page);
   await page.goto('/admin/competitions');

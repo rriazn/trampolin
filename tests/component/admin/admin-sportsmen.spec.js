@@ -39,6 +39,9 @@ test.describe('when logged in as admin', () => {
   test('show the correct table columns', async ({ page }) => {
     await expect(page.getByRole('columnheader', { name: 'Athlete' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Club' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Group' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Gender' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Birth Year' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
   });
 
@@ -48,6 +51,9 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Alice' });
     await expect(row.getByRole('cell', { name: 'Alice' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'Test Club' })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'f' })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 2013 })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'W11' })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
   });
@@ -164,6 +170,18 @@ test.describe('when logged in as admin', () => {
     await form.locator('input[type=file]').setInputFiles(filePath);
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (missing name).')).toBeVisible();
+  });
+
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
   });
 
   test('submitting a non-Excel file skips all rows', async ({ page }) => {

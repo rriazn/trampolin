@@ -130,6 +130,18 @@ test.describe('when logged in as admin', () => {
     await expect(page.locator('.alert.alert-danger')).toContainText('Round name is required.');
   });
 
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
+  });
+
   test('added rounds get shown in the correct order', async ({ page }) => {
     await page.locator('input[name=name]').fill('Round C');
     await page.locator('input[name=round_order]').fill('30');

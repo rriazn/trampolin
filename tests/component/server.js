@@ -61,7 +61,7 @@ app.post('/test/seed', (req, res) => {
   db.prepare('INSERT INTO competitions (name, date, status) VALUES (?, ?, ?)').run('Winter Cup', '2025-12-15', 'closed');
   const group = db.prepare('INSERT INTO groups (competition_id, name) VALUES (?, ?)').run(comp.lastInsertRowid, 'Group A');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
-  const sp = db.prepare('INSERT INTO sportsmen (name, club, gender, birth_year, routine, competition_id) VALUES (?, ?, ?, ?, ?, ?)').run('Alice', 'Test Club', 'f', 2013, 'W11', comp.lastInsertRowid);
+  const sp = db.prepare('INSERT INTO sportsmen (name, club, gender, birth_year, routine, competition_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Alice', 'Test Club', 'f', 2013, 'W11', comp.lastInsertRowid, group.lastInsertRowid);
   const sp2 = db.prepare('INSERT INTO sportsmen (name, club, competition_id) VALUES (?, ?, ?)').run('Bob', 'Test Club 2', comp.lastInsertRowid);
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Referee One', 'referee1@test.com', bcrypt.hashSync('ref123', 10), 'referee');
   const referee = db.prepare('SELECT id, email, created_at FROM users WHERE email=?').get('referee1@test.com');
@@ -91,8 +91,8 @@ app.post('/test/seed/scored', (req, res) => {
   const group = db.prepare('INSERT INTO groups (competition_id, name) VALUES (?, ?)').run(comp.lastInsertRowid, 'Group A');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1);
 
-  function addAthlete(name, startOrder, scores) {
-    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run(name, comp.lastInsertRowid, group.lastInsertRowid);
+  function addAthlete(name, startOrder, scores, routine = null) {
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id, routine) VALUES (?, ?, ?, ?)').run(name, comp.lastInsertRowid, group.lastInsertRowid, routine);
     const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sp.lastInsertRowid, startOrder);
     scores.forEach((score, i) => {
       const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, status) VALUES (?, ?, ?)').run(entry.lastInsertRowid, i + 1, 'scored');
@@ -100,7 +100,7 @@ app.post('/test/seed/scored', (req, res) => {
     });
   }
 
-  addAthlete('Bob', 1, [9.2, 9.1]);
+  addAthlete('Bob', 1, [9.2, 9.1], 'DMT');
   addAthlete('Charlie', 2, [8.8, 8.6]);
   addAthlete('Alice', 3, [8.5]);
 

@@ -32,10 +32,6 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
   });
 
-  test('shows the round name as subtitle', async ({ page }) => {
-    await expect(page.locator('.page-hero p', { hasText: 'Qualifications' })).toBeVisible();
-  });
-
   test('shows the "Add Entry" section header', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Add Entry' })).toBeVisible();
   });
@@ -107,6 +103,23 @@ test.describe('when logged in as admin', () => {
     expect(capturedDialog).toBeDefined();
     expect(capturedDialog.type()).toBe('confirm');
     expect(capturedDialog.message()).toMatch(/Create attempts for all entries\?/i);
+  });
+
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
+  });
+
+  test('group name breadcrumb navigates to the rounds page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Group A' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds`);
   });
 
   // Mutations last to avoid breaking earlier tests that rely on seed state
