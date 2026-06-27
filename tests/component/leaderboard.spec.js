@@ -50,4 +50,19 @@ test.describe('with scored athletes', () => {
     await expect(page.locator('table')).toContainText('8.800');  // Charlie's best
     await expect(page.locator('table')).toContainText('8.500');  // Alice's best
   });
+
+  test('renders one attempt column per attempt number in the round', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    // scored seed: Bob and Charlie have 2 attempts, Alice has 1 → maxAttempts = 2
+    await expect(page.getByRole('columnheader', { name: 'Attempt 1' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Attempt 2' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /Attempt \d+/ })).toHaveCount(2);
+  });
+
+  test('shows "–" for attempt slots an athlete has not completed', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    // Alice only has 1 attempt; her Attempt 2 cell (td index 5: rank/athlete/club/group/attempt1/attempt2) should be "–"
+    const aliceRow = page.locator('table tbody tr').filter({ hasText: 'Alice' });
+    await expect(aliceRow.locator('td').nth(5)).toContainText('–');
+  });
 });

@@ -97,7 +97,9 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     }
   }
 
-  res.render('leaderboard', { round, leaderboard, autoRefresh: true });
+  const maxAttempts = leaderboard.reduce((max, row) => Math.max(max, row.attempts.length), 0);
+
+  res.render('leaderboard', { round, leaderboard, maxAttempts, autoRefresh: true });
 });
 
 module.exports = router;
