@@ -6,28 +6,41 @@ router.use(requireReferee);
 
 router.get('/', (req, res) => {
   const rounds = db.prepare(`
-    SELECT r.id, r.name, r.round_order, c.name AS competition_name, c.id AS competition_id
+    SELECT r.id, r.name, r.round_order,
+           g.id AS group_id, g.name AS group_name,
+           c.id AS competition_id, c.name AS competition_name
     FROM rounds r
-    JOIN competitions c ON c.id = r.competition_id
+    JOIN groups g ON g.id = r.group_id
+    JOIN competitions c ON c.id = g.competition_id
     WHERE c.status = 'active'
     ORDER BY c.date DESC, r.round_order
   `).all();
   res.render('referee/dashboard', { rounds });
 });
 
-router.get('/round/:roundId', (req, res) => {
-  const { roundId } = req.params;
+router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
+  const { cid, gid, rid } = req.params;
   const refereeId = req.session.user.id;
 
+  const competition = db.prepare('SELECT id FROM competitions WHERE id = ?').get(cid);
+  if (!competition) return res.status(404).send('Competition not found');
+
+  const group = db.prepare('SELECT id FROM groups WHERE id = ? AND competition_id = ?').get(gid, cid);
+  if (!group) return res.status(404).send('Group not found');
+
   const round = db.prepare(`
-    SELECT r.*, c.name AS competition_name
-    FROM rounds r JOIN competitions c ON c.id=r.competition_id
-    WHERE r.id=?`).get(roundId);
+    SELECT r.*, g.id AS group_id, g.name AS group_name,
+           c.id AS competition_id, c.name AS competition_name
+    FROM rounds r
+    JOIN groups g ON g.id = r.group_id
+    JOIN competitions c ON c.id = g.competition_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
   if (!round) return res.status(404).send('Round not found');
 
   const attempts = db.prepare(`
     SELECT a.id AS attempt_id, a.attempt_number, a.status,
-           e.start_order, sp.name AS sportsman_name, sp.club, sp.category,
+           e.start_order, sp.name AS sportsman_name, sp.club, sp.routine,
            s.score AS my_score
     FROM entries e
     JOIN sportsmen sp ON sp.id = e.sportsman_id
@@ -35,7 +48,7 @@ router.get('/round/:roundId', (req, res) => {
     LEFT JOIN scores s ON s.attempt_id = a.id AND s.referee_id = ?
     WHERE e.round_id = ?
     ORDER BY e.start_order, a.attempt_number
-  `).all(refereeId, roundId);
+  `).all(refereeId, rid);
 
   res.render('referee/round', { round, attempts });
 });
@@ -53,12 +66,17 @@ router.post('/score', (req, res) => {
 
   db.prepare("UPDATE attempts SET status='scored' WHERE id=?").run(attemptId);
 
-  const entry = db.prepare(
-    'SELECT e.round_id FROM attempts a JOIN entries e ON e.id=a.entry_id WHERE a.id=?'
-  ).get(attemptId);
+  const ctx = db.prepare(`
+    SELECT e.round_id, r.group_id, g.competition_id
+    FROM attempts a
+    JOIN entries e ON e.id = a.entry_id
+    JOIN rounds r ON r.id = e.round_id
+    JOIN groups g ON g.id = r.group_id
+    WHERE a.id = ?
+  `).get(attemptId);
 
   req.session.flash = { success: `Score ${parsed.toFixed(1)} saved.` };
-  res.redirect(`/referee/round/${entry.round_id}`);
+  res.redirect(`/referee/competitions/${ctx.competition_id}/groups/${ctx.group_id}/rounds/${ctx.round_id}`);
 });
 
 module.exports = router;

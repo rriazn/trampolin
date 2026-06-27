@@ -3,7 +3,7 @@
 <div class="lb-hero">
   <div class="container">
     <p class="text-white-50 small mb-1"><i class="bi bi-trophy me-1"></i><%= round.competition_name %></p>
-    <h1 class="fw-900 mb-1" style="font-size:2.2rem"><%= round.name %></h1>
+    <h1 class="fw-900 mb-1" style="font-size:2.2rem"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
     <p class="text-white-50 small mb-0">
       <i class="bi bi-arrow-repeat me-1"></i>Live · refreshes every 10s
       &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
@@ -25,16 +25,15 @@
         <th style="width:70px;background:var(--brand)" class="text-white text-center">Rank</th>
         <th style="background:var(--brand)" class="text-white">Athlete</th>
         <th style="background:var(--brand)" class="text-white">Club</th>
-        <th style="background:var(--brand)" class="text-white">Category</th>
-        <th style="background:var(--brand)" class="text-white text-center">Attempt 1</th>
-        <th style="background:var(--brand)" class="text-white text-center">Attempt 2</th>
+        <th style="background:var(--brand)" class="text-white">Group</th>
+        <% for (let n = 1; n <= maxAttempts; n++) { %>
+        <th style="background:var(--brand)" class="text-white text-center">Attempt <%= n %></th>
+        <% } %>
         <th style="background:var(--brand);width:130px" class="text-white text-end">Best Score</th>
       </tr>
     </thead>
     <tbody>
     <% leaderboard.forEach((row, idx) => {
-         const a1 = row.attempts.find(a => a.number === 1);
-         const a2 = row.attempts.find(a => a.number === 2);
          const rankClass = row.rank === 1 ? 'gold' : row.rank === 2 ? 'silver' : row.rank === 3 ? 'bronze' : '';
          const rowBg = row.rank === 1 ? 'style="background:#fffbea"' : row.rank === 2 ? 'style="background:#f8f9fa"' : row.rank === 3 ? 'style="background:#fff8f3"' : '';
     %>
@@ -55,22 +54,20 @@
       </td>
       <td class="align-middle text-muted"><%= row.club || '–' %></td>
       <td class="align-middle">
-        <% if (row.category) { %>
-        <span class="badge bg-light text-dark border"><%= row.category %></span>
+        <% if (row.group) { %>
+        <span class="badge bg-light text-dark border"><%= row.group %></span>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
+      <% for (let n = 1; n <= maxAttempts; n++) {
+           const a = row.attempts.find(a => a.number === n);
+      %>
       <td class="text-center align-middle">
-        <% if (a1 && a1.finalScore !== null) { %>
-          <span class="fw-600"><%= a1.finalScore.toFixed(3) %></span>
-          <span class="text-muted small d-block">(<%= a1.scoreCount %> judges)</span>
+        <% if (a && a.finalScore !== null) { %>
+          <span class="fw-600"><%= a.finalScore.toFixed(3) %></span>
+          <span class="text-muted small d-block">(<%= a.scoreCount %> judges)</span>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
-      <td class="text-center align-middle">
-        <% if (a2 && a2.finalScore !== null) { %>
-          <span class="fw-600"><%= a2.finalScore.toFixed(3) %></span>
-          <span class="text-muted small d-block">(<%= a2.scoreCount %> judges)</span>
-        <% } else { %><span class="text-muted">–</span><% } %>
-      </td>
+      <% } %>
       <td class="text-end align-middle">
         <% if (row.bestScore !== null) { %>
           <span class="lb-score <%= rankClass %>"><%= row.bestScore.toFixed(3) %></span>

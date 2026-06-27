@@ -1,14 +1,15 @@
-<%- include('../partials/header', { title: 'Rounds – ' + competition.name, activePage: 'admin' }) %>
+<%- include('../partials/header', { title: 'Rounds – ' + group.name, activePage: 'admin' }) %>
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
         <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
-        <li class="breadcrumb-item active text-white"><%= competition.name %></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/groups" class="text-white-50"><%= competition.name %></a></li>
+        <li class="breadcrumb-item active text-white"><%= group.name %></li>
       </ol>
     </nav>
     <h1><i class="bi bi-list-ol me-2"></i>Rounds</h1>
-    <p><%= competition.name %> &nbsp;·&nbsp; <span class="badge rounded-pill status-<%= competition.status %>"><%= competition.status %></span></p>
+    <p><%= group.name %> &nbsp;·&nbsp; <%= competition.name %></p>
   </div>
 </div>
 
@@ -27,13 +28,13 @@
         <td><span class="badge bg-secondary rounded-pill"><%= r.round_order %></span></td>
         <td class="fw-600"><i class="bi bi-flag me-2 text-muted"></i><%= r.name %></td>
         <td class="text-end">
-          <a href="/admin/rounds/<%= r.id %>/entries" class="btn btn-sm btn-brand rounded-pill me-1">
+          <a href="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>/entries" class="btn btn-sm btn-brand rounded-pill me-1">
             <i class="bi bi-people me-1"></i>Entries
           </a>
-          <a href="/leaderboard/<%= r.id %>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill me-1">
+          <a href="/leaderboard/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill me-1">
             <i class="bi bi-bar-chart me-1"></i>Leaderboard
           </a>
-          <form method="POST" action="/admin/rounds/<%= r.id %>/delete" class="d-inline"
+          <form method="POST" action="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>/delete" class="d-inline"
                 onsubmit="return confirm('Delete round and all entries/scores?')">
             <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
           </form>
@@ -50,7 +51,7 @@
     <% if (locals.error) { %>
     <div class="alert alert-danger mb-3"><%= locals.error %></div>
     <% } %>
-    <form method="POST" action="/admin/competitions/<%= competition.id %>/rounds" class="row g-3 align-items-end">
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds" class="row g-3 align-items-end">
       <div class="col-md-5">
         <label class="form-label small fw-600 text-muted text-uppercase">Name</label>
         <input type="text" name="name" class="form-control" placeholder="e.g. Qualification" required>

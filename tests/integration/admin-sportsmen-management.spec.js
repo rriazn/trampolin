@@ -18,26 +18,25 @@ test.beforeAll(async ({ request }) => {
 
 test('admin adds a new athlete who appears as available to add to a round', async ({ page }) => {
   await loginAsAdmin(page);
-  await page.goto('/admin/sportsmen/new');
+  await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen/new`);
   await page.locator('input[name=name]').fill('Jonas Krause');
   await page.locator('input[name=club]').fill('TSV München');
-  await page.locator('input[name=category]').fill('Senior Men');
   await page.getByRole('button', { name: 'Create' }).click();
-  await page.waitForURL('/admin/sportsmen');
+  await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   await expect(page.getByRole('cell', { name: 'Jonas Krause' })).toBeVisible();
 
-  await page.goto(`/admin/rounds/${seed.roundId}/entries`);
+  await page.goto(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}/entries`);
   await expect(page.locator('select[name=sportsman_id]')).toContainText('Jonas Krause');
 });
 
 test('admin edits an athlete\'s club and the change is reflected in the list', async ({ page }) => {
   await loginAsAdmin(page);
-  await page.goto('/admin/sportsmen');
+  await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
   const row = page.getByRole('row').filter({ hasText: 'Leon Weber' });
   await row.locator('a.btn-outline-secondary').click();
   await page.locator('input[name=club]').fill('SV Frankfurt');
   await page.getByRole('button', { name: 'Save' }).click();
-  await page.waitForURL('/admin/sportsmen');
+  await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   await expect(
     page.getByRole('row').filter({ hasText: 'Leon Weber' }).getByRole('cell', { name: 'SV Frankfurt' })
   ).toBeVisible();
@@ -45,7 +44,7 @@ test('admin edits an athlete\'s club and the change is reflected in the list', a
 
 test('admin deletes an athlete and they are removed from the list', async ({ page }) => {
   await loginAsAdmin(page);
-  await page.goto('/admin/sportsmen');
+  await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
   const row = page.getByRole('row').filter({ hasText: 'Emma Fischer' });
   page.once('dialog', dialog => dialog.accept());
   await row.locator('button.btn-outline-danger').click();

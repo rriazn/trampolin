@@ -11,7 +11,7 @@ async function loginAsAdmin(page) {
 }
 
 test('returns 403 when not logged in', async ({ request }) => {
-  const res = await request.get('/admin/competitions');
+  const res = await request.get('/admin/competitions/1/groups/1/rounds');
   expect(res.status()).toBe(403);
 });
 
@@ -23,7 +23,7 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto(`/admin/competitions/${seed.competitionId}/rounds`);
+    page.goto(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds`);
   });
 
   // Page structure
@@ -32,8 +32,8 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('heading', { name: 'Rounds' })).toBeVisible();
   });
 
-  test('shows the competition name and status as subtitle', async ({ page }) => {
-    await expect(page.getByText('Spring Cup · active')).toBeVisible();
+  test('shows the competition name and group as subtitle', async ({ page }) => {
+    await expect(page.getByText('Group A · Spring Cup')).toBeVisible();
   });
 
   test('show the correct table columns', async ({ page }) => {
@@ -71,7 +71,7 @@ test.describe('when logged in as admin', () => {
   test('clicking the entries link for a round navigates to that round\'s entries page', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Qualifications' });
     await row.getByRole('link', { name: /Entries/ }).click();
-    await page.waitForURL(/\/admin\/rounds\/\d+\/entries/);
+    await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/);
   });
 
   test('clicking the leaderboard link for a round navigates to that round\'s leaderboard', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('when logged in as admin', () => {
       page.context().waitForEvent('page'),
       row.getByRole('link', { name: /Leaderboard/ }).click(),
     ]);
-    await newPage.waitForURL(/\/leaderboard\/\d+/);
+    await newPage.waitForURL(/\/leaderboard\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
   });
 
   test('clicking the delete button for a round shows a confirmation dialog', async ({ page }) => {
@@ -119,7 +119,7 @@ test.describe('when logged in as admin', () => {
   });
 
   test('submitting a round form without name shows a validation error', async ({ page }) => {
-    await page.locator(`form[action="/admin/competitions/${seed.competitionId}/rounds"]`).evaluate(form => form.setAttribute('novalidate', ''));
+    await page.locator(`form[action="/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds"]`).evaluate(form => form.setAttribute('novalidate', ''));
     await page.locator('button[type=submit]').click();
     await expect(page.locator('.alert.alert-danger')).toContainText('Round name is required.');
   });
@@ -128,6 +128,18 @@ test.describe('when logged in as admin', () => {
     await page.locator('input[name=name]').fill('   ');
     await page.locator('button[type=submit]').click();
     await expect(page.locator('.alert.alert-danger')).toContainText('Round name is required.');
+  });
+
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
   });
 
   test('added rounds get shown in the correct order', async ({ page }) => {

@@ -9,7 +9,7 @@
 
 <div class="container">
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="stat-card stat-blue">
         <i class="bi bi-person-badge stat-icon"></i>
         <div class="stat-num"><%= stats.users %></div>
@@ -17,15 +17,7 @@
         <a href="/admin/users" class="btn btn-sm btn-light mt-3 rounded-pill">Manage <i class="bi bi-arrow-right"></i></a>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-card stat-green">
-        <i class="bi bi-people stat-icon"></i>
-        <div class="stat-num"><%= stats.sportsmen %></div>
-        <div class="stat-label">Sportsmen</div>
-        <a href="/admin/sportsmen" class="btn btn-sm btn-light mt-3 rounded-pill">Manage <i class="bi bi-arrow-right"></i></a>
-      </div>
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="stat-card stat-orange">
         <i class="bi bi-trophy stat-icon"></i>
         <div class="stat-num"><%= stats.competitions %></div>
@@ -56,8 +48,8 @@
           <td><%= c.date || '–' %></td>
           <td><span class="badge rounded-pill status-<%= c.status %>"><%= c.status %></span></td>
           <td class="text-end">
-            <a href="/admin/competitions/<%= c.id %>/rounds" class="btn btn-sm btn-brand rounded-pill">
-              <i class="bi bi-list-ul me-1"></i>Rounds
+            <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand rounded-pill">
+              <i class="bi bi-collection me-1"></i>Groups
             </a>
           </td>
         </tr>

@@ -1,0 +1,72 @@
+<%- include('../partials/header', { title: 'Groups – ' + competition.name, activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
+        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
+        <li class="breadcrumb-item active text-white"><%= competition.name %></li>
+      </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-end">
+      <div>
+        <h1><i class="bi bi-collection me-2"></i>Groups</h1>
+        <p><%= competition.name %> &nbsp;·&nbsp; <span class="badge rounded-pill status-<%= competition.status %>"><%= competition.status %></span></p>
+      </div>
+      <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-light rounded-pill">
+        <i class="bi bi-people me-1"></i>Athletes
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <% if (groups.length === 0) { %>
+  <div class="card p-4 text-center text-muted mb-4">
+    <i class="bi bi-collection fs-1 mb-2 d-block"></i>No groups yet. Add one below.
+  </div>
+  <% } else { %>
+  <div class="table-card card mb-4">
+    <table class="table mb-0">
+      <thead><tr><th>Group Name</th><th>Rounds</th><th></th></tr></thead>
+      <tbody>
+      <% groups.forEach(g => { %>
+      <tr>
+        <td class="fw-600"><i class="bi bi-collection me-2 text-muted"></i><%= g.name %></td>
+        <td>
+          <span class="badge rounded-pill <%= g.round_count > 0 ? 'bg-success' : 'bg-light text-muted border' %>">
+            <%= g.round_count %> round<%= g.round_count !== 1 ? 's' : '' %>
+          </span>
+        </td>
+        <td class="text-end">
+          <a href="/admin/competitions/<%= competition.id %>/groups/<%= g.id %>/rounds" class="btn btn-sm btn-brand rounded-pill me-1">
+            <i class="bi bi-list-ol me-1"></i>Rounds
+          </a>
+          <form method="POST" action="/admin/competitions/<%= competition.id %>/groups/<%= g.id %>/delete" class="d-inline"
+                onsubmit="return confirm('Delete group and all its rounds and scores?')">
+            <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+
+  <div class="card p-4">
+    <h5 class="fw-700 mb-3"><i class="bi bi-plus-circle me-2"></i>Add Group</h5>
+    <% if (locals.error) { %>
+    <div class="alert alert-danger mb-3"><%= locals.error %></div>
+    <% } %>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/groups" class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small fw-600 text-muted text-uppercase">Group Name</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Junior Men" required>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

@@ -11,7 +11,7 @@ async function loginAsAdmin(page) {
 }
 
 test('returns 403 when not logged in', async ({ request }) => {
-  const res = await request.get('/admin/rounds/1/entries');
+  const res = await request.get('/admin/competitions/1/groups/1/rounds/1/entries');
   expect(res.status()).toBe(403);
 });
 
@@ -23,17 +23,13 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto(`/admin/rounds/${seed.roundId}/entries`);
+    page.goto(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}/entries`);
   });
 
   // Page structure
 
   test('shows the "Entries" heading', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
-  });
-
-  test('shows the round name as subtitle', async ({ page }) => {
-    await expect(page.locator('.page-hero p', { hasText: 'Qualifications' })).toBeVisible();
   });
 
   test('shows the "Add Entry" section header', async ({ page }) => {
@@ -74,7 +70,7 @@ test.describe('when logged in as admin', () => {
       page.context().waitForEvent('page'),
       page.getByRole('link', { name: /Leaderboard/ }).click(),
     ]);
-    await newPage.waitForURL(/\/leaderboard\/\d+/);
+    await newPage.waitForURL(/\/leaderboard\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
   });
 
   test('clicking the delete button shows a confirmation dialog', async ({ page }) => {
@@ -106,7 +102,24 @@ test.describe('when logged in as admin', () => {
     await page.getByRole('button', { name: /Create All Attempts/ }).click();
     expect(capturedDialog).toBeDefined();
     expect(capturedDialog.type()).toBe('confirm');
-    expect(capturedDialog.message()).toMatch(/Create attempt 1 & 2 for all entries\?/i);
+    expect(capturedDialog.message()).toMatch(/Create attempts for all entries\?/i);
+  });
+
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
+  });
+
+  test('group name breadcrumb navigates to the rounds page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Group A' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds`);
   });
 
   // Mutations last to avoid breaking earlier tests that rely on seed state
