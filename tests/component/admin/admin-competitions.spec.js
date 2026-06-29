@@ -46,7 +46,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: 'Autumn Open' })).toBeVisible();
     await expect(row.getByRole('cell', { name: '2026-09-15' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'planned' })).toBeVisible();
-    await expect(row.getByRole('link', { name: /Rounds/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Activate/ })).toBeVisible();
@@ -58,7 +58,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: 'Spring Cup' })).toBeVisible();
     await expect(row.getByRole('cell', { name: '–' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'active' })).toBeVisible();
-    await expect(row.getByRole('link', { name: /Rounds/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Close/ })).toBeVisible();
@@ -70,7 +70,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: 'Winter Cup' })).toBeVisible();
     await expect(row.getByRole('cell', { name: '2025-12-15' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'closed' })).toBeVisible();
-    await expect(row.getByRole('link', { name: /Rounds/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Close/ })).not.toBeVisible();
@@ -125,8 +125,8 @@ test.describe('when logged in as admin', () => {
 
   test('clicking the rounds link for a competition navigates to that competition\'s round page', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Spring Cup' });
-    await row.getByRole('link', { name: /Rounds/ }).click();
-    await page.waitForURL(/\/admin\/competitions\/\d+\/rounds/);
+    await row.getByRole('link', { name: /Groups/ }).click();
+    await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
   });
 
   test('clicking the "Activate" button starts a planned competition', async ({ page }) => {

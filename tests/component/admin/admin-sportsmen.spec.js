@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
+let seed;
+
 async function loginAsAdmin(page) {
   await page.goto('/login');
   await page.locator('input[name=email]').fill('admin@test.com');
@@ -9,46 +11,52 @@ async function loginAsAdmin(page) {
 }
 
 test('returns 403 when not logged in', async ({ request }) => {
-  const res = await request.get('/admin/sportsmen');
+  const res = await request.get('/admin/competitions/1/sportsmen');
   expect(res.status()).toBe(403);
 });
 
 test.describe('when logged in as admin', () => {
   test.beforeAll(async ({ request }) => {
-    await request.post('/test/seed');
+    const res = await request.post('/test/seed');
+    seed = await res.json();
   });
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto('/admin/sportsmen');
+    page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
   });
 
   // Page Structure
 
-  test('shows the "Sportsmen" heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Sportsmen' })).toBeVisible();
+  test('shows the "Athletes" heading', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Athletes' })).toBeVisible();
   });
 
-  test('shows the subtitle', async ({ page }) => {
-    await expect(page.getByText('Registered athletes for this tournament')).toBeVisible();
+  test('shows the competition name as subtitle', async ({ page }) => {
+    await expect(page.getByRole('link', { name: 'Spring Cup' })).toBeVisible();
   });
 
   test('show the correct table columns', async ({ page }) => {
     await expect(page.getByRole('columnheader', { name: 'Athlete' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Club' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Category' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Group' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Gender' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Birth Year' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
   });
 
   // Sportsmen List
 
   test('shows seeded sportsman in the list', async ({ page }) => {
-      const row = page.getByRole('row').filter({ hasText: 'Alice' });
-      await expect(row.getByRole('cell', { name: 'Alice' })).toBeVisible();
-      await expect(row.getByRole('cell', { name: 'Test Club' })).toBeVisible();
-      await expect(row.getByRole('cell', { name: 'Junior Women', exact: true })).toBeVisible();
-      await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
-      await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
-    });
+    const row = page.getByRole('row').filter({ hasText: 'Alice' });
+    await expect(row.getByRole('cell', { name: 'Alice' })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'Test Club' })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'f' })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 2013 })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'W11' })).toBeVisible();
+    await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
+    await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
+  });
 
   // Buttons
 
@@ -82,13 +90,13 @@ test.describe('when logged in as admin', () => {
 
   test('clicking "Add Athlete" navigates to the sportsmen creation form', async ({ page }) => {
     await page.getByRole('link', { name: /Add Athlete/ }).click();
-    await page.waitForURL('/admin/sportsmen/new');
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen/new`);
   });
 
   test('clicking the edit link for an athlete navigates to that athletes\'s edit form', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Alice' });
     await row.locator('a.btn-outline-secondary').click();
-    await page.waitForURL(/\/admin\/sportsmen\/\d+\/edit/);
+    await page.waitForURL(/\/admin\/competitions\/\d+\/sportsmen\/\d+\/edit/);
   });
 
   test('clicking the delete button for an athlete shows a confirmation dialog', async ({ page }) => {
@@ -131,7 +139,7 @@ test.describe('when logged in as admin', () => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
     await form.getByRole('button', { name: /Upload/ }).click();
-    await expect(page).toHaveURL('/admin/sportsmen');
+    await expect(page).toHaveURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   });
 
   test('submitting the form with a file shows a success message', async ({ page }) => {
@@ -153,7 +161,6 @@ test.describe('when logged in as admin', () => {
     const newAthleteRow = page.getByRole('row').filter({ hasText: 'Charlie' });
     await expect(newAthleteRow.getByRole('cell', { name: 'Charlie' })).toBeVisible();
     await expect(newAthleteRow.getByRole('cell', { name: 'Test Club 3' })).toBeVisible();
-    await expect(newAthleteRow.getByRole('cell', { name: 'Senior Men' })).toBeVisible();
   });
 
   test('submitting an invalid file skips all rows', async ({ page }) => {
@@ -165,6 +172,18 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByText('Import complete: 0 added, 2 skipped (missing name).')).toBeVisible();
   });
 
+  // Breadcrumbs
+
+  test('"Competitions" breadcrumb navigates to the competitions list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Competitions' }).click();
+    await page.waitForURL('/admin/competitions');
+  });
+
+  test('competition name breadcrumb navigates to the groups page', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Spring Cup' }).click();
+    await page.waitForURL(`/admin/competitions/${seed.competitionId}/groups`);
+  });
+
   test('submitting a non-Excel file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
@@ -173,6 +192,4 @@ test.describe('when logged in as admin', () => {
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (missing name).')).toBeVisible();
   });
-  
-})
-
+});

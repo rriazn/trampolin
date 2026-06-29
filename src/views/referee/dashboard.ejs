@@ -17,14 +17,14 @@
 <div class="row g-3">
   <% rounds.forEach(r => { %>
   <div class="col-md-6 col-lg-4">
-    <a href="/referee/round/<%= r.id %>" class="text-decoration-none">
+    <a href="/referee/competitions/<%= r.competition_id %>/groups/<%= r.group_id %>/rounds/<%= r.id %>" class="text-decoration-none">
       <div class="card p-4 h-100" style="transition:.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
         <div class="d-flex align-items-center gap-3">
           <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#3a4080);display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <i class="bi bi-flag-fill text-white fs-5"></i>
           </div>
           <div>
-            <div class="fw-700"><%= r.name %></div>
+            <div class="fw-700"><%= r.group_name %> · <%= r.name %></div>
             <div class="text-muted small"><%= r.competition_name %></div>
           </div>
           <i class="bi bi-chevron-right ms-auto text-muted"></i>

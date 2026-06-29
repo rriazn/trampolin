@@ -34,8 +34,8 @@ test.describe('when logged in as referee', () => {
 
   // Round cards
 
-  test('shows a card for the active round with round name and competition name', async ({ page }) => {
-    await expect(page.getByText('Qualifications')).toBeVisible();
+  test('shows a card for the active round with group and round name and competition name', async ({ page }) => {
+    await expect(page.getByText('Group A · Qualifications')).toBeVisible();
     await expect(page.getByText('Spring Cup')).toBeVisible();
   });
 
@@ -48,6 +48,6 @@ test.describe('when logged in as referee', () => {
 
   test('clicking a round card navigates to the round scoring view', async ({ page }) => {
     await page.getByText('Qualifications').click();
-    await page.waitForURL(/\/referee\/round\/\d+/);
+    await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
   });
 });

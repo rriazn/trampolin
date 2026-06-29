@@ -9,6 +9,7 @@ router.post('/test/seed', (req, res) => {
   db.prepare('DELETE FROM entries').run();
   db.prepare('DELETE FROM sportsmen').run();
   db.prepare('DELETE FROM rounds').run();
+  db.prepare('DELETE FROM groups').run();
   db.prepare('DELETE FROM competitions').run();
   db.prepare('DELETE FROM users').run();
 
@@ -22,13 +23,17 @@ router.post('/test/seed', (req, res) => {
 
   const comp = db.prepare("INSERT INTO competitions (name, status) VALUES (?, ?)")
     .run('Spring Championship', 'active');
-  const round = db.prepare("INSERT INTO rounds (competition_id, name, round_order) VALUES (?, ?, ?)")
-    .run(comp.lastInsertRowid, 'Qualifications', 1);
 
-  const sp1 = db.prepare("INSERT INTO sportsmen (name, club, category) VALUES (?, ?, ?)")
-    .run('Leon Weber', 'TSV München', 'Junior Men');
-  const sp2 = db.prepare("INSERT INTO sportsmen (name, club, category) VALUES (?, ?, ?)")
-    .run('Emma Fischer', 'SV Hamburg', 'Junior Women');
+  const group = db.prepare("INSERT INTO groups (name, competition_id) VALUES (?, ?)")
+    .run('Junior', comp.lastInsertRowid);
+
+  const round = db.prepare("INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)")
+    .run(group.lastInsertRowid, 'Qualifications', 1);
+
+  const sp1 = db.prepare("INSERT INTO sportsmen (name, club, competition_id, group_id) VALUES (?, ?, ?, ?)")
+    .run('Leon Weber', 'TSV München', comp.lastInsertRowid, group.lastInsertRowid);
+  const sp2 = db.prepare("INSERT INTO sportsmen (name, club, competition_id, group_id) VALUES (?, ?, ?, ?)")
+    .run('Emma Fischer', 'SV Hamburg', comp.lastInsertRowid, group.lastInsertRowid);
 
   const e1 = db.prepare("INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)")
     .run(round.lastInsertRowid, sp1.lastInsertRowid, 1);
@@ -43,7 +48,10 @@ router.post('/test/seed', (req, res) => {
   res.json({
     ok: true,
     competitionId: Number(comp.lastInsertRowid),
+    groupId: Number(group.lastInsertRowid),
     roundId: Number(round.lastInsertRowid),
+    sp1Id: Number(sp1.lastInsertRowid),
+    sp2Id: Number(sp2.lastInsertRowid),
   });
 });
 

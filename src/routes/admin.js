@@ -1,9 +1,11 @@
+'use strict';
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
+const { trimmedMean } = require('../utils/scoring');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -137,105 +139,6 @@ router.post('/users/:id', async (req, res) => {
   res.redirect('/admin/users');
 });
 
-// ── Sportsmen ────────────────────────────────────────────────────────────────
-
-router.get('/sportsmen', (req, res) => {
-  const sportsmen = db.prepare('SELECT * FROM sportsmen ORDER BY name').all();
-  res.render('admin/sportsmen', { sportsmen });
-});
-
-router.get('/sportsmen/export', (req, res) => {
-  const sportsmen = db.prepare('SELECT name, club, category, created_at FROM sportsmen ORDER BY name').all();
-  const ws = XLSX.utils.json_to_sheet(sportsmen.map(s => ({
-    Name: s.name,
-    Club: s.club || '',
-    Category: s.category || '',
-    'Created At': s.created_at.substring(0, 10),
-  })));
-  ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 18 }, { wch: 14 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  res.setHeader('Content-Disposition', 'attachment; filename="sportsmen.xlsx"');
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.send(buf);
-});
-
-router.get('/sportsmen/new', (req, res) => {
-  res.render('admin/sportsman-form', { sportsman: null, action: '/admin/sportsmen' });
-});
-
-router.post('/sportsmen', (req, res) => {
-  const { name, club, category } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).render('admin/sportsman-form', {
-      sportsman: null, action: '/admin/sportsmen',
-      error: 'Name is required.',
-    });
-  }
-  db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)').run(name.trim(), club || null, category || null);
-  req.session.flash = { success: `Sportsman "${name}" added.` };
-  res.redirect('/admin/sportsmen');
-});
-
-router.get('/sportsmen/:id/edit', (req, res) => {
-  const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.id);
-  if (!sportsman) return res.status(404).send('Not found');
-  res.render('admin/sportsman-form', { sportsman, action: `/admin/sportsmen/${sportsman.id}` });
-});
-
-router.post('/sportsmen/:id/delete', (req, res) => {
-  db.transaction(() => {
-    db.prepare('DELETE FROM entries WHERE sportsman_id=?').run(req.params.id);
-    db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.id);
-  })();
-  req.session.flash = { success: 'Sportsman deleted.' };
-  res.redirect('/admin/sportsmen');
-});
-
-router.post('/sportsmen/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    req.session.flash = { error: 'No file uploaded.' };
-    return res.redirect('/admin/sportsmen');
-  }
-  let rows = [];
-  try {
-    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
-    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-  } catch {
-    // unparseable file — rows stays empty, all will be counted as skipped
-  }
-  const insert = db.prepare('INSERT INTO sportsmen (name,club,category) VALUES (?,?,?)');
-  const insertAll = db.transaction(() => {
-    let created = 0, skipped = 0;
-    for (const row of rows) {
-      const name = String(row['Name'] || row['name'] || '').trim();
-      if (!name) { skipped++; continue; }
-      const club = String(row['Club'] || row['club'] || '').trim() || null;
-      const category = String(row['Category'] || row['category'] || '').trim() || null;
-      insert.run(name, club, category);
-      created++;
-    }
-    return { created, skipped };
-  });
-  const { created, skipped } = insertAll();
-  req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (missing name).` };
-  res.redirect('/admin/sportsmen');
-});
-
-router.post('/sportsmen/:id', (req, res) => {
-  const { name, club, category } = req.body;
-  if (!name || !name.trim()) {
-    return res.status(400).render('admin/sportsman-form', {
-      sportsman: null, action: '/admin/sportsmen',
-      error: 'Name is required.',
-    });
-  }
-  db.prepare('UPDATE sportsmen SET name=?,club=?,category=? WHERE id=?')
-    .run(name, club || null, category || null, req.params.id);
-  req.session.flash = { success: 'Sportsman updated.' };
-  res.redirect('/admin/sportsmen');
-});
 
 // ── Competitions ─────────────────────────────────────────────────────────────
 
@@ -294,94 +197,412 @@ router.post('/competitions/:id/delete', (req, res) => {
   res.redirect('/admin/competitions');
 });
 
-// ── Rounds ───────────────────────────────────────────────────────────────────
 
-router.get('/competitions/:id/rounds', (req, res) => {
+// ── Sportsmen ────────────────────────────────────────────────────────────────
+
+router.get('/competitions/:id/sportsmen', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-  if (!competition) return res.status(404).send('Not found');
-  const rounds = db.prepare('SELECT * FROM rounds WHERE competition_id=? ORDER BY round_order').all(req.params.id);
-  res.render('admin/rounds', { competition, rounds });
+  if (!competition) return res.status(404).send('Competition not found');
+  const sportsmen = db.prepare(`
+    SELECT s.*, g.name AS group_name
+    FROM sportsmen s
+    LEFT JOIN groups g ON g.id = s.group_id
+    WHERE s.competition_id = ?
+    ORDER BY s.name
+  `).all(req.params.id);
+  res.render('admin/sportsmen', { competition, sportsmen });
 });
 
-router.post('/competitions/:id/rounds', (req, res) => {
-  const { name, round_order } = req.body;
-  const renderWithError = (error) => {
+router.get('/competitions/:id/sportsmen/export', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id = ?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+  const clean_comp_name = competition.name
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '') // eslint-disable-line no-control-regex
+    .replace(/\s+/g, '-')
+    .replace(/\.+$/, '')
+    .trim();
+
+  const sportsmen = db.prepare(`
+    SELECT s.name, s.club, s.gender, s.birth_year, s.routine, g.name AS group_name
+    FROM sportsmen s
+    LEFT JOIN groups g ON g.id = s.group_id
+    WHERE s.competition_id = ?
+    ORDER BY s.name
+  `).all(req.params.id);
+  const ws = XLSX.utils.json_to_sheet(sportsmen.map(s => ({
+    Name: s.name,
+    Club: s.club || '',
+    Gender: s.gender || '',
+    Birthyear: s.birth_year || '',
+    Routine: s.routine || '',
+    Group: s.group_name || '',
+  })));
+  ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${clean_comp_name}.xlsx"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
+});
+
+router.get('/competitions/:id/sportsmen/new', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+  const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
+  res.render('admin/sportsman-form', {
+    sportsman: null,
+    competition,
+    groups,
+    action: `/admin/competitions/${req.params.id}/sportsmen`,
+  });
+});
+
+router.post('/competitions/:id/sportsmen', (req, res) => {
+  const { name, club, gender, birth_year, routine, group_id } = req.body;
+  if (!name || !name.trim()) {
     const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
-    if (!competition) return res.status(404).send('Not found');
-    const rounds = db.prepare('SELECT * FROM rounds WHERE competition_id=? ORDER BY round_order').all(req.params.id);
-    return res.status(400).render('admin/rounds', { competition, rounds, error });
+    const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman: null, competition, groups,
+      action: `/admin/competitions/${req.params.id}/sportsmen`,
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id,group_id) VALUES (?,?,?,?,?,?,?)')
+    .run(name.trim(), club || null, gender || null, birth_year ? parseInt(birth_year) : null, routine || null, req.params.id, group_id || null);
+  req.session.flash = { success: `Athlete "${name}" added.` };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.get('/competitions/:id/sportsmen/:sid/edit', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+  const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.sid);
+  if (!sportsman) return res.status(404).send('Sportsman not found');
+  const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
+  res.render('admin/sportsman-form', {
+    sportsman,
+    competition,
+    groups,
+    action: `/admin/competitions/${req.params.id}/sportsmen/${sportsman.id}`,
+  });
+});
+
+router.post('/competitions/:id/sportsmen/:sid/delete', (req, res) => {
+  db.prepare('DELETE FROM sportsmen WHERE id=?').run(req.params.sid);
+  req.session.flash = { success: 'Athlete deleted.' };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.post('/competitions/:id/sportsmen/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    req.session.flash = { error: 'No file uploaded.' };
+    return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+  }
+  let rows = [];
+  try {
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  } catch {
+    // unparseable file — rows stays empty, all will be counted as skipped
+  }
+  const insert = db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id) VALUES (?,?,?,?,?,?)');
+  const insertAll = db.transaction(() => {
+    let created = 0, skipped = 0;
+    for (const row of rows) {
+      const name = String(row['Name'] || row['name'] || '').trim();
+      if (!name) { skipped++; continue; }
+      const club = String(row['Club'] || row['club'] || '').trim() || null;
+      const gender = String(row['Gender'] || row['gender'] || '').trim() || null;
+      const birth_year_raw = String(row['Birthyear'] || row['Birth Year'] || row['birth_year'] || '').trim();
+      const birth_year = birth_year_raw ? parseInt(birth_year_raw) : null;
+      const routine = String(row['Routine'] || row['routine'] || '').trim() || null;
+      insert.run(name, club, gender, birth_year, routine, req.params.id);
+      created++;
+    }
+    return { created, skipped };
+  });
+  const { created, skipped } = insertAll();
+  req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (missing name).` };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+router.post('/competitions/:id/sportsmen/:sid', (req, res) => {
+  const { name, club, gender, birth_year, routine, group_id } = req.body;
+  if (!name || !name.trim()) {
+    const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+    const groups = db.prepare('SELECT * FROM groups WHERE competition_id=? ORDER BY name').all(req.params.id);
+    const sportsman = db.prepare('SELECT * FROM sportsmen WHERE id=?').get(req.params.sid);
+    return res.status(400).render('admin/sportsman-form', {
+      sportsman, competition, groups,
+      action: `/admin/competitions/${req.params.id}/sportsmen/${req.params.sid}`,
+      error: 'Name is required.',
+    });
+  }
+  db.prepare('UPDATE sportsmen SET name=?,club=?,gender=?,birth_year=?,routine=?,group_id=? WHERE id=?')
+    .run(name.trim(), club || null, gender || null, birth_year ? parseInt(birth_year) : null, routine || null, group_id || null, req.params.sid);
+  req.session.flash = { success: 'Athlete updated.' };
+  res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+});
+
+// ── Groups ───────────────────────────────────────────────────────────────────
+
+router.get('/competitions/:id/groups', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+  const groups = db.prepare(`
+    SELECT g.*, COUNT(r.id) AS round_count
+    FROM groups g
+    LEFT JOIN rounds r ON r.group_id = g.id
+    WHERE g.competition_id = ?
+    GROUP BY g.id
+    ORDER BY g.name
+  `).all(req.params.id);
+  res.render('admin/groups', { competition, groups });
+});
+
+router.post('/competitions/:id/groups', (req, res) => {
+  const { name } = req.body;
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+  if (!name || !name.trim()) {
+    const groups = db.prepare(`
+      SELECT g.*, COUNT(r.id) AS round_count
+      FROM groups g LEFT JOIN rounds r ON r.group_id = g.id
+      WHERE g.competition_id = ? GROUP BY g.id ORDER BY g.name
+    `).all(req.params.id);
+    return res.status(400).render('admin/groups', { competition, groups, error: 'Group name is required.' });
+  }
+  db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run(name.trim(), req.params.id);
+  req.session.flash = { success: `Group "${name}" created.` };
+  res.redirect(`/admin/competitions/${req.params.id}/groups`);
+});
+
+router.post('/competitions/:id/groups/:gid/delete', (req, res) => {
+  db.prepare('DELETE FROM groups WHERE id=? AND competition_id=?').run(req.params.gid, req.params.id);
+  req.session.flash = { success: 'Group deleted.' };
+  res.redirect(`/admin/competitions/${req.params.id}/groups`);
+});
+
+// ── Rounds ───────────────────────────────────────────────────────────────────
+
+router.get('/competitions/:cid/groups/:gid/rounds', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.cid);
+  if (!competition) return res.status(404).send('Competition not found');
+  const group = db.prepare('SELECT * FROM groups WHERE id=? AND competition_id=?').get(req.params.gid, req.params.cid);
+  if (!group) return res.status(404).send('Group not found');
+  const rounds = db.prepare('SELECT * FROM rounds WHERE group_id=? ORDER BY round_order').all(req.params.gid);
+  res.render('admin/rounds', { competition, group, rounds });
+});
+
+router.post('/competitions/:cid/groups/:gid/rounds', (req, res) => {
+  const { name, round_order } = req.body;
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.cid);
+  if (!competition) return res.status(404).send('Not found');
+  const group = db.prepare('SELECT * FROM groups WHERE id=? AND competition_id=?').get(req.params.gid, req.params.cid);
+  if (!group) return res.status(404).send('Not found');
+
+  const renderWithError = (error) => {
+    const rounds = db.prepare('SELECT * FROM rounds WHERE group_id=? ORDER BY round_order').all(req.params.gid);
+    return res.status(400).render('admin/rounds', { competition, group, rounds, error });
   };
+
   if (!name || !name.trim()) return renderWithError('Round name is required.');
   if (round_order !== undefined && round_order !== '' && (isNaN(round_order) || Number(round_order) < 0))
     return renderWithError('Round order must be a non-negative number.');
-  db.prepare('INSERT INTO rounds (competition_id,name,round_order) VALUES (?,?,?)').run(req.params.id, name.trim(), parseInt(round_order) || 0);
+
+  db.prepare('INSERT INTO rounds (group_id,name,round_order) VALUES (?,?,?)')
+    .run(req.params.gid, name.trim(), parseInt(round_order) || 0);
   req.session.flash = { success: `Round "${name}" added.` };
-  res.redirect(`/admin/competitions/${req.params.id}/rounds`);
+  res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
 });
 
-router.post('/rounds/:id/delete', (req, res) => {
-  const round = db.prepare('SELECT competition_id FROM rounds WHERE id=?').get(req.params.id);
-  if (!round) return res.status(404).send('Not found');
-  db.prepare('DELETE FROM rounds WHERE id=?').run(req.params.id);
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/delete', (req, res) => {
+  db.prepare('DELETE FROM rounds WHERE id=? AND group_id=?').run(req.params.rid, req.params.gid);
   req.session.flash = { success: 'Round deleted.' };
-  res.redirect(`/admin/competitions/${round.competition_id}/rounds`);
+  res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
 });
 
 // ── Entries ──────────────────────────────────────────────────────────────────
 
-router.get('/rounds/:id/entries', (req, res) => {
+router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
+  const { cid, gid, rid } = req.params;
+
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(cid);
+  if (!competition) return res.status(404).send('Competition not found');
+  const group = db.prepare('SELECT * FROM groups WHERE id=? AND competition_id=?').get(gid, cid);
+  if (!group) return res.status(404).send('Group not found');
+
   const round = db.prepare(`
-    SELECT r.*, c.name AS competition_name, c.id AS competition_id
-    FROM rounds r JOIN competitions c ON c.id=r.competition_id
-    WHERE r.id=?`).get(req.params.id);
-  if (!round) return res.status(404).send('Not found');
+    SELECT r.*, g.id AS group_id, g.name AS group_name,
+           c.id AS competition_id, c.name AS competition_name
+    FROM rounds r
+    JOIN groups g ON g.id = r.group_id
+    JOIN competitions c ON c.id = g.competition_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
 
   const entries = db.prepare(`
-    SELECT e.*, sp.name AS sportsman_name, sp.club,
+    SELECT e.*, sp.name AS sportsman_name, sp.club, sp.routine,
            (SELECT COUNT(*) FROM attempts a WHERE a.entry_id=e.id) AS attempt_count
-    FROM entries e JOIN sportsmen sp ON sp.id=e.sportsman_id
-    WHERE e.round_id=? ORDER BY e.start_order`).all(req.params.id);
+    FROM entries e
+    JOIN sportsmen sp ON sp.id = e.sportsman_id
+    LEFT JOIN groups g ON g.id = sp.group_id
+    WHERE e.round_id = ?
+    ORDER BY e.start_order
+  `).all(rid);
 
-  const allSportsmen = db.prepare('SELECT * FROM sportsmen ORDER BY name').all();
-  const enteredIds = new Set(entries.map(e => e.sportsman_id));
-  const available = allSportsmen.filter(s => !enteredIds.has(s.id));
+  const available = db.prepare(`
+    SELECT s.*, g.name AS group_name
+    FROM sportsmen s
+    LEFT JOIN groups g ON g.id = s.group_id
+    WHERE s.competition_id = ?
+      AND s.id NOT IN (SELECT sportsman_id FROM entries WHERE round_id = ?)
+    ORDER BY s.name
+  `).all(round.competition_id, rid);
 
-  res.render('admin/entries', { round, entries, available });
+  // If a previous round exists in this group, rank available athletes by their placement there
+  const prevRound = db.prepare(`
+    SELECT id, name FROM rounds
+    WHERE group_id = ? AND round_order < ?
+    ORDER BY round_order DESC LIMIT 1
+  `).get(round.group_id, round.round_order);
+
+  if (prevRound) {
+    const rows = db.prepare(`
+      SELECT e.sportsman_id, a.attempt_number, s.score
+      FROM entries e
+      JOIN attempts a ON a.entry_id = e.id
+      LEFT JOIN scores s ON s.attempt_id = a.id
+      WHERE e.round_id = ?
+      ORDER BY e.sportsman_id, a.attempt_number
+    `).all(prevRound.id);
+
+    const spMap = new Map();
+    for (const row of rows) {
+      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, new Map());
+      const attempts = spMap.get(row.sportsman_id);
+      if (!attempts.has(row.attempt_number)) attempts.set(row.attempt_number, []);
+      if (row.score !== null) attempts.get(row.attempt_number).push(row.score);
+    }
+
+    const ranked = [];
+    for (const [spId, attempts] of spMap) {
+      const scores = [...attempts.values()].map(trimmedMean).filter(s => s !== null);
+      ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
+    }
+    ranked.sort((a, b) => {
+      if (a.bestScore === null && b.bestScore === null) return 0;
+      if (a.bestScore === null) return 1;
+      if (b.bestScore === null) return -1;
+      return b.bestScore - a.bestScore;
+    });
+
+    const rankMap = new Map();
+    let rank = 1;
+    for (let i = 0; i < ranked.length; i++) {
+      if (ranked[i].bestScore !== null) {
+        if (i > 0 && ranked[i].bestScore !== ranked[i - 1].bestScore) rank = i + 1;
+        rankMap.set(ranked[i].spId, rank);
+      }
+    }
+
+    available.forEach(s => { s.prevRank = rankMap.get(s.id) ?? null; });
+    available.sort((a, b) => {
+      if (a.prevRank === null && b.prevRank === null) return a.name.localeCompare(b.name);
+      if (a.prevRank === null) return 1;
+      if (b.prevRank === null) return -1;
+      return a.prevRank - b.prevRank;
+    });
+  }
+
+  res.render('admin/entries', { round, entries, available, prevRound: prevRound || null });
 });
 
-router.post('/rounds/:id/entries', (req, res) => {
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
   const { sportsman_id, start_order } = req.body;
   try {
     db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)')
-      .run(req.params.id, sportsman_id, parseInt(start_order) || 0);
-    req.session.flash = { success: 'Sportsman added to round.' };
+      .run(req.params.rid, sportsman_id, parseInt(start_order) || 0);
+    req.session.flash = { success: 'Athlete added to round.' };
   } catch {
-    req.session.flash = { error: 'Sportsman already in this round.' };
+    req.session.flash = { error: 'Athlete already in this round.' };
   }
-  res.redirect(`/admin/rounds/${req.params.id}/entries`);
+  res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 });
 
-router.post('/entries/:id/delete', (req, res) => {
-  const entry = db.prepare('SELECT round_id FROM entries WHERE id=?').get(req.params.id);
-  if (!entry) return res.status(404).send('Not found');
-  db.prepare('DELETE FROM entries WHERE id=?').run(req.params.id);
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/add-all', (req, res) => {
+  const { cid, gid, rid } = req.params;
+  const round = db.prepare(`
+    SELECT r.*, g.competition_id
+    FROM rounds r JOIN groups g ON g.id = r.group_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
+
+  const available = db.prepare(`
+    SELECT id FROM sportsmen
+    WHERE competition_id = ?
+      AND id NOT IN (SELECT sportsman_id FROM entries WHERE round_id = ?)
+    ORDER BY name
+  `).all(round.competition_id, rid);
+
+  const maxOrder = db.prepare('SELECT MAX(start_order) AS max FROM entries WHERE round_id=?').get(rid);
+  let nextOrder = (maxOrder.max || 0) + 1;
+
+  const insert = db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)');
+  db.transaction(() => { for (const sp of available) insert.run(rid, sp.id, nextOrder++); })();
+
+  req.session.flash = { success: `${available.length} athlete(s) added to the round.` };
+  res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+});
+
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/randomize', (req, res) => {
+  const { cid, gid, rid } = req.params;
+  const round = db.prepare(`
+    SELECT r.*, g.competition_id
+    FROM rounds r JOIN groups g ON g.id = r.group_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
+
+  const entries = db.prepare('SELECT id FROM entries WHERE round_id = ?').all(rid);
+
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+  }
+
+  const update = db.prepare('UPDATE entries SET start_order = ? WHERE id = ?');
+  db.transaction(() => { entries.forEach((e, i) => update.run(i + 1, e.id)); })();
+
+  req.session.flash = { success: `Start order randomized.` };
+  res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+});
+
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/:eid/delete', (req, res) => {
+  db.prepare('DELETE FROM entries WHERE id=? AND round_id=?').run(req.params.eid, req.params.rid);
   req.session.flash = { success: 'Entry removed.' };
-  res.redirect(`/admin/rounds/${entry.round_id}/entries`);
+  res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 });
 
-// Bulk-create attempts 1 and 2 for all entries in a round
-router.post('/rounds/:id/attempts/bulk', (req, res) => {
-  const entries = db.prepare('SELECT id FROM entries WHERE round_id=?').all(req.params.id);
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/attempts/bulk', (req, res) => {
+  const count = Math.min(Math.max(parseInt(req.body.attempt_count) || 2, 1), 20);
+  const entries = db.prepare('SELECT id FROM entries WHERE round_id=?').all(req.params.rid);
   const insertAttempt = db.prepare('INSERT OR IGNORE INTO attempts (entry_id,attempt_number) VALUES (?,?)');
-  const insertAll = db.transaction(() => {
+  db.transaction(() => {
     for (const e of entries) {
-      insertAttempt.run(e.id, 1);
-      insertAttempt.run(e.id, 2);
+      for (let n = 1; n <= count; n++) {
+        insertAttempt.run(e.id, n);
+      }
     }
-  });
-  insertAll();
-  req.session.flash = { success: 'Attempts created for all entries.' };
-  res.redirect(`/admin/rounds/${req.params.id}/entries`);
+  })();
+  req.session.flash = { success: `${count} attempt(s) created for all entries.` };
+  res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 });
 
 module.exports = router;

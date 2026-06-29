@@ -54,8 +54,9 @@ function seedTestUsers(password = 'secret123') {
 
 function seedLeaderboardData() {
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Test Competition', 'active');
-  const round = db.prepare('INSERT INTO rounds (competition_id, name, round_order) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Qualifications', 1);
-  return { competitionId: comp.lastInsertRowid, roundId: round.lastInsertRowid };
+  const group = db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run('Test Round', comp.lastInsertRowid);
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
+  return { competitionId: comp.lastInsertRowid, groupId: group.lastInsertRowid, roundId: round.lastInsertRowid };
 }
 
 function seedReferee() {
@@ -73,13 +74,15 @@ async function loginReferee(app) {
 
 function seedCompetitionData() {
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Active Competition', 'active');
-  const round = db.prepare('INSERT INTO rounds (competition_id, name, round_order) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Round A', 1);
-  const sportsman = db.prepare('INSERT INTO sportsmen (name) VALUES (?)').run('Alice');
-  const sportsman2 = db.prepare('INSERT INTO sportsmen (name) VALUES (?)').run('Bob');
+  const group = db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run('Test Group A', comp.lastInsertRowid);
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Round A', 1);
+  const sportsman = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Alice', comp.lastInsertRowid);
+  const sportsman2 = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Bob', comp.lastInsertRowid);
   const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sportsman.lastInsertRowid, 1);
   const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)').run(entry.lastInsertRowid, 1);
   return {
     competitionId: comp.lastInsertRowid,
+    groupId: group.lastInsertRowid,
     roundId: round.lastInsertRowid,
     sportsmanId: sportsman.lastInsertRowid,
     sportsman2Id: sportsman2.lastInsertRowid,
@@ -105,4 +108,8 @@ function entryExists(entryId) {
   return !!db.prepare('SELECT id FROM entries WHERE id=?').get(entryId);
 }
 
-module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, entryExists };
+function getEntryStartOrders(roundId) {
+  return db.prepare('SELECT start_order FROM entries WHERE round_id=? ORDER BY start_order').all(roundId).map(r => r.start_order);
+}
+
+module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, entryExists, getEntryStartOrders };

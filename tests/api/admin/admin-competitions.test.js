@@ -76,6 +76,11 @@ describe('GET /admin/competitions/:id/edit', () => {
         expect(res.status).toBe(200);
         expect(res.text).toContain('Edit Competition');
     });
+
+    it('returns 404 when competition does not exist', async () => {
+        const res = await agent.get(`/admin/competitions/999/edit`);
+        expect(res.status).toBe(404);
+    });
 });
 
 describe('POST /admin/competitions/:id', () => {

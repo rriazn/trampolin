@@ -11,7 +11,7 @@ async function loginAsReferee(page) {
 }
 
 test('returns 403 when not logged in', async ({ request }) => {
-  const res = await request.get('/referee/round/1');
+  const res = await request.get('/referee/competitions/1/groups/1/rounds/1');
   expect(res.status()).toBe(403);
 });
 
@@ -23,7 +23,7 @@ test.describe('when logged in as referee', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsReferee(page);
-    page.goto(`/referee/round/${seed.roundId}`);
+    page.goto(`/referee/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   });
 
   // Page structure
@@ -32,8 +32,8 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('heading', { name: 'Finals' })).toBeVisible();
   });
 
-  test('shows the competition name as subtitle', async ({ page }) => {
-    await expect(page.locator('.page-hero p').getByText('Championship')).toBeVisible();
+  test('shows the competition name and group name as subtitle', async ({ page }) => {
+    await expect(page.locator('.page-hero p').getByText('Championship · Group A')).toBeVisible();
   });
 
   test('shows a "Back" button', async ({ page }) => {
@@ -44,8 +44,22 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('columnheader', { name: '#' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Athlete' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Club' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Attempt' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Your Score' })).toBeVisible();
+  });
+
+  // Athlete data
+
+  test('shows the routine for athletes who have one set', async ({ page }) => {
+    const bobRow = page.getByRole('row').filter({ hasText: 'Bob' }).first();
+    await expect(bobRow).toContainText('DMT');
+  });
+
+  test('shows "–" for athletes without a routine', async ({ page }) => {
+    const charlieRow = page.getByRole('row').filter({ hasText: 'Charlie' }).first();
+    const routineCell = charlieRow.locator('td').nth(3); // #, Athlete, Club, Routine
+    await expect(routineCell).toContainText('–');
   });
 
   // Attempt rows

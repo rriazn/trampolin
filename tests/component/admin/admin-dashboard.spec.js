@@ -39,17 +39,11 @@ test.describe('when logged in as admin', () => {
 
   test('shows three labelled stat cards', async ({ page }) => {
     await expect(page.getByText('Referees')).toBeVisible();
-    await expect(page.getByText('Sportsmen')).toBeVisible();
     await expect(page.getByText('Competitions', { exact: true })).toBeVisible();
   });
 
   test('referees count is at least 1 after seeding', async ({ page }) => {
     const n = parseInt(await page.locator('.stat-blue .stat-num').textContent(), 10);
-    expect(n).toBeGreaterThanOrEqual(1);
-  });
-
-  test('sportsmen count is at least 1 after seeding', async ({ page }) => {
-    const n = parseInt(await page.locator('.stat-green .stat-num').textContent(), 10);
     expect(n).toBeGreaterThanOrEqual(1);
   });
 
@@ -90,18 +84,13 @@ test.describe('when logged in as admin', () => {
     await page.waitForURL('/admin/users');
   });
 
-  test('"Manage" link on the Sportsmen card navigates to /admin/sportsmen', async ({ page }) => {
-    await page.locator('.stat-green').getByRole('link', { name: /Manage/ }).click();
-    await page.waitForURL('/admin/sportsmen');
-  });
-
   test('"Manage" link on the Competitions card navigates to /admin/competitions', async ({ page }) => {
     await page.locator('.stat-orange').getByRole('link', { name: /Manage/ }).click();
     await page.waitForURL('/admin/competitions');
   });
 
-  test('"Rounds" button in a competition row navigates to that competition\'s rounds page', async ({ page }) => {
-    await page.getByRole('link', { name: /Rounds/ }).first().click();
-    await expect(page).toHaveURL(`/admin/competitions/${seed.competitionId}/rounds`);
+  test('"Groups" button in a competition row navigates to that competition\'s groups page', async ({ page }) => {
+    await page.getByRole('link', { name: /Groups/ }).first().click();
+    await expect(page).toHaveURL(`/admin/competitions/${seed.competitionId}/groups`);
   });
 });

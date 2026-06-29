@@ -3,7 +3,7 @@
   <div class="container d-flex justify-content-between align-items-end">
     <div>
       <h1><i class="bi bi-pencil-square me-2"></i><%= round.name %></h1>
-      <p><%= round.competition_name %></p>
+      <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
     </div>
     <a href="/referee" class="btn btn-outline-light rounded-pill"><i class="bi bi-arrow-left me-1"></i>Back</a>
   </div>
@@ -29,6 +29,7 @@
         <th style="width:60px">#</th>
         <th>Athlete</th>
         <th>Club</th>
+        <th>Routine</th>
         <th style="width:80px" class="text-center">Attempt</th>
         <th style="width:220px">Your Score</th>
       </tr>
@@ -39,9 +40,9 @@
       <td><span class="badge bg-secondary rounded-pill"><%= a.start_order %></span></td>
       <td>
         <span class="fw-600"><%= a.sportsman_name %></span>
-        <% if (a.category) { %><span class="badge bg-light text-dark border ms-1 small"><%= a.category %></span><% } %>
       </td>
       <td class="text-muted small"><%= a.club || '–' %></td>
+      <td class="text-muted small"><%= a.routine || '–' %></td>
       <td class="text-center">
         <span class="badge rounded-pill bg-primary">#<%= a.attempt_number %></span>
       </td>

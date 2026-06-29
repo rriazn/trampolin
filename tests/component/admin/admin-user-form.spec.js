@@ -149,4 +149,11 @@ test.describe('when logged in as admin', () => {
       await expect(page.getByRole('row').filter({ hasText: 'Referee Renamed' })).toBeVisible();
     });
   });
+
+  // Breadcrumbs (same on both new and edit forms)
+
+  test('"Users" breadcrumb navigates to the users list', async ({ page }) => {
+    await page.locator('.breadcrumb').getByRole('link', { name: 'Users' }).click();
+    await page.waitForURL('/admin/users');
+  });
 });
