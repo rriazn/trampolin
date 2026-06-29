@@ -59,6 +59,21 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('button', { name: /Create All Attempts/ })).toBeVisible();
   });
 
+  test('has an "Add" button', async ({ page }) => {
+    const addForm = page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') });
+    await expect(addForm.getByRole('button', { name: /Add/ })).toBeVisible();
+  });
+
+  test('has an "Add All" button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Add All/ })).toBeVisible();
+  });
+
+  test('does not show rank prefixes or a "ranked by" label when it is the first round', async ({ page }) => {
+    await expect(page.locator('label').filter({ hasText: /ranked by/i })).not.toBeVisible();
+    const firstOption = page.locator('select[name=sportsman_id] option').first();
+    await expect(firstOption).not.toContainText('#');
+  });
+
   test('has a "Leaderboard" link', async ({ page }) => {
     await expect(page.getByRole('link', { name: /Leaderboard/ })).toBeVisible();
   });
@@ -126,7 +141,8 @@ test.describe('when logged in as admin', () => {
 
   test('adding an entry adds the athlete to the list', async ({ page }) => {
     await page.locator('select[name=sportsman_id]').selectOption(String(seed.sportsmanId2));
-    await page.locator('button[type=submit]').click();
+    const addForm = page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') });
+    await addForm.getByRole('button', { name: /Add/ }).click();
     const row = page.getByRole('row').filter({ hasText: 'Bob' });
     await expect(row).toBeVisible();
     await expect(row.getByText('Test Club 2')).toBeVisible();
@@ -137,5 +153,71 @@ test.describe('when logged in as admin', () => {
     page.once('dialog', dialog => dialog.accept());
     await row.locator('button.btn-outline-danger').click();
     await expect(row).not.toBeVisible();
+  });
+
+  test('clicking the "Add All" button adds all remaining athletes to the round', async ({ page }) => {
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: /Add All/ }).click();
+    await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: 'Dave' })).toBeVisible();
+  });
+
+  test('has a "Randomize" button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Randomize/ })).toBeVisible();
+  });
+
+  test('clicking "Randomize" shows a confirmation dialog', async ({ page }) => {
+    let capturedDialog;
+    page.once('dialog', dialog => { capturedDialog = dialog; dialog.dismiss(); });
+    await page.getByRole('button', { name: /Randomize/ }).click();
+    expect(capturedDialog).toBeDefined();
+    expect(capturedDialog.type()).toBe('confirm');
+  });
+
+  test('dismissing the randomize confirm keeps the current entries', async ({ page }) => {
+    page.once('dialog', dialog => dialog.dismiss());
+    await page.getByRole('button', { name: /Randomize/ }).click();
+    await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
+  });
+
+  test('accepting the randomize confirm shows the flash message and keeps all entries', async ({ page }) => {
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: /Randomize/ }).click();
+    await expect(page.getByText(/Start order randomized/i)).toBeVisible();
+    await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
+  });
+});
+
+test.describe('when a previous round exists with scores', () => {
+  let finalsSeed;
+
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post('/test/seed/finals');
+    finalsSeed = await res.json();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/login');
+    await page.locator('input[name=email]').fill('admin@test.com');
+    await page.locator('input[name=password]').fill('admin123');
+    await page.locator('button[type=submit]').click();
+    await page.waitForURL('/admin');
+    await page.goto(`/admin/competitions/${finalsSeed.competitionId}/groups/${finalsSeed.groupId}/rounds/${finalsSeed.round2Id}/entries`);
+  });
+
+  test('label shows which round the ranking comes from', async ({ page }) => {
+    await expect(page.locator('label').filter({ hasText: /ranked by Qualifications/i })).toBeVisible();
+  });
+
+  test('athletes are sorted by their rank in the previous round', async ({ page }) => {
+    const options = page.locator('select[name=sportsman_id] option');
+    await expect(options.nth(0)).toContainText('Alice');
+    await expect(options.nth(1)).toContainText('Bob');
+  });
+
+  test('rank prefix is shown for each athlete', async ({ page }) => {
+    const options = page.locator('select[name=sportsman_id] option');
+    await expect(options.nth(0)).toContainText('#1');
+    await expect(options.nth(1)).toContainText('#2');
   });
 });

@@ -50,6 +50,8 @@ router.post('/test/seed', (req, res) => {
     competitionId: Number(comp.lastInsertRowid),
     groupId: Number(group.lastInsertRowid),
     roundId: Number(round.lastInsertRowid),
+    sp1Id: Number(sp1.lastInsertRowid),
+    sp2Id: Number(sp2.lastInsertRowid),
   });
 });
 

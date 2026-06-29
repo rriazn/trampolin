@@ -69,7 +69,7 @@ test('admin creates and fully sets up a competition, and a referee can score it'
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/);
 
   await page.locator('select[name=sportsman_id]').selectOption({ label: 'Jonas Krause · TSV München' });
-  await page.locator('button[type=submit]').click();
+  await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
 
   // Create attempts for all entries
   page.once('dialog', dialog => dialog.accept());

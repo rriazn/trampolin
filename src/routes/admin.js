@@ -5,6 +5,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
+const { trimmedMean } = require('../utils/scoring');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -464,7 +465,62 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
     ORDER BY s.name
   `).all(round.competition_id, rid);
 
-  res.render('admin/entries', { round, entries, available });
+  // If a previous round exists in this group, rank available athletes by their placement there
+  const prevRound = db.prepare(`
+    SELECT id, name FROM rounds
+    WHERE group_id = ? AND round_order < ?
+    ORDER BY round_order DESC LIMIT 1
+  `).get(round.group_id, round.round_order);
+
+  if (prevRound) {
+    const rows = db.prepare(`
+      SELECT e.sportsman_id, a.attempt_number, s.score
+      FROM entries e
+      JOIN attempts a ON a.entry_id = e.id
+      LEFT JOIN scores s ON s.attempt_id = a.id
+      WHERE e.round_id = ?
+      ORDER BY e.sportsman_id, a.attempt_number
+    `).all(prevRound.id);
+
+    const spMap = new Map();
+    for (const row of rows) {
+      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, new Map());
+      const attempts = spMap.get(row.sportsman_id);
+      if (!attempts.has(row.attempt_number)) attempts.set(row.attempt_number, []);
+      if (row.score !== null) attempts.get(row.attempt_number).push(row.score);
+    }
+
+    const ranked = [];
+    for (const [spId, attempts] of spMap) {
+      const scores = [...attempts.values()].map(trimmedMean).filter(s => s !== null);
+      ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
+    }
+    ranked.sort((a, b) => {
+      if (a.bestScore === null && b.bestScore === null) return 0;
+      if (a.bestScore === null) return 1;
+      if (b.bestScore === null) return -1;
+      return b.bestScore - a.bestScore;
+    });
+
+    const rankMap = new Map();
+    let rank = 1;
+    for (let i = 0; i < ranked.length; i++) {
+      if (ranked[i].bestScore !== null) {
+        if (i > 0 && ranked[i].bestScore !== ranked[i - 1].bestScore) rank = i + 1;
+        rankMap.set(ranked[i].spId, rank);
+      }
+    }
+
+    available.forEach(s => { s.prevRank = rankMap.get(s.id) ?? null; });
+    available.sort((a, b) => {
+      if (a.prevRank === null && b.prevRank === null) return a.name.localeCompare(b.name);
+      if (a.prevRank === null) return 1;
+      if (b.prevRank === null) return -1;
+      return a.prevRank - b.prevRank;
+    });
+  }
+
+  res.render('admin/entries', { round, entries, available, prevRound: prevRound || null });
 });
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
@@ -477,6 +533,55 @@ router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => 
     req.session.flash = { error: 'Athlete already in this round.' };
   }
   res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
+});
+
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/add-all', (req, res) => {
+  const { cid, gid, rid } = req.params;
+  const round = db.prepare(`
+    SELECT r.*, g.competition_id
+    FROM rounds r JOIN groups g ON g.id = r.group_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
+
+  const available = db.prepare(`
+    SELECT id FROM sportsmen
+    WHERE competition_id = ?
+      AND id NOT IN (SELECT sportsman_id FROM entries WHERE round_id = ?)
+    ORDER BY name
+  `).all(round.competition_id, rid);
+
+  const maxOrder = db.prepare('SELECT MAX(start_order) AS max FROM entries WHERE round_id=?').get(rid);
+  let nextOrder = (maxOrder.max || 0) + 1;
+
+  const insert = db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)');
+  db.transaction(() => { for (const sp of available) insert.run(rid, sp.id, nextOrder++); })();
+
+  req.session.flash = { success: `${available.length} athlete(s) added to the round.` };
+  res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+});
+
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/randomize', (req, res) => {
+  const { cid, gid, rid } = req.params;
+  const round = db.prepare(`
+    SELECT r.*, g.competition_id
+    FROM rounds r JOIN groups g ON g.id = r.group_id
+    WHERE r.id = ? AND r.group_id = ?
+  `).get(rid, gid);
+  if (!round) return res.status(404).send('Round not found');
+
+  const entries = db.prepare('SELECT id FROM entries WHERE round_id = ?').all(rid);
+
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+  }
+
+  const update = db.prepare('UPDATE entries SET start_order = ? WHERE id = ?');
+  db.transaction(() => { entries.forEach((e, i) => update.run(i + 1, e.id)); })();
+
+  req.session.flash = { success: `Start order randomized.` };
+  res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
 });
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/:eid/delete', (req, res) => {

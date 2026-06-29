@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { trimmedMean } from '../../src/routes/leaderboard.js';
+import { trimmedMean } from '../../src/utils/scoring.js';
 
 describe('trimmedMean', () => {
   it('returns null for empty scores', () => {

@@ -26,7 +26,7 @@ describe('GET /admin/competitions/:id/groups', () => {
   it('shows existing groups on the page', async () => {
     const res = await agent.get(`/admin/competitions/${data.competitionId}/groups`);
     expect(res.status).toBe(200);
-    expect(res.text).toContain('Test Round A');
+    expect(res.text).toContain('Test Group A');
   });
 
   it('returns 404 for non-existent competition', async () => {
@@ -76,6 +76,6 @@ describe('POST /admin/competitions/:id/groups/:gid/delete', () => {
     expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups`);
 
     const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups`);
-    expect(listRes.text).not.toContain('Test Round A');
+    expect(listRes.text).not.toContain('Test Group A');
   });
 });

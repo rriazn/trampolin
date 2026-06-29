@@ -109,9 +109,9 @@ test('admin adds a second round to a group and referee sees both rounds on the d
   await finalsRow.getByRole('link', { name: /Entries/ }).click();
   await page.waitForURL(adminEntriesUrlPattern);
 
-  await page.locator('select[name=sportsman_id]').selectOption({ label: 'Leon Weber · TSV München' });
+  await page.locator('select[name=sportsman_id]').selectOption(String(seed.sp1Id));
   await page.locator('input[name=start_order]').fill('1');
-  await page.locator('button[type=submit]').click();
+  await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
   await page.waitForURL(adminEntriesUrlPattern);
 
   page.once('dialog', dialog => dialog.accept());
@@ -127,4 +127,21 @@ test('admin adds a second round to a group and referee sees both rounds on the d
   await loginAsReferee(page);
   await expect(page.getByText('Qualifications')).toBeVisible();
   await expect(page.getByText('Finals')).toBeVisible();
+});
+
+test('entries dropdown for a later round sorts athletes by their previous round placement', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds`);
+
+  const finalsRow = page.getByRole('row').filter({ hasText: 'Finals' });
+  await finalsRow.getByRole('link', { name: /Entries/ }).click();
+  await page.waitForURL(adminEntriesUrlPattern);
+
+  // Label tells the admin which round the ranking comes from
+  await expect(page.locator('label').filter({ hasText: /ranked by Qualifications/i })).toBeVisible();
+
+  // Emma is the only remaining scored athlete in Qualifications → she appears first as #1
+  const firstOption = page.locator('select[name=sportsman_id] option').first();
+  await expect(firstOption).toContainText('#1');
+  await expect(firstOption).toContainText('Emma Fischer');
 });
