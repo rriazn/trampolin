@@ -24,8 +24,8 @@ router.post('/test/seed', (req, res) => {
   const comp = db.prepare("INSERT INTO competitions (name, status) VALUES (?, ?)")
     .run('Spring Championship', 'active');
 
-  const group = db.prepare("INSERT INTO groups (name, competition_id) VALUES (?, ?)")
-    .run('Junior', comp.lastInsertRowid);
+  const group = db.prepare("INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)")
+    .run('Junior', comp.lastInsertRowid, 'JR');
 
   const round = db.prepare("INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)")
     .run(group.lastInsertRowid, 'Qualifications', 1);

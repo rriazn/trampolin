@@ -59,7 +59,7 @@ app.post('/test/seed', (req, res) => {
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Spring Cup', 'active');
   db.prepare('INSERT INTO competitions (name, date) VALUES (?, ?)').run('Autumn Open', '2026-09-15');
   db.prepare('INSERT INTO competitions (name, date, status) VALUES (?, ?, ?)').run('Winter Cup', '2025-12-15', 'closed');
-  const group = db.prepare('INSERT INTO groups (competition_id, name) VALUES (?, ?)').run(comp.lastInsertRowid, 'Group A');
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
   const sp = db.prepare('INSERT INTO sportsmen (name, club, gender, birth_year, routine, competition_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Alice', 'Test Club', 'f', 2013, 'W11', comp.lastInsertRowid, group.lastInsertRowid);
   const sp2 = db.prepare('INSERT INTO sportsmen (name, club, competition_id) VALUES (?, ?, ?)').run('Bob', 'Test Club 2', comp.lastInsertRowid);
@@ -90,7 +90,7 @@ app.post('/test/seed/scored', (req, res) => {
   const referee = db.prepare('SELECT id FROM users WHERE email=?').get('ref@test.com');
 
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Championship', 'active');
-  const group = db.prepare('INSERT INTO groups (competition_id, name) VALUES (?, ?)').run(comp.lastInsertRowid, 'Group A');
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1);
 
   function addAthlete(name, startOrder, scores, routine = null) {
@@ -121,7 +121,7 @@ app.post('/test/seed/finals', (req, res) => {
   const referee = db.prepare('SELECT id FROM users WHERE email=?').get('ref@test.com');
 
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Spring Cup', 'active');
-  const group = db.prepare('INSERT INTO groups (competition_id, name) VALUES (?, ?)').run(comp.lastInsertRowid, 'Group A');
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
   const round1 = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
   const round2 = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Finals', 2);
 

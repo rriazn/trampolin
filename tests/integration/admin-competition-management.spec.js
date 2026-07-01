@@ -51,6 +51,7 @@ test('admin creates and fully sets up a competition, and a referee can score it'
   // Add a group
   await page.goto(`/admin/competitions/${compId}/groups`);
   await page.locator('input[name=name]').fill('Seniors');
+  await page.locator('input[name=abbreviation]').fill('SEN');
   await page.locator('button[type=submit]').click();
 
   // Navigate to rounds for the new group

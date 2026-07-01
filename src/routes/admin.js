@@ -225,7 +225,7 @@ router.get('/competitions/:id/sportsmen/export', (req, res) => {
     .trim();
 
   const sportsmen = db.prepare(`
-    SELECT s.name, s.club, s.gender, s.birth_year, s.routine, g.name AS group_name
+    SELECT s.name, s.club, s.gender, s.birth_year, s.routine, g.abbreviation AS group_abbreviation
     FROM sportsmen s
     LEFT JOIN groups g ON g.id = s.group_id
     WHERE s.competition_id = ?
@@ -237,7 +237,7 @@ router.get('/competitions/:id/sportsmen/export', (req, res) => {
     Gender: s.gender || '',
     Birthyear: s.birth_year || '',
     Routine: s.routine || '',
-    Group: s.group_name || '',
+    Group: s.group_abbreviation || '',
   })));
   ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }];
   const wb = XLSX.utils.book_new();
@@ -309,9 +309,10 @@ router.post('/competitions/:id/sportsmen/upload', upload.single('file'), (req, r
   } catch {
     // unparseable file — rows stays empty, all will be counted as skipped
   }
-  const insert = db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id) VALUES (?,?,?,?,?,?)');
+  const insert = db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id,group_id) VALUES (?,?,?,?,?,?,?)');
+  const lookupGroup = db.prepare('SELECT id FROM groups WHERE competition_id=? AND abbreviation=?');
   const insertAll = db.transaction(() => {
-    let created = 0, skipped = 0;
+    let created = 0, skipped = 0, unknownGroup = 0;
     for (const row of rows) {
       const name = String(row['Name'] || row['name'] || '').trim();
       if (!name) { skipped++; continue; }
@@ -320,13 +321,18 @@ router.post('/competitions/:id/sportsmen/upload', upload.single('file'), (req, r
       const birth_year_raw = String(row['Birthyear'] || row['Birth Year'] || row['birth_year'] || '').trim();
       const birth_year = birth_year_raw ? parseInt(birth_year_raw) : null;
       const routine = String(row['Routine'] || row['routine'] || '').trim() || null;
-      insert.run(name, club, gender, birth_year, routine, req.params.id);
+      const abbrev = String(row['Group'] || row['group'] || '').trim();
+      const group_id = abbrev ? (lookupGroup.get(req.params.id, abbrev)?.id || null) : null;
+      if (abbrev && !group_id) unknownGroup++;
+      insert.run(name, club, gender, birth_year, routine, req.params.id, group_id);
       created++;
     }
-    return { created, skipped };
+    return { created, skipped, unknownGroup };
   });
-  const { created, skipped } = insertAll();
-  req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (missing name).` };
+  const { created, skipped, unknownGroup } = insertAll();
+  const parts = [`${created} added`, `${skipped} skipped (missing name)`];
+  if (unknownGroup > 0) parts.push(`${unknownGroup} without group (unknown abbreviation)`);
+  req.session.flash = { success: `Import complete: ${parts.join(', ')}.` };
   res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 });
 
@@ -365,7 +371,7 @@ router.get('/competitions/:id/groups', (req, res) => {
 });
 
 router.post('/competitions/:id/groups', (req, res) => {
-  const { name } = req.body;
+  const { name, abbreviation } = req.body;
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
   if (!competition) return res.status(404).send('Competition not found');
   if (!name || !name.trim()) {
@@ -376,7 +382,24 @@ router.post('/competitions/:id/groups', (req, res) => {
     `).all(req.params.id);
     return res.status(400).render('admin/groups', { competition, groups, error: 'Group name is required.' });
   }
-  db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run(name.trim(), req.params.id);
+  if (!abbreviation || !abbreviation.trim()) {
+    const groups = db.prepare(`
+      SELECT g.*, COUNT(r.id) AS round_count
+      FROM groups g LEFT JOIN rounds r ON r.group_id = g.id
+      WHERE g.competition_id = ? GROUP BY g.id ORDER BY g.name
+    `).all(req.params.id);
+    return res.status(400).render('admin/groups', { competition, groups, error: 'Group abbreviation is required.' });
+  }
+  try {
+    db.prepare('INSERT INTO groups (name, abbreviation, competition_id) VALUES (?, ?, ?)').run(name.trim(), abbreviation.trim(), req.params.id);
+  } catch {
+    const groups = db.prepare(`
+      SELECT g.*, COUNT(r.id) AS round_count
+      FROM groups g LEFT JOIN rounds r ON r.group_id = g.id
+      WHERE g.competition_id = ? GROUP BY g.id ORDER BY g.name
+    `).all(req.params.id);
+    return res.status(422).render('admin/groups', { competition, groups, error: `Abbreviation "${abbreviation.trim()}" is already used by another group in this competition.` });
+  }
   req.session.flash = { success: `Group "${name}" created.` };
   res.redirect(`/admin/competitions/${req.params.id}/groups`);
 });

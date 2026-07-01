@@ -54,7 +54,7 @@ function seedTestUsers(password = 'secret123') {
 
 function seedLeaderboardData() {
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Test Competition', 'active');
-  const group = db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run('Test Round', comp.lastInsertRowid);
+  const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('Test Round', comp.lastInsertRowid, 'TR');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
   return { competitionId: comp.lastInsertRowid, groupId: group.lastInsertRowid, roundId: round.lastInsertRowid };
 }
@@ -74,7 +74,7 @@ async function loginReferee(app) {
 
 function seedCompetitionData() {
   const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Active Competition', 'active');
-  const group = db.prepare('INSERT INTO groups (name, competition_id) VALUES (?, ?)').run('Test Group A', comp.lastInsertRowid);
+  const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('Test Group A', comp.lastInsertRowid, 'TGA');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Round A', 1);
   const sportsman = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Alice', comp.lastInsertRowid);
   const sportsman2 = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Bob', comp.lastInsertRowid);

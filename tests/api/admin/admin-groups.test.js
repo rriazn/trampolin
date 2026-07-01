@@ -38,12 +38,12 @@ describe('GET /admin/competitions/:id/groups', () => {
 
 describe('POST /admin/competitions/:id/groups', () => {
   it('returns 403 when unauthenticated', async () => {
-    const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group B' });
+    const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group B', abbreviation: 'GB' });
     expect(res.status).toBe(403);
   });
 
   it('creates a new group and redirects', async () => {
-    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group B' });
+    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group B', abbreviation: 'GB' });
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups`);
 
@@ -52,13 +52,25 @@ describe('POST /admin/competitions/:id/groups', () => {
   });
 
   it('returns 400 when name is empty', async () => {
-    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: '' });
+    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: '', abbreviation: 'GB' });
     expect(res.status).toBe(400);
     expect(res.text).toContain('Group name is required.');
   });
 
+  it('returns 400 when abbreviation is empty', async () => {
+    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group C', abbreviation: '' });
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('Group abbreviation is required.');
+  });
+
+  it('returns 422 when abbreviation is already used in this competition', async () => {
+    const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Group Duplicate', abbreviation: 'GB' });
+    expect(res.status).toBe(422);
+    expect(res.text).toContain('already used by another group');
+  });
+
   it('returns 404 for non-existent competition', async () => {
-    const res = await agent.post(`/admin/competitions/99999/groups`).type('form').send({ name: 'Group X' });
+    const res = await agent.post(`/admin/competitions/99999/groups`).type('form').send({ name: 'Group X', abbreviation: 'GX' });
     expect(res.status).toBe(404);
     expect(res.text).toBe('Competition not found');
   });
