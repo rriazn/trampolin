@@ -163,6 +163,28 @@ test.describe('when logged in as admin', () => {
     await expect(newAthleteRow.getByRole('cell', { name: 'Test Club 3' })).toBeVisible();
   });
 
+  test('importing with a matching group abbreviation assigns the athlete to that group', async ({ page }) => {
+    await page.getByRole('button', { name: /Import Excel/ }).click();
+    const form = page.locator('#uploadForm');
+    await form.locator('input[type=file]').setInputFiles('tests/component/fixtures/sportsmen-import-group.xlsx');
+    await form.getByRole('button', { name: /Upload/ }).click();
+    await expect(page.getByText('Import complete: 1 added, 0 skipped (missing name).')).toBeVisible();
+    const row = page.getByRole('row').filter({ hasText: 'David' });
+    await expect(row.getByRole('cell', { name: 'David' })).toBeVisible();
+    await expect(row.getByText('Group A')).toBeVisible();
+  });
+
+  test('importing with an unknown group abbreviation adds the athlete and shows a warning', async ({ page }) => {
+    await page.getByRole('button', { name: /Import Excel/ }).click();
+    const form = page.locator('#uploadForm');
+    await form.locator('input[type=file]').setInputFiles('tests/component/fixtures/sportsmen-import-unknown-group.xlsx');
+    await form.getByRole('button', { name: /Upload/ }).click();
+    await expect(page.getByText('1 without group (unknown abbreviation)')).toBeVisible();
+    const row = page.getByRole('row').filter({ hasText: 'Eve' });
+    await expect(row.getByRole('cell', { name: 'Eve' })).toBeVisible();
+    await expect(row.locator('.badge')).not.toBeVisible();
+  });
+
   test('submitting an invalid file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');

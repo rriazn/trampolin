@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS competitions (
 CREATE TABLE IF NOT EXISTS groups (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     name           TEXT    NOT NULL,
-    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE
+    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+    abbreviation   TEXT    NOT NULL,
+    UNIQUE(competition_id, abbreviation)
 );
 
 CREATE TABLE IF NOT EXISTS sportsmen (

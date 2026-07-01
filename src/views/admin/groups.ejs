@@ -27,11 +27,12 @@
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th>Group Name</th><th>Rounds</th><th></th></tr></thead>
+      <thead><tr><th>Group Name</th><th>Abbreviation</th><th>Rounds</th><th></th></tr></thead>
       <tbody>
       <% groups.forEach(g => { %>
       <tr>
         <td class="fw-600"><i class="bi bi-collection me-2 text-muted"></i><%= g.name %></td>
+        <td class="text-muted font-monospace"><%= g.abbreviation %></td>
         <td>
           <span class="badge rounded-pill <%= g.round_count > 0 ? 'bg-success' : 'bg-light text-muted border' %>">
             <%= g.round_count %> round<%= g.round_count !== 1 ? 's' : '' %>
@@ -62,6 +63,10 @@
       <div class="col-md-5">
         <label class="form-label small fw-600 text-muted text-uppercase">Group Name</label>
         <input type="text" name="name" class="form-control" placeholder="e.g. Junior Men" required>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label small fw-600 text-muted text-uppercase">Group Abbreviation</label>
+        <input type="text" name="abbreviation" class="form-control" placeholder="e.g. JM1" required>
       </div>
       <div class="col-md-2">
         <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>

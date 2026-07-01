@@ -117,21 +117,40 @@ test.describe('when logged in as admin', () => {
 
   test('adding a group adds it to the list', async ({ page }) => {
     await page.locator('input[name=name]').fill('Senior Men');
+    await page.locator('input[name=abbreviation]').fill('SM');
     await page.locator('button[type=submit]').click();
     await expect(page.getByRole('cell', { name: /Senior Men/ })).toBeVisible();
   });
 
   test('new group starts with a "0 rounds" badge', async ({ page }) => {
     await page.locator('input[name=name]').fill('New Group');
+    await page.locator('input[name=abbreviation]').fill('NG');
     await page.locator('button[type=submit]').click();
     const row = page.getByRole('row').filter({ hasText: 'New Group' });
     await expect(row.locator('.badge')).toContainText('0 rounds');
   });
 
   test('submitting with an empty name shows a validation error', async ({ page }) => {
-    await page.locator(`form[action="/admin/competitions/${seed.competitionId}/groups"]`).evaluate(f => f.setAttribute('novalidate', ''));
+    const form = page.locator(`form[action="/admin/competitions/${seed.competitionId}/groups"]`);
+    await form.evaluate(f => f.setAttribute('novalidate', ''));
+    await page.locator('input[name=abbreviation]').fill('XX');
     await page.locator('button[type=submit]').click();
     await expect(page.locator('.alert.alert-danger')).toContainText('Group name is required.');
+  });
+
+  test('submitting with an empty abbreviation shows a validation error', async ({ page }) => {
+    const form = page.locator(`form[action="/admin/competitions/${seed.competitionId}/groups"]`);
+    await form.evaluate(f => f.setAttribute('novalidate', ''));
+    await page.locator('input[name=name]').fill('Some Group');
+    await page.locator('button[type=submit]').click();
+    await expect(page.locator('.alert.alert-danger')).toContainText('Group abbreviation is required.');
+  });
+
+  test('submitting a duplicate abbreviation shows a validation error', async ({ page }) => {
+    await page.locator('input[name=name]').fill('Duplicate Group');
+    await page.locator('input[name=abbreviation]').fill('GA');
+    await page.locator('button[type=submit]').click();
+    await expect(page.locator('.alert.alert-danger')).toContainText('already used by another group');
   });
 
   test('accepting the delete confirm removes the group from the list', async ({ page }) => {
