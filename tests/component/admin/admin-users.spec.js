@@ -65,6 +65,21 @@ test.describe('when logged in as admin', () => {
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
   });
 
+  test('shows a head_judge user with a gold "Head Judge" badge', async ({ page }) => {
+    await page.goto('/admin/users/new');
+    await page.locator('input[name=name]').fill('Badge Head Judge');
+    await page.locator('input[name=email]').fill('badgeheadjudge@test.com');
+    await page.locator('input[name=password]').fill('secret123');
+    await page.locator('select[name=role]').selectOption('head_judge');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.waitForURL('/admin/users');
+
+    const row = page.getByRole('row').filter({ hasText: 'Badge Head Judge' });
+    const badge = row.locator('.badge');
+    await expect(badge).toHaveText('Head Judge');
+    await expect(badge).toHaveClass(/bg-gold/);
+  });
+
   // Buttons
 
   test('Import Excel button is present', async ({ page }) => {

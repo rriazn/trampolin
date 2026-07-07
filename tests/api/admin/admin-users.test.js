@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import * as XLSX from 'xlsx';
-import { createApp, loginAdmin, seedCompetitionData, seedReferee } from '../helpers/createApp.js';
+import { createApp, loginAdmin, seedCompetitionData, seedReferee, db } from '../helpers/createApp.js';
 
 const app = createApp();
 let agent;
@@ -113,6 +113,30 @@ describe('POST /admin/users/', () => {
         expect(res.status).toBe(422);
         expect(res.text).toContain('Email already in use');
     });
+
+    it('creates a user with the head_judge role (not silently downgraded to referee)', async () => {
+        const res = await agent.post('/admin/users/').type('form').send({
+            name: 'New Head Judge',
+            email: 'newheadjudge@example.com',
+            password: 'password123',
+            role: 'head_judge'
+        });
+        expect(res.status).toBe(302);
+        const user = db.prepare('SELECT role FROM users WHERE email=?').get('newheadjudge@example.com');
+        expect(user.role).toBe('head_judge');
+    });
+
+    it('falls back to referee for an unrecognized role value', async () => {
+        const res = await agent.post('/admin/users/').type('form').send({
+            name: 'Bogus Role User',
+            email: 'bogusrole@example.com',
+            password: 'password123',
+            role: 'superuser'
+        });
+        expect(res.status).toBe(302);
+        const user = db.prepare('SELECT role FROM users WHERE email=?').get('bogusrole@example.com');
+        expect(user.role).toBe('referee');
+    });
 });
 
 describe('GET /admin/users/:id/edit', () => {
@@ -153,6 +177,43 @@ describe('POST /admin/users/:id', () => {
         });
         expect(res.status).toBe(302);
         expect(res.headers.location).toBe('/admin/users');
+    });
+
+    it('promotes an existing user to head_judge (with password change)', async () => {
+        await agent.post('/admin/users/').type('form').send({
+            name: 'Promotable Judge',
+            email: 'promotable@example.com',
+            password: 'password123',
+            role: 'referee'
+        });
+        const id = db.prepare('SELECT id FROM users WHERE email=?').get('promotable@example.com').id;
+
+        const res = await agent.post(`/admin/users/${id}`).type('form').send({
+            name: 'Promotable Judge',
+            email: 'promotable@example.com',
+            password: 'newpassword123',
+            role: 'head_judge'
+        });
+        expect(res.status).toBe(302);
+        expect(db.prepare('SELECT role FROM users WHERE id=?').get(id).role).toBe('head_judge');
+    });
+
+    it('promotes an existing user to head_judge (without password change)', async () => {
+        await agent.post('/admin/users/').type('form').send({
+            name: 'Promotable Judge 2',
+            email: 'promotable2@example.com',
+            password: 'password123',
+            role: 'referee'
+        });
+        const id = db.prepare('SELECT id FROM users WHERE email=?').get('promotable2@example.com').id;
+
+        const res = await agent.post(`/admin/users/${id}`).type('form').send({
+            name: 'Promotable Judge 2',
+            email: 'promotable2@example.com',
+            role: 'head_judge'
+        });
+        expect(res.status).toBe(302);
+        expect(db.prepare('SELECT role FROM users WHERE id=?').get(id).role).toBe('head_judge');
     });
 
     it('returns 404 when user does not exist', async () => {
@@ -253,5 +314,20 @@ describe('POST /admin/users/upload', () => {
         const res = await agent.post('/admin/users/upload').attach('file', buffer, 'users.xlsx').redirects(1);
         expect(res.status).toBe(200);
         expect(res.text).toContain('1 skipped');
+    });
+
+    it('assigns the head_judge role from an uploaded row', async () => {
+        const workbook = XLSX.utils.book_new();
+        const worksheetData = [
+            ['Name', 'Email', 'Password', 'Role'],
+            ['Uploaded Head Judge', 'uploadedheadjudge@example.com', 'password123', 'head_judge']
+        ];
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        const res = await agent.post('/admin/users/upload').attach('file', buffer, 'users.xlsx');
+        expect(res.status).toBe(302);
+        const user = db.prepare('SELECT role FROM users WHERE email=?').get('uploadedheadjudge@example.com');
+        expect(user.role).toBe('head_judge');
     });
 });

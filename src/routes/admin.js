@@ -9,6 +9,8 @@ const { trimmedMean } = require('../utils/scoring');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+const normalizeRole = (role) => ['admin', 'head_judge'].includes(role) ? role : 'referee';
+
 router.use(requireAdmin);
 
 // Dashboard
@@ -63,7 +65,7 @@ router.post('/users', async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
-      .run(name, email, hash, role === 'admin' ? 'admin' : 'referee');
+      .run(name, email, hash, normalizeRole(role));
   } catch {
     return res.status(422).render('admin/user-form', {
       user: null, action: '/admin/users',
@@ -98,7 +100,7 @@ router.post('/users/upload', upload.single('file'), async (req, res) => {
       ? await bcrypt.hash(String(row['Password'] || row['password']), 10)
       : defaultHash;
     const role = String(row['Role'] || row['role'] || 'referee').trim().toLowerCase();
-    const info = insert.run(name, email, hash, role === 'admin' ? 'admin' : 'referee');
+    const info = insert.run(name, email, hash, normalizeRole(role));
     info.changes ? created++ : skipped++;
   }
   req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (duplicate/invalid).` };
@@ -125,10 +127,10 @@ router.post('/users/:id', async (req, res) => {
     if (password) {
       const hash = await bcrypt.hash(password, 12);
       db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?')
-        .run(name, email, hash, role === 'admin' ? 'admin' : 'referee', req.params.id);
+        .run(name, email, hash, normalizeRole(role), req.params.id);
     } else {
       db.prepare('UPDATE users SET name=?,email=?,role=? WHERE id=?')
-        .run(name, email, role === 'admin' ? 'admin' : 'referee', req.params.id);
+        .run(name, email, normalizeRole(role), req.params.id);
     }
   } catch {
     return res.status(422).render('admin/user-form', {

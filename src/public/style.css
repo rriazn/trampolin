@@ -7,6 +7,11 @@
   --card-shadow: 0 2px 12px rgba(26,31,58,.10);
 }
 
+.bg-gold {
+  background-color: var(--accent2) !important;
+  color: var(--brand) !important;
+}
+
 body {
   background: var(--surface);
   font-family: 'Inter', 'Segoe UI', sans-serif;

@@ -112,4 +112,4 @@ function getEntryStartOrders(roundId) {
   return db.prepare('SELECT start_order FROM entries WHERE round_id=? ORDER BY start_order').all(roundId).map(r => r.start_order);
 }
 
-module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, entryExists, getEntryStartOrders };
+module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, entryExists, getEntryStartOrders, db };

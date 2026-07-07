@@ -35,6 +35,7 @@
     <select name="role" class="form-select">
       <option value="referee" <%= (!user || user.role==='referee') ? 'selected' : '' %>>Referee</option>
       <option value="admin" <%= (user && user.role==='admin') ? 'selected' : '' %>>Admin</option>
+      <option value="head_judge" <%= (user && user.role==='head_judge') ? 'selected' : '' %>>Head Judge</option>
     </select>
   </div>
   <div class="d-flex gap-2">
