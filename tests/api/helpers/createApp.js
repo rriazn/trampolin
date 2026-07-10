@@ -104,6 +104,34 @@ async function loginAdmin(app) {
   return agent;
 }
 
+// Competition assigned to the 'fig' panel template, plus a small pool of referee/head_judge
+// users to assign to its judge roles. Only 2 referees are seeded (not the full 6 execution
+// needs) since assignment-flow tests don't need every slot staffed.
+function seedJudgesData() {
+  const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+  const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
+    .run('Judges Test Cup', 'active', panelTemplate.id);
+
+  const hash = bcrypt.hashSync('judge-secret', 10);
+  const referee1 = db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
+    .run('Judge Referee One', 'judgeref1@test.com', hash, 'referee');
+  const referee2 = db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
+    .run('Judge Referee Two', 'judgeref2@test.com', hash, 'referee');
+  const headJudge = db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
+    .run('Judge Head Judge', 'judgehj@test.com', hash, 'head_judge');
+
+  const roleIdByKey = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+  return {
+    competitionId: comp.lastInsertRowid,
+    panelTemplateId: panelTemplate.id,
+    roleIds: roleIdByKey,
+    referee1Id: referee1.lastInsertRowid,
+    referee2Id: referee2.lastInsertRowid,
+    headJudgeId: headJudge.lastInsertRowid,
+  };
+}
+
 function entryExists(entryId) {
   return !!db.prepare('SELECT id FROM entries WHERE id=?').get(entryId);
 }
@@ -112,4 +140,4 @@ function getEntryStartOrders(roundId) {
   return db.prepare('SELECT start_order FROM entries WHERE round_id=? ORDER BY start_order').all(roundId).map(r => r.start_order);
 }
 
-module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, entryExists, getEntryStartOrders, db };
+module.exports = { createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData, seedAdmin, loginAdmin, seedJudgesData, entryExists, getEntryStartOrders, db };

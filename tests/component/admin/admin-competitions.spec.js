@@ -47,6 +47,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: '2026-09-15' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'planned' })).toBeVisible();
     await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Judges/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Activate/ })).toBeVisible();
@@ -59,6 +60,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: '–' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'active' })).toBeVisible();
     await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Judges/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Close/ })).toBeVisible();
@@ -71,6 +73,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('cell', { name: '2025-12-15' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'closed' })).toBeVisible();
     await expect(row.getByRole('link', { name: /Groups/ })).toBeVisible();
+    await expect(row.getByRole('link', { name: /Judges/ })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
     await expect(row.getByRole('button', { name: /Close/ })).not.toBeVisible();
@@ -127,6 +130,12 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Spring Cup' });
     await row.getByRole('link', { name: /Groups/ }).click();
     await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
+  });
+
+  test('clicking the judges link for a competition navigates to that competition\'s judges page', async ({ page }) => {
+    const row = page.getByRole('row').filter({ hasText: 'Spring Cup' });
+    await row.getByRole('link', { name: /Judges/ }).click();
+    await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
   });
 
   test('clicking the "Activate" button starts a planned competition', async ({ page }) => {

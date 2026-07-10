@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 require('./db/database');
 const db = require('./db/database');
 
+// 6 execution + 1 difficulty + 1 time_of_flight/horizontal_displacement (shared machine, one
+// person) = 8 distinct referees. A judge may only hold one role per competition.
 const REFEREES = [
   { name: 'Maria Schmidt',   email: 'maria@example.com' },
   { name: 'Thomas Müller',   email: 'thomas@example.com' },
@@ -9,6 +11,8 @@ const REFEREES = [
   { name: 'Pierre Dupont',   email: 'pierre@example.com' },
   { name: 'Sofia Rossi',     email: 'sofia@example.com' },
   { name: 'Julia Novak',     email: 'julia@example.com' },
+  { name: 'Erik Larsson',    email: 'erik@example.com' },
+  { name: 'Nina Petrova',    email: 'nina@example.com' },
 ];
 
 const HEAD_JUDGE = { name: 'Karl Weber', email: 'karl@example.com' };
@@ -83,12 +87,14 @@ async function seed() {
   const insertAssignment = db.prepare(
     'INSERT OR IGNORE INTO panel_assignments (competition_id,judge_role_id,user_id) VALUES (?,?,?)'
   );
-  for (const refereeId of refereeIds) {
+  // referees[0..5] -> execution (6), referees[6] -> difficulty, referees[7] -> time_of_flight
+  // + horizontal_displacement (one person covers both, read off the same machine).
+  for (const refereeId of refereeIds.slice(0, 6)) {
     insertAssignment.run(comp.id, roleIdByKey.get('execution'), refereeId);
   }
-  insertAssignment.run(comp.id, roleIdByKey.get('difficulty'), refereeIds[0]);
-  insertAssignment.run(comp.id, roleIdByKey.get('time_of_flight'), refereeIds[1]);
-  insertAssignment.run(comp.id, roleIdByKey.get('horizontal_displacement'), refereeIds[2]);
+  insertAssignment.run(comp.id, roleIdByKey.get('difficulty'), refereeIds[6]);
+  insertAssignment.run(comp.id, roleIdByKey.get('time_of_flight'), refereeIds[7]);
+  insertAssignment.run(comp.id, roleIdByKey.get('horizontal_displacement'), refereeIds[7]);
   insertAssignment.run(comp.id, roleIdByKey.get('head_judge'), headJudgeId);
   console.log(`Assigned judge panel for "${COMPETITION_NAME}" (fig panel).`);
 

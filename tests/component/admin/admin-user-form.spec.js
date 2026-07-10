@@ -76,7 +76,7 @@ test.describe('when logged in as admin', () => {
     const newUserRow = page.getByRole('row').filter({ hasText: 'New Referee' });
     await expect(newUserRow.getByRole('cell', { name: 'New Referee' })).toBeVisible();
     await expect(newUserRow.getByRole('cell', { name: 'newreferee@test.com' })).toBeVisible();
-    await expect(newUserRow.getByRole('cell', { name: 'referee', exact: true })).toBeVisible();
+    await expect(newUserRow.getByRole('cell', { name: 'Referee', exact: true })).toBeVisible();
   });
 
   test('creating a new user with the head_judge role labels it "Head Judge" in the list', async ({ page }) => {

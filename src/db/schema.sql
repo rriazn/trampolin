@@ -29,15 +29,19 @@ CREATE TABLE IF NOT EXISTS panel_templates (
 );
 
 CREATE TABLE IF NOT EXISTS panel_template_slots (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    panel_template_id INTEGER NOT NULL REFERENCES panel_templates(id) ON DELETE CASCADE,
-    judge_role_id     INTEGER NOT NULL REFERENCES judge_roles(id) ON DELETE CASCADE,
-    judge_count       INTEGER NOT NULL DEFAULT 1 CHECK(judge_count > 0),
-    drop_high         INTEGER NOT NULL DEFAULT 0,
-    drop_low          INTEGER NOT NULL DEFAULT 0,
-    combine           TEXT    NOT NULL CHECK(combine IN ('sum','mean','median')) DEFAULT 'sum',
-    multiplier        REAL    NOT NULL DEFAULT 1,
-    sort_order        INTEGER NOT NULL DEFAULT 0,
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    panel_template_id       INTEGER NOT NULL REFERENCES panel_templates(id) ON DELETE CASCADE,
+    judge_role_id            INTEGER NOT NULL REFERENCES judge_roles(id) ON DELETE CASCADE,
+    judge_count              INTEGER NOT NULL DEFAULT 1 CHECK(judge_count > 0),
+    drop_high                INTEGER NOT NULL DEFAULT 0,
+    drop_low                 INTEGER NOT NULL DEFAULT 0,
+    combine                  TEXT    NOT NULL CHECK(combine IN ('sum','mean','median')) DEFAULT 'sum',
+    multiplier                REAL    NOT NULL DEFAULT 1,
+    sort_order                INTEGER NOT NULL DEFAULT 0,
+    -- Slots sharing the same non-null value here must be assigned to the SAME person
+    -- (e.g. time_of_flight + horizontal_displacement are read off one machine by one judge),
+    -- while each slot's own score stays a distinct value/component in the final formula.
+    shared_assignment_group  TEXT,
     UNIQUE(panel_template_id, judge_role_id)
 );
 

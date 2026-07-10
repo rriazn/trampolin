@@ -56,9 +56,19 @@ function cleanupDb() {
 app.post('/test/seed', (req, res) => {
   cleanupDb();
 
-  const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Spring Cup', 'active');
-  db.prepare('INSERT INTO competitions (name, date) VALUES (?, ?)').run('Autumn Open', '2026-09-15');
-  db.prepare('INSERT INTO competitions (name, date, status) VALUES (?, ?, ?)').run('Winter Cup', '2025-12-15', 'closed');
+  // Explicit, unambiguous created_at values: relying on insertion-order timing to break ties in
+  // `ORDER BY created_at DESC` is not reliable (SQLite doesn't guarantee tie order), and
+  // admin-dashboard.spec.js depends on Spring Cup sorting first (most recent).
+  const comp = db.prepare('INSERT INTO competitions (name, status, created_at) VALUES (?, ?, ?)')
+    .run('Spring Cup', 'active', '2026-01-03T00:00:00.000Z');
+  db.prepare('INSERT INTO competitions (name, date, created_at) VALUES (?, ?, ?)')
+    .run('Autumn Open', '2026-09-15', '2026-01-02T00:00:00.000Z');
+  db.prepare('INSERT INTO competitions (name, date, status, created_at) VALUES (?, ?, ?, ?)')
+    .run('Winter Cup', '2025-12-15', 'closed', '2026-01-01T00:00:00.000Z');
+  // Judge panel fixture competition, dated even older so it never contends for "most recent".
+  const figPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+  const panelComp = db.prepare('INSERT INTO competitions (name, status, panel_template_id, created_at) VALUES (?, ?, ?, ?)')
+    .run('Panel Cup', 'active', figPanel.id, '2020-01-01T00:00:00.000Z');
   const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
   const sp = db.prepare('INSERT INTO sportsmen (name, club, gender, birth_year, routine, competition_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Alice', 'Test Club', 'f', 2013, 'W11', comp.lastInsertRowid, group.lastInsertRowid);
@@ -70,6 +80,17 @@ app.post('/test/seed', (req, res) => {
 
   const admin = db.prepare("SELECT id, email, created_at FROM users WHERE email='admin@test.com'").get();
 
+  // Judge pool for judges-assignment component/integration tests.
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Judge Referee A', 'judgerefa@test.com', bcrypt.hashSync('ref123', 10), 'referee');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Judge Referee B', 'judgerefb@test.com', bcrypt.hashSync('ref123', 10), 'referee');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Judge Head Judge', 'judgehj@test.com', bcrypt.hashSync('hj123', 10), 'head_judge');
+  const judgeRefA = db.prepare("SELECT id FROM users WHERE email='judgerefa@test.com'").get();
+  const judgeRefB = db.prepare("SELECT id FROM users WHERE email='judgerefb@test.com'").get();
+  const judgeHeadJudge = db.prepare("SELECT id FROM users WHERE email='judgehj@test.com'").get();
+
   res.json({
     competitionId: Number(comp.lastInsertRowid),
     groupId: Number(group.lastInsertRowid),
@@ -79,6 +100,10 @@ app.post('/test/seed', (req, res) => {
     sportsmanId3: Number(sp3.lastInsertRowid),
     referee1: { id: Number(referee.id), email: referee.email, created_at: referee.created_at.substring(0, 10) },
     admin: { id: Number(admin.id), email: admin.email, created_at: admin.created_at.substring(0, 10) },
+    panelCompetitionId: Number(panelComp.lastInsertRowid),
+    judgeRefAId: Number(judgeRefA.id),
+    judgeRefBId: Number(judgeRefB.id),
+    judgeHeadJudgeId: Number(judgeHeadJudge.id),
   });
 });
 

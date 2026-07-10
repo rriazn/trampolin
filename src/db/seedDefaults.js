@@ -16,8 +16,11 @@ const PANEL_TEMPLATES = [
       // execution: per trick, drop 2 highest + 2 lowest deductions, sum the remaining 2, sum across tricks, then 10 - total (is_deduction).
       { role: 'execution',               judge_count: 6, drop_high: 2, drop_low: 2, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty',              judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
-      { role: 'time_of_flight',          judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 3 },
-      { role: 'horizontal_displacement', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 4 },
+      // time_of_flight + horizontal_displacement are read off the same machine by one judge:
+      // shared_assignment_group ties the two slots to a single required person, while each
+      // still contributes its own distinct value to the final score.
+      { role: 'time_of_flight',          judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 3, shared_assignment_group: 'tof_hd' },
+      { role: 'horizontal_displacement', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 4, shared_assignment_group: 'tof_hd' },
       { role: 'head_judge',              judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 5 },
     ],
   },
@@ -51,8 +54,8 @@ module.exports = function applySeedDefaults(db) {
   );
   const insertSlot = db.prepare(`
     INSERT OR IGNORE INTO panel_template_slots
-      (panel_template_id,judge_role_id,judge_count,drop_high,drop_low,combine,multiplier,sort_order)
-    VALUES (?,?,?,?,?,?,?,?)
+      (panel_template_id,judge_role_id,judge_count,drop_high,drop_low,combine,multiplier,sort_order,shared_assignment_group)
+    VALUES (?,?,?,?,?,?,?,?,?)
   `);
 
   for (const t of PANEL_TEMPLATES) {
@@ -67,7 +70,8 @@ module.exports = function applySeedDefaults(db) {
         s.drop_low,
         s.combine,
         s.multiplier,
-        s.sort_order
+        s.sort_order,
+        s.shared_assignment_group || null
       );
     }
   }

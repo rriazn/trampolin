@@ -23,7 +23,7 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto('/admin/users');
+    await page.goto('/admin/users');
   });
 
   // Page structure
@@ -49,7 +49,7 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Referee One' });
     await expect(row.getByRole('cell', { name: 'Referee One' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'referee1@test.com' })).toBeVisible();
-    await expect(row.getByRole('cell', { name: 'referee', exact: true })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'Referee', exact: true })).toBeVisible();
     await expect(row.getByRole('cell', { name: seed.referee1.created_at })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
@@ -59,7 +59,7 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Test Admin' });
     await expect(row.getByRole('cell', { name: 'Test Admin' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'admin@test.com' })).toBeVisible();
-    await expect(row.getByRole('cell', { name: 'admin', exact: true })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'Admin', exact: true })).toBeVisible();
     await expect(row.getByRole('cell', { name: seed.admin.created_at })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button

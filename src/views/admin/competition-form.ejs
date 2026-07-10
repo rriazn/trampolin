@@ -22,9 +22,19 @@
     <label class="form-label small fw-600 text-muted text-uppercase">Competition Name</label>
     <input type="text" name="name" class="form-control" value="<%= competition ? competition.name : '' %>" required placeholder="e.g. Spring Cup 2026">
   </div>
-  <div class="mb-4">
+  <div class="mb-3">
     <label class="form-label small fw-600 text-muted text-uppercase">Date <span class="text-muted fw-normal">(optional)</span></label>
     <input type="date" name="date" class="form-control" value="<%= competition ? (competition.date || '') : '' %>">
+  </div>
+  <div class="mb-4">
+    <label class="form-label small fw-600 text-muted text-uppercase">Judge Panel <span class="text-muted fw-normal">(optional)</span></label>
+    <select name="panel_template_id" class="form-select">
+      <option value="">— None selected —</option>
+      <% panelTemplates.forEach(t => { %>
+      <option value="<%= t.id %>" title="<%= t.description %>" <%= (competition && competition.panel_template_id === t.id) ? 'selected' : '' %>><%= t.name %></option>
+      <% }) %>
+    </select>
+    <div class="form-text">Applies to every group and round in this competition. Assign judges to it afterwards from the competition list.</div>
   </div>
   <div class="d-flex gap-2">
     <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= competition ? 'Save' : 'Create' %></button>
