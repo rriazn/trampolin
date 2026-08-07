@@ -1,11 +1,25 @@
 const router = require('express').Router();
 const db = require('../db/database');
-const { trimmedMean } = require('../utils/scoring');
+const { computeAttemptScore } = require('../utils/scoring');
+
+function loadPanelSlots(panelTemplateId) {
+  if (!panelTemplateId) return [];
+  return db.prepare(`
+    SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
+           s.drop_low AS dropLow, s.combine, s.multiplier,
+           jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
+           jr.is_deduction AS isDeduction, jr.max_value AS maxValue
+    FROM panel_template_slots s
+    JOIN judge_roles jr ON jr.id = s.judge_role_id
+    WHERE s.panel_template_id = ?
+    ORDER BY s.sort_order
+  `).all(panelTemplateId);
+}
 
 router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
   const { cid, gid, rid } = req.params;
 
-  const competition = db.prepare('SELECT id FROM competitions WHERE id = ?').get(cid);
+  const competition = db.prepare('SELECT id, panel_template_id FROM competitions WHERE id = ?').get(cid);
   if (!competition) return res.status(404).send('Competition not found');
 
   const group = db.prepare('SELECT id FROM groups WHERE id = ? AND competition_id = ?').get(gid, cid);
@@ -21,49 +35,84 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
   `).get(rid, gid);
   if (!round) return res.status(404).send('Round not found');
 
-  const rows = db.prepare(`
+  const panelSlots = loadPanelSlots(competition.panel_template_id);
+
+  const entryRows = db.prepare(`
     SELECT
       sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club,
       g.name AS group_name,
       e.start_order,
-      a.id AS attempt_id, a.attempt_number,
-      s.score
+      a.id AS attempt_id, a.attempt_number, a.element_count
     FROM entries e
     JOIN sportsmen sp ON sp.id = e.sportsman_id
     LEFT JOIN groups g ON g.id = sp.group_id
     JOIN attempts a ON a.entry_id = e.id
-    LEFT JOIN scores s ON s.attempt_id = a.id
     WHERE e.round_id = ?
     ORDER BY sp.id, a.attempt_number
   `).all(rid);
 
+  const scoreRows = db.prepare(`
+    SELECT s.attempt_id, s.judge_role_id, s.score
+    FROM scores s
+    JOIN attempts a ON a.id = s.attempt_id
+    JOIN entries e ON e.id = a.entry_id
+    WHERE e.round_id = ?
+  `).all(rid);
+  const elementScoreRows = db.prepare(`
+    SELECT es.attempt_id, es.judge_role_id, es.element_number, es.value
+    FROM element_scores es
+    JOIN attempts a ON a.id = es.attempt_id
+    JOIN entries e ON e.id = a.entry_id
+    WHERE e.round_id = ?
+  `).all(rid);
+
+  const scoresByAttempt = new Map();
+  for (const row of scoreRows) {
+    if (!scoresByAttempt.has(row.attempt_id)) scoresByAttempt.set(row.attempt_id, new Map());
+    const byRole = scoresByAttempt.get(row.attempt_id);
+    if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, []);
+    byRole.get(row.judge_role_id).push(row.score);
+  }
+  const elementScoresByAttempt = new Map();
+  for (const row of elementScoreRows) {
+    if (!elementScoresByAttempt.has(row.attempt_id)) elementScoresByAttempt.set(row.attempt_id, new Map());
+    const byRole = elementScoresByAttempt.get(row.attempt_id);
+    if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, new Map());
+    const byElement = byRole.get(row.judge_role_id);
+    if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
+    byElement.get(row.element_number).push(row.value);
+  }
+
   const map = new Map();
-  for (const row of rows) {
+  for (const row of entryRows) {
     if (!map.has(row.sportsman_id)) {
       map.set(row.sportsman_id, {
         name: row.sportsman_name,
         club: row.club,
         group: row.group_name,
         startOrder: row.start_order,
-        attempts: new Map()
+        attempts: []
       });
     }
     const sp = map.get(row.sportsman_id);
-    if (!sp.attempts.has(row.attempt_id)) {
-      sp.attempts.set(row.attempt_id, { number: row.attempt_number, scores: [] });
-    }
-    if (row.score !== null) {
-      sp.attempts.get(row.attempt_id).scores.push(row.score);
-    }
+    const scoresByJudgeRoleId = scoresByAttempt.get(row.attempt_id) || new Map();
+    const elementScoresByJudgeRoleId = elementScoresByAttempt.get(row.attempt_id) || new Map();
+    const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
+    const result = panelSlots.length > 0
+      ? computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count)
+      : { total: 0, breakdown: [], isComplete: false };
+
+    sp.attempts.push({
+      number: row.attempt_number,
+      finalScore: hasAnyScore ? result.total : null,
+      breakdown: result.breakdown,
+      isComplete: result.isComplete,
+    });
   }
 
   const leaderboard = [];
   for (const [id, sp] of map) {
-    const attemptScores = [...sp.attempts.values()].map(a => ({
-      number: a.number,
-      finalScore: trimmedMean(a.scores),
-      scoreCount: a.scores.length
-    })).sort((a, b) => a.number - b.number);
+    const attemptScores = [...sp.attempts].sort((a, b) => a.number - b.number);
 
     const scored = attemptScores.filter(a => a.finalScore !== null);
     const bestScore = scored.length > 0 ? Math.max(...scored.map(a => a.finalScore)) : null;
@@ -92,7 +141,13 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
 
   const maxAttempts = leaderboard.reduce((max, row) => Math.max(max, row.attempts.length), 0);
 
-  res.render('leaderboard', { round, leaderboard, maxAttempts, autoRefresh: true });
+  res.render('leaderboard', {
+    round,
+    leaderboard,
+    maxAttempts,
+    autoRefresh: true,
+    panelConfigured: panelSlots.length > 0,
+  });
 });
 
 module.exports = router;

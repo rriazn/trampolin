@@ -10,7 +10,13 @@ exports.requireAdmin = (req, res, next) => {
 };
 
 exports.requireReferee = (req, res, next) => {
-  if (!req.session.user || !['admin', 'referee'].includes(req.session.user.role))
+  if (!req.session.user || !['admin', 'referee', 'head_judge'].includes(req.session.user.role))
+    return res.status(403).send('Forbidden');
+  next();
+};
+
+exports.requireHeadJudge = (req, res, next) => {
+  if (!req.session.user || !['admin', 'head_judge'].includes(req.session.user.role))
     return res.status(403).send('Forbidden');
   next();
 };

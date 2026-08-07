@@ -5,7 +5,12 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
-const { trimmedMean } = require('../utils/scoring');
+const { combineScores } = require('../utils/scoring');
+
+// TODO: temporary compatibility shim reproducing the old trimmedMean behavior (drop one high,
+// one low, mean the rest) while this ranking still pools every score regardless of judge role.
+// Replace with a full computeAttemptScore/panel-aware rewrite (see .claude/plans/scoring-panel-plan.md).
+const legacyPooledScore = (scores) => combineScores({ scores, dropHigh: 1, dropLow: 1, combine: 'mean', multiplier: 1 });
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -675,7 +680,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
 
     const ranked = [];
     for (const [spId, attempts] of spMap) {
-      const scores = [...attempts.values()].map(trimmedMean).filter(s => s !== null);
+      const scores = [...attempts.values()].map(legacyPooledScore).filter(s => s !== null);
       ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
     }
     ranked.sort((a, b) => {

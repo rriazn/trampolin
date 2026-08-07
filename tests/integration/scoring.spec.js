@@ -18,29 +18,24 @@ test.beforeAll(async ({ request }) => {
 
 const refereeRoundUrlPattern = /\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/;
 
-test('referee scores all athletes and the leaderboard ranks them by best score', async ({ page }) => {
+// The seed starts the round on Leon's first attempt with Maria assigned as the time_of_flight
+// judge (a single attempt-level mark). Advancing to the next attempt/athlete is head-judge.js's
+// job (Start/Next/Complete) and isn't built yet, so these tests only cover scoring the current
+// turn — not a multi-athlete sequence, which needs that future work to be reachable via the UI.
+test('referee scores the current attempt and the leaderboard reflects it', async ({ page }) => {
   await loginAsReferee(page);
   await page.getByText('Qualifications').click();
   await page.waitForURL(refereeRoundUrlPattern);
+  await expect(page.getByText('Leon Weber')).toBeVisible();
 
-  // Score Leon 9.0 on attempt 1
-  const leonRow = page.locator('tbody tr').filter({ hasText: 'Leon Weber' }).first();
-  await leonRow.locator('input[name=score]').fill('9.0');
-  await leonRow.getByRole('button', { name: /Save/ }).click();
-  await page.waitForURL(refereeRoundUrlPattern);
-
-  // Score Emma 7.5 on attempt 1
-  const emmaRow = page.locator('tbody tr').filter({ hasText: 'Emma Fischer' }).first();
-  await emmaRow.locator('input[name=score]').fill('7.5');
-  await emmaRow.getByRole('button', { name: /Save/ }).click();
+  await page.locator('input[name=score]').fill('9.0');
+  await page.getByRole('button', { name: /Save/ }).click();
   await page.waitForURL(refereeRoundUrlPattern);
 
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   const rows = page.locator('tbody tr');
-  await expect(rows.nth(0)).toContainText('Leon Weber');
-  await expect(rows.nth(0)).toContainText('9.000');
-  await expect(rows.nth(1)).toContainText('Emma Fischer');
-  await expect(rows.nth(1)).toContainText('7.500');
+  await expect(rows.first()).toContainText('Leon Weber');
+  await expect(rows.first()).toContainText('9.000');
 });
 
 test('referee overwrites a score and the leaderboard reflects the updated value', async ({ page }) => {
@@ -48,17 +43,10 @@ test('referee overwrites a score and the leaderboard reflects the updated value'
   await page.getByText('Qualifications').click();
   await page.waitForURL(refereeRoundUrlPattern);
 
-  // Overwrite Leon's attempt 1 score with 6.0
-  const leonRow = page.locator('tbody tr').filter({ hasText: 'Leon Weber' }).first();
-  await leonRow.locator('input[name=score]').fill('6.0');
-  await leonRow.getByRole('button', { name: /Save/ }).click();
+  await page.locator('input[name=score]').fill('6.0');
+  await page.getByRole('button', { name: /Save/ }).click();
   await page.waitForURL(refereeRoundUrlPattern);
 
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
-
-  // Emma (7.5) now ranks above Leon (6.0)
-  const rows = page.locator('tbody tr');
-  await expect(rows.nth(0)).toContainText('Emma Fischer');
-  await expect(rows.nth(1)).toContainText('Leon Weber');
-  await expect(rows.nth(1)).toContainText('6.000');
+  await expect(page.locator('tbody tr').first()).toContainText('6.000');
 });

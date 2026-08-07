@@ -31,14 +31,14 @@ test.describe('when logged in as admin', () => {
   });
 
   test('shows a "no judge panel selected" message for a competition without one', async ({ page }) => {
-    await page.goto(`/admin/competitions/${seed.competitionId}/judges`);
+    await page.goto(`/admin/competitions/${seed.noPanelCompetitionId}/judges`);
     await expect(page.getByText('No judge panel selected')).toBeVisible();
     await expect(page.getByText('Choose a judge panel on the competition\'s edit page before assigning judges.')).toBeVisible();
     await expect(page.getByRole('link', { name: /Edit Competition/ })).toBeVisible();
   });
 
   test('"Edit Competition" link navigates to the competition edit form', async ({ page }) => {
-    await page.goto(`/admin/competitions/${seed.competitionId}/judges`);
+    await page.goto(`/admin/competitions/${seed.noPanelCompetitionId}/judges`);
     await page.getByRole('link', { name: /Edit Competition/ }).click();
     await page.waitForURL(/\/admin\/competitions\/\d+\/edit/);
   });

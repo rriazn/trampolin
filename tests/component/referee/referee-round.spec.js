@@ -23,7 +23,7 @@ test.describe('when logged in as referee', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsReferee(page);
-    page.goto(`/referee/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    await page.goto(`/referee/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   });
 
   // Page structure
@@ -40,45 +40,23 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('link', { name: /Back/ })).toBeVisible();
   });
 
-  test('shows the correct table columns', async ({ page }) => {
-    await expect(page.getByRole('columnheader', { name: '#' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Athlete' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Club' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Routine' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Attempt' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Your Score' })).toBeVisible();
+  // Current attempt (round starts on Bob's first attempt)
+
+  test('shows the current athlete\'s name, club and routine', async ({ page }) => {
+    await expect(page.getByText('Bob').first()).toBeVisible();
+    await expect(page.getByText('DMT')).toBeVisible();
   });
 
-  // Athlete data
-
-  test('shows the routine for athletes who have one set', async ({ page }) => {
-    const bobRow = page.getByRole('row').filter({ hasText: 'Bob' }).first();
-    await expect(bobRow).toContainText('DMT');
+  test('shows the attempt number badge', async ({ page }) => {
+    await expect(page.getByText('Attempt #1')).toBeVisible();
   });
 
-  test('shows "–" for athletes without a routine', async ({ page }) => {
-    const charlieRow = page.getByRole('row').filter({ hasText: 'Charlie' }).first();
-    const routineCell = charlieRow.locator('td').nth(3); // #, Athlete, Club, Routine
-    await expect(routineCell).toContainText('–');
+  test('shows the assigned judge role\'s name as a heading', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Time of Flight' })).toBeVisible();
   });
 
-  // Attempt rows
-
-  test('shows athletes with their attempt numbers', async ({ page }) => {
-    await expect(page.getByRole('row').filter({ hasText: 'Bob' }).first()).toBeVisible();
-    await expect(page.getByRole('row').filter({ hasText: 'Charlie' }).first()).toBeVisible();
-    await expect(page.getByRole('row').filter({ hasText: 'Alice' }).first()).toBeVisible();
-  });
-
-  test('already-scored rows are highlighted green', async ({ page }) => {
-    const rows = page.locator('tbody tr.table-success');
-    await expect(rows.first()).toBeVisible();
-  });
-
-  test('scored rows show the saved score value in the input', async ({ page }) => {
-    const bobRow = page.getByRole('row').filter({ hasText: 'Bob' }).first();
-    const scoreInput = bobRow.locator('input[name=score]');
-    await expect(scoreInput).toHaveValue('9.2');
+  test('pre-fills the previously saved score', async ({ page }) => {
+    await expect(page.locator('input[name=score]')).toHaveValue('9.2');
   });
 
   // Back button
@@ -91,16 +69,34 @@ test.describe('when logged in as referee', () => {
   // Score submission
 
   test('submitting a score saves it and shows a flash message', async ({ page }) => {
-    const firstRow = page.locator('tbody tr').first();
-    await firstRow.locator('input[name=score]').fill('8.0');
-    await firstRow.getByRole('button', { name: /Save/ }).click();
+    await page.locator('input[name=score]').fill('8.0');
+    await page.getByRole('button', { name: /Save/ }).click();
     await expect(page.locator('.alert-success')).toContainText('Score 8.0 saved.');
   });
 
-  test('submitting a score highlights the row green', async ({ page }) => {
-    const firstRow = page.locator('tbody tr').first();
-    await firstRow.locator('input[name=score]').fill('7.5');
-    await firstRow.getByRole('button', { name: /Save/ }).click();
-    await expect(page.locator('tbody tr.table-success').first()).toBeVisible();
+  test('resubmitting updates the pre-filled value', async ({ page }) => {
+    await page.locator('input[name=score]').fill('7.5');
+    await page.getByRole('button', { name: /Save/ }).click();
+    await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
+    await expect(page.locator('input[name=score]')).toHaveValue('7.5');
+  });
+});
+
+test.describe('turn states', () => {
+  test('shows a "not started" message when the round has not begun', async ({ page, request }) => {
+    const res = await request.post('/test/seed');
+    const basicSeed = await res.json();
+
+    // The basic seed assigns "Referee One" (referee1@test.com) to time_of_flight and marks the
+    // round 'in_progress', but no attempts exist yet so current_attempt_id stays null — the round
+    // page treats that the same as "not started", nothing to score right now.
+    await page.goto('/login');
+    await page.locator('input[name=email]').fill('referee1@test.com');
+    await page.locator('input[name=password]').fill('ref123');
+    await page.locator('button[type=submit]').click();
+    await page.waitForURL('/referee');
+
+    await page.goto(`/referee/competitions/${basicSeed.competitionId}/groups/${basicSeed.groupId}/rounds/${basicSeed.roundId}`);
+    await expect(page.getByText('Round not started yet')).toBeVisible();
   });
 });

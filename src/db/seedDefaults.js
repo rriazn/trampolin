@@ -27,9 +27,9 @@ const PANEL_TEMPLATES = [
   {
     key: 'local',
     name: 'Local Panel',
-    description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 6 execution, 1 difficulty, 1 head judge (penalties).',
+    description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties).',
     slots: [
-      { role: 'execution',  judge_count: 6, drop_high: 2, drop_low: 2, combine: 'sum', multiplier: 1,  sort_order: 1 },
+      { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },
     ],

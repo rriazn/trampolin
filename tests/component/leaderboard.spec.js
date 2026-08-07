@@ -107,11 +107,14 @@ test.describe('with scored athletes', () => {
     await expect(bobRow.locator('td').nth(5)).toContainText('9.100');
   });
 
-  test('shows judge count below each attempt score', async ({ page }) => {
+  test('shows a per-role breakdown tooltip and a partial marker on each attempt score', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    // scored seed has 1 referee → each scored attempt shows "(1 judges)"
+    // scored seed only submits the time_of_flight role, so every attempt is partial (marked *)
+    // and the other roles are absent from the breakdown title.
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
-    await expect(bobRow.locator('td').nth(4)).toContainText('1 judges');
+    const scoreSpan = bobRow.locator('td').nth(4).locator('span');
+    await expect(scoreSpan).toHaveAttribute('title', /Time of Flight: 9\.20/);
+    await expect(bobRow.locator('td').nth(4)).toContainText('*');
   });
 
   test('renders one attempt column per attempt number in the round', async ({ page }) => {

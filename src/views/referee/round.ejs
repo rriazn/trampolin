@@ -10,60 +10,68 @@
 </div>
 
 <div class="container">
-<% if (attempts.length === 0) { %>
+<% if (state === 'not_started') { %>
+<div class="card p-5 text-center text-muted">
+  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
+  <h5>Round not started yet</h5>
+  <p class="mb-0 small">The head judge hasn't started this round. Check back once scoring begins.</p>
+</div>
+<% } else if (state === 'no_assignment') { %>
 <div class="card p-5 text-center text-muted">
   <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>No attempts set up yet</h5>
-  <p class="mb-0 small">Ask the admin to create attempts for this round.</p>
+  <h5>No judge role assigned</h5>
+  <p class="mb-0 small">You don't have a judge role assigned for this competition. Contact the admin.</p>
 </div>
 <% } else { %>
-<p class="text-muted small mb-3">
-  <i class="bi bi-info-circle me-1"></i>
-  Enter a score (0.0 – 10.0) and press Save. Re-submitting overwrites your previous score.
-  <span class="ms-2 badge bg-success"><i class="bi bi-check me-1"></i>green = scored by you</span>
-</p>
-<div class="table-card card">
-  <table class="table mb-0">
-    <thead>
-      <tr>
-        <th style="width:60px">#</th>
-        <th>Athlete</th>
-        <th>Club</th>
-        <th>Routine</th>
-        <th style="width:80px" class="text-center">Attempt</th>
-        <th style="width:220px">Your Score</th>
-      </tr>
-    </thead>
-    <tbody>
-    <% attempts.forEach(a => { %>
-    <tr class="<%= a.my_score !== null ? 'table-success' : '' %>">
-      <td><span class="badge bg-secondary rounded-pill"><%= a.start_order %></span></td>
-      <td>
-        <span class="fw-600"><%= a.sportsman_name %></span>
-      </td>
-      <td class="text-muted small"><%= a.club || '–' %></td>
-      <td class="text-muted small"><%= a.routine || '–' %></td>
-      <td class="text-center">
-        <span class="badge rounded-pill bg-primary">#<%= a.attempt_number %></span>
-      </td>
-      <td>
-        <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
-          <input type="hidden" name="attemptId" value="<%= a.attempt_id %>">
-          <input type="number" name="score" min="0" max="10" step="0.1"
-                 value="<%= a.my_score !== null ? a.my_score.toFixed(1) : '' %>"
-                 class="form-control form-control-sm" style="width:90px"
-                 placeholder="0.0–10" required>
-          <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
-          <% if (a.my_score !== null) { %>
-          <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> <%= a.my_score.toFixed(1) %></span>
-          <% } %>
-        </form>
-      </td>
-    </tr>
-    <% }) %>
-    </tbody>
-  </table>
+<div class="card p-4 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <span class="badge bg-secondary rounded-pill fs-6">#<%= attempt.start_order %></span>
+    <div>
+      <div class="fw-700 fs-5"><%= attempt.sportsman_name %></div>
+      <div class="text-muted small">
+        <%= attempt.club || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
+      </div>
+    </div>
+    <span class="badge rounded-pill bg-primary ms-auto">Attempt #<%= attempt.attempt_number %></span>
+  </div>
 </div>
+
+<% inputs.forEach(input => { %>
+<div class="card p-4 mb-4">
+  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= input.name %></h5>
+
+  <% if (input.granularity === 'element') { %>
+  <form method="POST" action="/referee/score/elements" class="d-flex flex-wrap gap-2 align-items-end">
+    <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
+    <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
+    <% input.elements.forEach(el => { %>
+    <div>
+      <label class="form-label small text-muted mb-1">Trick <%= el.number %></label>
+      <input type="number" name="element_<%= el.number %>"
+             value="<%= el.value !== null ? el.value : '' %>"
+             min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
+             step="0.1" class="form-control form-control-sm" style="width:80px" required>
+    </div>
+    <% }) %>
+    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
+  </form>
+  <% } else { %>
+  <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
+    <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
+    <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
+    <input type="number" name="score"
+           value="<%= input.score !== null ? input.score : '' %>"
+           min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
+           step="0.1" class="form-control form-control-sm" style="width:100px"
+           placeholder="<%= input.score_min %>–<%= input.score_max !== null ? input.score_max : '∞' %>" required>
+    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
+    <% if (input.score !== null) { %>
+    <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> Saved</span>
+    <% } %>
+  </form>
+  <% } %>
+</div>
+<% }) %>
 <% } %>
 </div>
 <%- include('../partials/footer') %>
