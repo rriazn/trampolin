@@ -5,12 +5,21 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
-const { combineScores } = require('../utils/scoring');
+const { computeAttemptScore } = require('../utils/scoring');
 
-// TODO: temporary compatibility shim reproducing the old trimmedMean behavior (drop one high,
-// one low, mean the rest) while this ranking still pools every score regardless of judge role.
-// Replace with a full computeAttemptScore/panel-aware rewrite (see .claude/plans/scoring-panel-plan.md).
-const legacyPooledScore = (scores) => combineScores({ scores, dropHigh: 1, dropLow: 1, combine: 'mean', multiplier: 1 });
+function loadPanelSlots(panelTemplateId) {
+  if (!panelTemplateId) return [];
+  return db.prepare(`
+    SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
+           s.drop_low AS dropLow, s.combine, s.multiplier,
+           jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
+           jr.is_deduction AS isDeduction, jr.max_value AS maxValue
+    FROM panel_template_slots s
+    JOIN judge_roles jr ON jr.id = s.judge_role_id
+    WHERE s.panel_template_id = ?
+    ORDER BY s.sort_order
+  `).all(panelTemplateId);
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -661,26 +670,57 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
   `).get(round.group_id, round.round_order);
 
   if (prevRound) {
-    const rows = db.prepare(`
-      SELECT e.sportsman_id, a.attempt_number, s.score
+    const panelSlots = loadPanelSlots(competition.panel_template_id);
+
+    const attemptRows = db.prepare(`
+      SELECT a.id AS attempt_id, a.element_count, e.sportsman_id
       FROM entries e
       JOIN attempts a ON a.entry_id = e.id
-      LEFT JOIN scores s ON s.attempt_id = a.id
       WHERE e.round_id = ?
       ORDER BY e.sportsman_id, a.attempt_number
     `).all(prevRound.id);
 
+    const scoreRows = db.prepare(`
+      SELECT s.attempt_id, s.judge_role_id, s.score
+      FROM scores s JOIN attempts a ON a.id = s.attempt_id JOIN entries e ON e.id = a.entry_id
+      WHERE e.round_id = ?
+    `).all(prevRound.id);
+    const elementScoreRows = db.prepare(`
+      SELECT es.attempt_id, es.judge_role_id, es.element_number, es.value
+      FROM element_scores es JOIN attempts a ON a.id = es.attempt_id JOIN entries e ON e.id = a.entry_id
+      WHERE e.round_id = ?
+    `).all(prevRound.id);
+
+    const scoresByAttempt = new Map();
+    for (const row of scoreRows) {
+      if (!scoresByAttempt.has(row.attempt_id)) scoresByAttempt.set(row.attempt_id, new Map());
+      const byRole = scoresByAttempt.get(row.attempt_id);
+      if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, []);
+      byRole.get(row.judge_role_id).push(row.score);
+    }
+    const elementScoresByAttempt = new Map();
+    for (const row of elementScoreRows) {
+      if (!elementScoresByAttempt.has(row.attempt_id)) elementScoresByAttempt.set(row.attempt_id, new Map());
+      const byRole = elementScoresByAttempt.get(row.attempt_id);
+      if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, new Map());
+      const byElement = byRole.get(row.judge_role_id);
+      if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
+      byElement.get(row.element_number).push(row.value);
+    }
+
     const spMap = new Map();
-    for (const row of rows) {
-      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, new Map());
-      const attempts = spMap.get(row.sportsman_id);
-      if (!attempts.has(row.attempt_number)) attempts.set(row.attempt_number, []);
-      if (row.score !== null) attempts.get(row.attempt_number).push(row.score);
+    for (const row of attemptRows) {
+      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, []);
+      const scoresByJudgeRoleId = scoresByAttempt.get(row.attempt_id) || new Map();
+      const elementScoresByJudgeRoleId = elementScoresByAttempt.get(row.attempt_id) || new Map();
+      const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
+      if (!hasAnyScore) continue;
+      const { total } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count);
+      spMap.get(row.sportsman_id).push(total);
     }
 
     const ranked = [];
-    for (const [spId, attempts] of spMap) {
-      const scores = [...attempts.values()].map(legacyPooledScore).filter(s => s !== null);
+    for (const [spId, scores] of spMap) {
       ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
     }
     ranked.sort((a, b) => {

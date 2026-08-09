@@ -55,6 +55,12 @@
     <% }) %>
     <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
   </form>
+  <% if (input.contribution) { %>
+  <p class="text-muted small mt-2 mb-0">
+    Current <%= input.name %> value: <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <% if (!input.contribution.isComplete) { %> (partial — not every judge has submitted yet)<% } %>
+  </p>
+  <% } %>
   <% } else { %>
   <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
@@ -69,6 +75,12 @@
     <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> Saved</span>
     <% } %>
   </form>
+  <% if (input.contribution) { %>
+  <p class="text-muted small mt-2 mb-0">
+    Current <%= input.name %> value: <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <% if (!input.contribution.isComplete) { %> (partial — not every judge has submitted yet)<% } %>
+  </p>
+  <% } %>
   <% } %>
 </div>
 <% }) %>

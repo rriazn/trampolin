@@ -16,9 +16,6 @@ const PANEL_TEMPLATES = [
       // execution: per trick, drop 2 highest + 2 lowest deductions, sum the remaining 2, sum across tricks, then 10 - total (is_deduction).
       { role: 'execution',               judge_count: 6, drop_high: 2, drop_low: 2, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty',              judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
-      // time_of_flight + horizontal_displacement are read off the same machine by one judge:
-      // shared_assignment_group ties the two slots to a single required person, while each
-      // still contributes its own distinct value to the final score.
       { role: 'time_of_flight',          judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 3, shared_assignment_group: 'tof_hd' },
       { role: 'horizontal_displacement', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 4, shared_assignment_group: 'tof_hd' },
       { role: 'head_judge',              judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 5 },
@@ -30,6 +27,16 @@ const PANEL_TEMPLATES = [
     description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties).',
     slots: [
       { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1 },
+      { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
+      { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },
+    ],
+  },
+  {
+    key: 'test',
+    name: 'Test Panel',
+    description: 'Test panel for development and testing purposes.',
+    slots: [
+      { role: 'execution',  judge_count: 1, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },
     ],

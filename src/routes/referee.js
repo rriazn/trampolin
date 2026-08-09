@@ -91,7 +91,7 @@ router.get('/', (req, res) => {
     JOIN competitions c ON c.id = g.competition_id
     JOIN panel_assignments pa ON pa.competition_id = c.id AND pa.user_id = ?
     WHERE r.status = 'in_progress' AND c.status = 'active'
-    ORDER BY c.date DESC, r.round_order
+    ORDER BY c.name, g.name, r.round_order
   `).all(userId);
   res.render('referee/dashboard', { rounds });
 });
@@ -141,7 +141,16 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     WHERE a.id = ?
   `).get(round.current_attempt_id);
 
+  // Own-role contribution (not the full attempt total): once a judge has submitted at least once,
+  // show them what their role currently contributes to the final score — the same combined
+  // drop-high/low value that feeds the leaderboard, not just their own raw number back at them.
+  const panelSlots = loadPanelSlots(round.competition_id);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attempt.attempt_id);
+  const { breakdown } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
+  const breakdownByRoleId = new Map(panelSlots.map((slot, i) => [slot.judgeRoleId, breakdown[i]]));
+
   const inputs = assignments.map(a => {
+    const contribution = breakdownByRoleId.get(a.judge_role_id) || null;
     if (a.granularity === 'element') {
       const existing = db.prepare(
         'SELECT element_number, value FROM element_scores WHERE attempt_id=? AND panel_assignment_id=?'
@@ -151,12 +160,13 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
       for (let n = 1; n <= attempt.element_count; n++) {
         elements.push({ number: n, value: valueByElement.has(n) ? valueByElement.get(n) : null });
       }
-      return { ...a, elements };
+      const hasSubmitted = existing.length > 0;
+      return { ...a, elements, contribution: hasSubmitted ? contribution : null };
     }
     const existing = db.prepare(
       'SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?'
     ).get(attempt.attempt_id, a.assignment_id);
-    return { ...a, score: existing ? existing.score : null };
+    return { ...a, score: existing ? existing.score : null, contribution: existing ? contribution : null };
   });
 
   res.render('referee/round', { round, attempt, inputs, state: 'active' });

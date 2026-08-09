@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS attempts (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     entry_id       INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
     attempt_number INTEGER NOT NULL CHECK(attempt_number > 0),
-    status         TEXT    NOT NULL CHECK(status IN ('pending','scored')) DEFAULT 'pending',
+    status         TEXT    NOT NULL CHECK(status IN ('pending','scored','skipped')) DEFAULT 'pending',
     element_count  INTEGER NOT NULL DEFAULT 10 CHECK(element_count > 0),
     UNIQUE(entry_id, attempt_number)
 );

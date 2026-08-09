@@ -28,7 +28,8 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   if (req.session.user) {
-    return res.redirect(req.session.user.role === 'admin' ? '/admin' : '/referee');
+    const landing = { admin: '/admin', head_judge: '/head-judge' }[req.session.user.role] || '/referee';
+    return res.redirect(landing);
   }
   res.redirect('/login');
 });
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 app.use('/', require('../../src/routes/auth'));
 app.use('/leaderboard', require('../../src/routes/leaderboard'));
 app.use('/referee', require('../../src/routes/referee'));
+app.use('/head-judge', require('../../src/routes/head-judge'));
 app.use('/admin', require('../../src/routes/admin'));
 
 // Deletes all test data while keeping the permanent admin account.

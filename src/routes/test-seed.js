@@ -24,6 +24,11 @@ router.post('/test/seed', (req, res) => {
     .run('Maria Schmidt', 'maria@example.com', refHash, 'referee');
   const maria = db.prepare("SELECT id FROM users WHERE email='maria@example.com'").get();
 
+  const headJudgeHash = bcrypt.hashSync('headjudge123', 10);
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Petra Voss', 'petra@example.com', headJudgeHash, 'head_judge');
+  const petra = db.prepare("SELECT id FROM users WHERE email='petra@example.com'").get();
+
   const figPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
   const comp = db.prepare("INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)")
     .run('Spring Championship', 'active', figPanel.id);
@@ -56,6 +61,12 @@ router.post('/test/seed', (req, res) => {
   db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)')
     .run(comp.lastInsertRowid, timeOfFlightRoleId, maria.id);
 
+  // Petra holds the head_judge panel role too (same identity, two capabilities per the plan), so
+  // head-judge.js's own integration tests can exercise Start/Next/Complete without a full roster.
+  const headJudgeRoleId = db.prepare("SELECT id FROM judge_roles WHERE key='head_judge'").get().id;
+  db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)')
+    .run(comp.lastInsertRowid, headJudgeRoleId, petra.id);
+
   // Round starts on Leon's first attempt, matching the old fixture's implicit "ready to score"
   // state. Advancing turns (Next) is head-judge.js's job and isn't testable here yet.
   db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?")
@@ -73,6 +84,8 @@ router.post('/test/seed', (req, res) => {
     attempt3Id: Number(a3.lastInsertRowid),
     attempt4Id: Number(a4.lastInsertRowid),
     timeOfFlightRoleId: Number(timeOfFlightRoleId),
+    headJudgeRoleId: Number(headJudgeRoleId),
+    headJudgeUserId: Number(petra.id),
   });
 });
 
