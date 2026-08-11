@@ -189,8 +189,10 @@ describe('POST /referee/score/elements (element-granularity roles)', () => {
   });
 
   it('saves all trick values and redirects to the round view', async () => {
+    // Difficulty is entered x10 for easier typing (e.g. "10" -> true tariff 1.0) and divided back
+    // down server-side.
     const res = await agent.post('/referee/score/elements').type('form')
-      .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '1.0', element_2: '1.0', element_3: '1.5' });
+      .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '10', element_2: '10', element_3: '15' });
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
 
@@ -203,16 +205,16 @@ describe('POST /referee/score/elements (element-granularity roles)', () => {
     ]);
   });
 
-  it('the round page pre-fills previously saved trick values', async () => {
+  it('the round page pre-fills previously saved trick values (x10 display)', async () => {
     const res = await agent.get(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(200);
-    expect(res.text).toContain('value="1"');
-    expect(res.text).toContain('value="1.5"');
+    expect(res.text).toContain('value="10"');
+    expect(res.text).toContain('value="15"');
   });
 
   it('resubmitting overwrites previous trick values, not duplicating rows', async () => {
     await agent.post('/referee/score/elements').type('form')
-      .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '2.0', element_2: '2.0', element_3: '2.0' });
+      .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '20', element_2: '20', element_3: '20' });
     const rows = db.prepare('SELECT element_number, value FROM element_scores WHERE attempt_id=? AND judge_role_id=?')
       .all(data.attemptId, data.roleIds.difficulty);
     expect(rows).toHaveLength(3);

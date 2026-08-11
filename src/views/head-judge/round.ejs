@@ -127,7 +127,7 @@
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/attempts/<%= attempt.attempt_id %>/element-count" class="d-flex gap-2 align-items-end">
     <div>
       <label class="form-label small text-muted mb-1">Number of tricks</label>
-      <input type="number" name="element_count" value="<%= attempt.element_count %>" min="1" max="10" class="form-control form-control-sm" style="width:100px">
+      <input type="number" name="element_count" value="<%= attempt.element_count %>" min="0" max="10" class="form-control form-control-sm" style="width:100px">
     </div>
     <button class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
   </form>

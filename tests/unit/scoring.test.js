@@ -153,4 +153,79 @@ describe('computeAttemptScore', () => {
     expect(result.breakdown).toHaveLength(5);
     expect(result.breakdown.every(b => b.value === 0 || Number.isNaN(b.value) === false)).toBe(true);
   });
+
+  describe('landing (is_deduction element roles, full 10-skill routines)', () => {
+    it('judges landing as an 11th element via the same drop/combine rule, required for completeness, only when elementCount is 10', () => {
+      const tricks = new Map();
+      for (let n = 1; n <= 10; n++) tricks.set(n, [0, 0, 0, 0, 0, 0]); // no trick deductions
+      tricks.set(11, [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]); // landing: all 6 judges give 0.1 -> drop 2/2 -> keep two 0.1 -> sum 0.2
+      const difficultyTricks = new Map();
+      for (let n = 1; n <= 10; n++) difficultyTricks.set(n, [1.0]);
+      const elementScoresByJudgeRoleId = new Map([[1, tricks], [2, difficultyTricks]]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 10);
+      const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
+      expect(executionBreakdown.value).toBeCloseTo(10 - 0.2); // 10 tricks, 0 deduction each, minus landing's 0.2
+      expect(executionBreakdown.perTrick).toHaveLength(11);
+      expect(executionBreakdown.perTrick[10].isLanding).toBe(true);
+      expect(result.isComplete).toBe(true);
+    });
+
+    it('blocks completeness if landing has not been judged by every required judge, for a full routine', () => {
+      const tricks = new Map();
+      for (let n = 1; n <= 10; n++) tricks.set(n, [0, 0, 0, 0, 0, 0]);
+      tricks.set(11, [0, 0]); // only 2 of 6 judges have entered landing
+      const elementScoresByJudgeRoleId = new Map([[1, tricks], [2, new Map([[1, [1.0]]])]]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 10);
+      expect(result.isComplete).toBe(false);
+      const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
+      expect(executionBreakdown.isComplete).toBe(false);
+    });
+
+    it('does not apply landing at all for a shortened routine, even if element 11 data exists (stale from before it was shortened)', () => {
+      const tricks = new Map();
+      for (let n = 1; n <= 6; n++) tricks.set(n, [0, 0, 0, 0, 0, 0]);
+      tricks.set(11, [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]); // stale leftover landing data, must be ignored
+      const difficultyTricks = new Map();
+      for (let n = 1; n <= 6; n++) difficultyTricks.set(n, [1.0]);
+      const elementScoresByJudgeRoleId = new Map([[1, tricks], [2, difficultyTricks]]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 6);
+      const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
+      expect(executionBreakdown.value).toBeCloseTo(6); // no deductions, landing ignored
+      expect(executionBreakdown.perTrick).toHaveLength(6);
+      expect(result.isComplete).toBe(true);
+    });
+  });
+
+  describe('bonus (non-deduction element roles, e.g. difficulty)', () => {
+    it('adds an optional bonus on top of the per-trick sum when present, without affecting completeness', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]], [11, [0.3]]])], // difficulty: 1 trick worth 2.0, plus a 0.3 bonus
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(2.3);
+      expect(difficultyBreakdown.isComplete).toBe(true);
+    });
+
+    it('defaults to 0 (no effect) when no bonus was entered', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]]])],
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(2.0);
+    });
+  });
 });

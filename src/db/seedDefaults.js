@@ -1,6 +1,8 @@
 const JUDGE_ROLES = [
   // execution/difficulty are scored per trick (see element_scores); the others are one value per attempt.
-  { key: 'execution',               name: 'Execution',                granularity: 'element', is_deduction: 1, max_value: 10,   score_min: 0, score_max: 5 },
+  // Per-trick deduction: 0, 0.1, 0.2, 0.3 or 0.5 (score_max here). Landing is the exception —
+  // it goes up to 1.0 and is validated against a hardcoded bound in referee.js, not this field.
+  { key: 'execution',               name: 'Execution',                granularity: 'element', is_deduction: 1, max_value: 10,   score_min: 0, score_max: 0.5 },
   { key: 'difficulty',              name: 'Difficulty',                granularity: 'element', is_deduction: 0, max_value: null, score_min: 0, score_max: null },
   { key: 'time_of_flight',          name: 'Time of Flight',            granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },
   { key: 'horizontal_displacement', name: 'Horizontal Displacement',   granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },

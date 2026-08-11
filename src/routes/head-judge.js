@@ -117,17 +117,29 @@ function loadJudgeSubmissionStatus(panelTemplateId, competitionId, attemptId, el
     if (!elementsByAssignment.has(row.panel_assignment_id)) elementsByAssignment.set(row.panel_assignment_id, []);
     elementsByAssignment.get(row.panel_assignment_id).push({ number: row.element_number, value: row.value });
   }
+  // 11th line: landing (is_deduction roles, full 10-skill routines, required) or bonus
+  // (non-deduction roles, always optional) — see scoring.js. Outside the elementCount bound above.
+  const extraByAssignment = new Map();
+  for (const row of db.prepare('SELECT panel_assignment_id, value FROM element_scores WHERE attempt_id=? AND element_number=11').all(attemptId)) {
+    extraByAssignment.set(row.panel_assignment_id, row.value);
+  }
 
   const byRole = new Map();
   for (const a of assignments) {
     if (!byRole.has(a.role_key)) byRole.set(a.role_key, { name: a.role_name, granularity: a.granularity, judges: [] });
     const elements = elementsByAssignment.get(a.assignment_id) || [];
+    const landingApplies = a.granularity === 'element' && a.isDeduction && elementCount === 10;
+    const bonusApplies = a.granularity === 'element' && !a.isDeduction;
+    const extraValue = (landingApplies || bonusApplies) ? extraByAssignment.get(a.assignment_id) : undefined;
     const score = scoresByAssignment.has(a.assignment_id) ? scoresByAssignment.get(a.assignment_id) : null;
-    const submittedCount = a.granularity === 'element' ? elements.length : (score !== null ? 1 : 0);
-    const isDone = a.granularity === 'element' ? submittedCount >= elementCount : submittedCount >= 1;
+    const submittedCount = a.granularity === 'element'
+      ? elements.length + (extraValue !== undefined ? 1 : 0)
+      : (score !== null ? 1 : 0);
+    const requiredCount = a.granularity === 'element' ? elementCount + (landingApplies ? 1 : 0) : 1;
+    const isDone = a.granularity === 'element' ? submittedCount >= requiredCount : submittedCount >= 1;
     let value = score;
     if (a.granularity === 'element' && elements.length > 0) {
-      const sum = elements.reduce((acc, el) => acc + el.value, 0);
+      const sum = elements.reduce((acc, el) => acc + el.value, 0) + (extraValue !== undefined ? extraValue : 0);
       value = a.isDeduction ? elementCount - sum : sum;
     }
     byRole.get(a.role_key).judges.push({ name: a.judge_name, submittedCount, isDone, value });
@@ -441,8 +453,8 @@ router.post('/competitions/:cid/groups/:gid/rounds/:rid/attempts/:aid/element-co
   }
 
   const elementCount = parseInt(req.body.element_count, 10);
-  if (isNaN(elementCount) || elementCount < 1 || elementCount > 10) {
-    req.session.flash = { error: 'Trick count must be between 1 and 10.' };
+  if (isNaN(elementCount) || elementCount < 0 || elementCount > 10) {
+    req.session.flash = { error: 'Trick count must be between 0 and 10.' };
     return res.redirect(backUrl);
   }
 

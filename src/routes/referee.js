@@ -19,7 +19,8 @@ function getAttemptContext(attemptId) {
 
 function findAssignment(competitionId, userId, judgeRoleId) {
   return db.prepare(`
-    SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.granularity, jr.score_min, jr.score_max
+    SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.granularity, jr.score_min, jr.score_max,
+           jr.is_deduction AS isDeduction
     FROM panel_assignments pa
     JOIN judge_roles jr ON jr.id = pa.judge_role_id
     WHERE pa.competition_id = ? AND pa.user_id = ? AND pa.judge_role_id = ?
@@ -69,9 +70,6 @@ function loadAttemptScoreMaps(attemptId) {
   return { scoresByJudgeRoleId, elementScoresByJudgeRoleId };
 }
 
-// Recomputes whether every required judge/trick has submitted for this attempt and flips
-// attempts.status accordingly. Only referee.js's own writes trigger this — advancing the round
-// itself (start/next/complete) is head-judge.js's job, not this route's.
 function recomputeAttemptCompletion(attemptId, competitionId) {
   const attempt = db.prepare('SELECT element_count FROM attempts WHERE id=?').get(attemptId);
   const panelSlots = loadPanelSlots(competitionId);
@@ -118,7 +116,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
 
   const assignments = db.prepare(`
     SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.key, jr.name,
-           jr.granularity, jr.score_min, jr.score_max
+           jr.granularity, jr.score_min, jr.score_max, jr.is_deduction AS isDeduction
     FROM panel_assignments pa
     JOIN judge_roles jr ON jr.id = pa.judge_role_id
     WHERE pa.competition_id = ? AND pa.user_id = ?
@@ -141,9 +139,6 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     WHERE a.id = ?
   `).get(round.current_attempt_id);
 
-  // Own-role contribution (not the full attempt total): once a judge has submitted at least once,
-  // show them what their role currently contributes to the final score — the same combined
-  // drop-high/low value that feeds the leaderboard, not just their own raw number back at them.
   const panelSlots = loadPanelSlots(round.competition_id);
   const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attempt.attempt_id);
   const { breakdown } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
@@ -158,7 +153,13 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
       const valueByElement = new Map(existing.map(e => [e.element_number, e.value]));
       const elements = [];
       for (let n = 1; n <= attempt.element_count; n++) {
-        elements.push({ number: n, value: valueByElement.has(n) ? valueByElement.get(n) : null });
+        elements.push({ number: n, value: valueByElement.has(n) ? valueByElement.get(n) : null, kind: 'trick' });
+      }
+      // 11th line: landing deduction/bonus
+      if (a.isDeduction && attempt.element_count === 10) {
+        elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'landing' });
+      } else if (!a.isDeduction) {
+        elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'bonus' });
       }
       const hasSubmitted = existing.length > 0;
       return { ...a, elements, contribution: hasSubmitted ? contribution : null };
@@ -208,13 +209,35 @@ router.post('/score/elements', (req, res) => {
   if (!assignment) return res.status(403).send('Forbidden');
   if (assignment.granularity !== 'element') return res.status(400).send('This role is scored per attempt, not per trick.');
 
+  // Non-deduction element roles (difficulty) are entered x10 for easier typing 
+  const scale = assignment.isDeduction ? 1 : 10;
+
   const parsedValues = [];
   for (let n = 1; n <= ctx.elementCount; n++) {
-    const parsed = parseFloat(req.body[`element_${n}`]);
+    const raw = parseFloat(req.body[`element_${n}`]);
+    const parsed = isNaN(raw) ? NaN : raw / scale;
     if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
       return res.status(400).send(`Trick ${n}: ${rangeErrorMessage(assignment)}`);
     }
     parsedValues.push([n, parsed]);
+  }
+
+  // 11th line: landing (deduction roles, full 10-skill routines, required) or bonus (non-deduction
+  // roles, always optional). Landing's range is 0-1.0, wider than a regular trick's 0-0.5 cap
+  // (assignment.score_max), so it's validated against a hardcoded bound here, not that field.
+  if (assignment.isDeduction && ctx.elementCount === 10) {
+    const raw = parseFloat(req.body.element_11);
+    if (isNaN(raw) || raw < 0 || raw > 1.0) {
+      return res.status(400).send('Landing: score must be between 0 and 1.0.');
+    }
+    parsedValues.push([11, raw]);
+  } else if (!assignment.isDeduction && req.body.element_11 !== undefined && req.body.element_11 !== '') {
+    const raw = parseFloat(req.body.element_11);
+    const parsed = isNaN(raw) ? NaN : raw / scale;
+    if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
+      return res.status(400).send(`Bonus: ${rangeErrorMessage(assignment)}`);
+    }
+    parsedValues.push([11, parsed]);
   }
 
   const upsert = db.prepare(

@@ -41,19 +41,41 @@
   <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= input.name %></h5>
 
   <% if (input.granularity === 'element') { %>
-  <form method="POST" action="/referee/score/elements" class="d-flex flex-wrap gap-2 align-items-end">
+  <form method="POST" action="/referee/score/elements">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
     <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
-    <% input.elements.forEach(el => { %>
-    <div>
-      <label class="form-label small text-muted mb-1">Trick <%= el.number %></label>
+    <% input.elements.forEach((el, idx) => { %>
+    <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
+        <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
+      <span class="fw-600" style="width:90px">
+        <% if (el.kind === 'landing') { %>Landing
+        <% } else if (el.kind === 'bonus') { %>Bonus
+        <% } else { %>Trick <%= el.number %>
+        <% } %>
+      </span>
+
+      <% if (input.isDeduction) { %>
+      <div class="d-flex gap-3 flex-wrap">
+        <% var deductionOptions = el.kind === 'landing' ? [0, 0.1, 0.2, 0.3, 0.5, 1.0] : [0, 0.1, 0.2, 0.3, 0.4, 0.5]; %>
+        <% deductionOptions.forEach(v => { %>
+        <div class="form-check form-check-inline m-0">
+          <input class="form-check-input" type="radio" name="element_<%= el.number %>"
+                 id="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>" value="<%= v %>"
+                 <%= (el.value !== null ? el.value : 0) === v ? 'checked' : '' %>>
+          <label class="form-check-label small" for="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>"><%= v %></label>
+        </div>
+        <% }) %>
+      </div>
+      <% } else { %>
       <input type="number" name="element_<%= el.number %>"
-             value="<%= el.value !== null ? el.value : '' %>"
-             min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
-             step="0.1" class="form-control form-control-sm" style="width:80px" required>
+             value="<%= el.value !== null ? Math.round(el.value * 10) : '' %>"
+             min="0" step="1" class="form-control form-control-sm" style="width:90px"
+             <% if (el.kind !== 'bonus') { %>required<% } %>>
+      <span class="text-muted small">/10</span>
+      <% } %>
     </div>
     <% }) %>
-    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
+    <button class="btn btn-sm btn-brand rounded-pill mt-2"><i class="bi bi-check-lg"></i> Save</button>
   </form>
   <% if (input.contribution) { %>
   <p class="text-muted small mt-2 mb-0">

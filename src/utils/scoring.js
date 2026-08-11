@@ -51,6 +51,32 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         perTrick.push({ elementNumber, value: elementValue, count: values.length, required: slot.judgeCount, isComplete: elementComplete });
       }
 
+      // Landing (is_deduction roles, e.g. execution — full 10-skill routines only): per CoP
+      // §17.2.3.2, "the sum of the median deductions [considering landing deductions]" — the
+      // landing penalty is judged by the same panel as an 11th element, using the same
+      // drop/combine rule as tricks 1-10, and required for completeness just like any other trick.
+      if (slot.isDeduction && elementCount === 10) {
+        const values = elementScores.get(11) || [];
+        const landingValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
+        combinedTotal += landingValue ?? 0;
+        submittedCount += values.length;
+        const landingComplete = values.length >= slot.judgeCount;
+        if (!landingComplete) roleComplete = false;
+        perTrick.push({ elementNumber: 11, value: landingValue, count: values.length, required: slot.judgeCount, isComplete: landingComplete, isLanding: true });
+      }
+
+      // Bonus (non-deduction element roles, e.g. difficulty): an optional extra addition on top
+      // of the per-trick sum. Always available regardless of elementCount, defaults to 0, and
+      // never required/blocking (unlike landing) — "usually 0" per the product owner.
+      if (!slot.isDeduction) {
+        const values = elementScores.get(11) || [];
+        if (values.length > 0) {
+          const bonusValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
+          combinedTotal += bonusValue ?? 0;
+          perTrick.push({ elementNumber: 11, value: bonusValue, count: values.length, required: slot.judgeCount, isComplete: true, isBonus: true });
+        }
+      }
+
       const roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
       const contribution = roleValue * slot.multiplier;
       total += contribution;
