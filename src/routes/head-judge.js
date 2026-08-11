@@ -88,13 +88,14 @@ function recomputeAttemptCompletion(attemptId, panelTemplateId) {
 // Per-judge (not just per-role) submission status for the current attempt — lets the head judge
 // see exactly who among e.g. the 6 execution judges has and hasn't submitted yet, not just a count.
 // Each judge's `value` is their own single end value in the same shape shown to the judge
-// themselves (e.g. execution: max_value minus that judge's own summed deductions) — not the
-// cross-judge combined role value, and not a raw per-trick list.
+// themselves (e.g. execution: elementCount minus that judge's own summed deductions, per Code of
+// Points — a shortened routine's max is the number of skills actually performed, not a fixed 10)
+// — not the cross-judge combined role value, and not a raw per-trick list.
 function loadJudgeSubmissionStatus(panelTemplateId, competitionId, attemptId, elementCount) {
   if (!panelTemplateId) return [];
   const assignments = db.prepare(`
     SELECT pa.id AS assignment_id, u.name AS judge_name, jr.key AS role_key,
-           jr.name AS role_name, jr.granularity, jr.is_deduction AS isDeduction, jr.max_value AS maxValue,
+           jr.name AS role_name, jr.granularity, jr.is_deduction AS isDeduction,
            s.sort_order
     FROM panel_template_slots s
     JOIN judge_roles jr ON jr.id = s.judge_role_id
@@ -108,8 +109,11 @@ function loadJudgeSubmissionStatus(panelTemplateId, competitionId, attemptId, el
   for (const row of db.prepare('SELECT panel_assignment_id, score FROM scores WHERE attempt_id=?').all(attemptId)) {
     scoresByAssignment.set(row.panel_assignment_id, row.score);
   }
+  // Bounded to the attempt's CURRENT element_count: if the head judge shortened the routine after
+  // some tricks beyond that were already judged, those leftover rows must be disregarded here too,
+  // exactly like computeAttemptScore already does for the final score.
   const elementsByAssignment = new Map();
-  for (const row of db.prepare('SELECT panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=? ORDER BY element_number').all(attemptId)) {
+  for (const row of db.prepare('SELECT panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=? AND element_number<=? ORDER BY element_number').all(attemptId, elementCount)) {
     if (!elementsByAssignment.has(row.panel_assignment_id)) elementsByAssignment.set(row.panel_assignment_id, []);
     elementsByAssignment.get(row.panel_assignment_id).push({ number: row.element_number, value: row.value });
   }
@@ -124,7 +128,7 @@ function loadJudgeSubmissionStatus(panelTemplateId, competitionId, attemptId, el
     let value = score;
     if (a.granularity === 'element' && elements.length > 0) {
       const sum = elements.reduce((acc, el) => acc + el.value, 0);
-      value = a.isDeduction ? a.maxValue - sum : sum;
+      value = a.isDeduction ? elementCount - sum : sum;
     }
     byRole.get(a.role_key).judges.push({ name: a.judge_name, submittedCount, isDone, value });
   }

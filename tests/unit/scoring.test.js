@@ -78,22 +78,40 @@ describe('computeAttemptScore', () => {
 
     const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2);
 
-    // execution: 10 - (0.3 + 0.5) = 9.2
+    // execution: elementCount(2) - (0.3 + 0.5) = 1.2 (max scales to skills actually performed,
+    // per Code of Points — not the role's fixed max_value)
     // difficulty: 2.5, time_of_flight: 8.0, horizontal_displacement: 9.4, head_judge: -0.2
-    expect(result.total).toBeCloseTo(9.2 + 2.5 + 8.0 + 9.4 - 0.2);
+    expect(result.total).toBeCloseTo(1.2 + 2.5 + 8.0 + 9.4 - 0.2);
     expect(result.isComplete).toBe(true);
     expect(result.breakdown).toHaveLength(5);
   });
 
   it('computes a full local-shape attempt score (execution + difficulty - head_judge penalty)', () => {
     const elementScoresByJudgeRoleId = new Map([
-      [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 10 - 0 = 10
+      [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> elementCount(1) - 0 = 1
       [2, new Map([[1, [2.0]]])], // difficulty
     ]);
     const scoresByJudgeRoleId = new Map([[5, [0.4]]]); // head_judge penalty
 
     const result = computeAttemptScore(LOCAL_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
-    expect(result.total).toBeCloseTo(10 + 2.0 - 0.4);
+    expect(result.total).toBeCloseTo(1 + 2.0 - 0.4);
+  });
+
+  it('scales a deduction role\'s max to the number of skills actually performed, not a fixed constant', () => {
+    // A routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10).
+    const elementScoresByJudgeRoleId = new Map([
+      [1, new Map([
+        // trick 1: all 6 judges give 0.1 -> drop 2 hi/2 lo -> keep two 0.1s -> sum 0.2; tricks 2-6: 0
+        [1, [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], [2, [0, 0, 0, 0, 0, 0]], [3, [0, 0, 0, 0, 0, 0]],
+        [4, [0, 0, 0, 0, 0, 0]], [5, [0, 0, 0, 0, 0, 0]], [6, [0, 0, 0, 0, 0, 0]],
+      ])], // total deduction = 0.2
+      [2, new Map([[1, [1]], [2, [1]], [3, [1]], [4, [1]], [5, [1]], [6, [1]]])], // difficulty, 6 tricks
+    ]);
+    const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+    const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 6);
+    const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
+    expect(executionBreakdown.value).toBeCloseTo(6 - 0.2); // not 10 - 0.2
   });
 
   it('is not complete until every trick meets the required judge count for element roles', () => {

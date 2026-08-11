@@ -51,7 +51,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         perTrick.push({ elementNumber, value: elementValue, count: values.length, required: slot.judgeCount, isComplete: elementComplete });
       }
 
-      const roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? slot.maxValue - combinedTotal : combinedTotal);
+      const roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
       const contribution = roleValue * slot.multiplier;
       total += contribution;
       if (!roleComplete) isComplete = false;
