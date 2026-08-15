@@ -19,9 +19,10 @@ test.beforeAll(async ({ request }) => {
 const refereeRoundUrlPattern = /\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/;
 
 // The seed starts the round on Leon's first attempt with Maria assigned as the time_of_flight
-// judge (a single attempt-level mark). Advancing to the next attempt/athlete is head-judge.js's
-// job (Start/Next/Complete) and isn't built yet, so these tests only cover scoring the current
-// turn — not a multi-athlete sequence, which needs that future work to be reachable via the UI.
+// judge (a single attempt-level mark). Its fig panel only staffs time_of_flight and head_judge,
+// so the round can never reach isComplete and head-judge.js can't advance it past this attempt —
+// these tests only cover scoring the current turn. See rounds-entries-leaderboard.spec.js for a
+// fully-staffed Test Panel competition that exercises the real Start/Next/Complete flow.
 test('referee scores the current attempt and the leaderboard reflects it', async ({ page }) => {
   await loginAsReferee(page);
   await page.getByText('Qualifications').click();

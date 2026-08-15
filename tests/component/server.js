@@ -208,6 +208,55 @@ app.post('/test/seed/finals', (req, res) => {
   });
 });
 
+// Seed for head-judge component specs (dashboard + round control) and for referee execution/
+// difficulty rendering specs: a fully-staffed 'local' panel (4 execution, 1 difficulty, 1 head
+// judge), round not started, 2 athletes with a 1-trick attempt each (keeps trick-input rendering
+// small — no landing line, which only applies at the full 10-trick count).
+app.post('/test/seed/head-judge', (req, res) => {
+  cleanupDb();
+
+  const localPanel = db.prepare("SELECT id FROM panel_templates WHERE key='local'").get();
+  const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
+    .run('HJ Cup', 'active', localPanel.id);
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1);
+
+  const sp1 = db.prepare('INSERT INTO sportsmen (name, club, competition_id, group_id) VALUES (?, ?, ?, ?)').run('Leon Weber', 'TSV München', comp.lastInsertRowid, group.lastInsertRowid);
+  const sp2 = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Noah Becker', comp.lastInsertRowid, group.lastInsertRowid);
+  const entry1 = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp1.lastInsertRowid);
+  const entry2 = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 2)').run(round.lastInsertRowid, sp2.lastInsertRowid);
+  const attempt1 = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 1)').run(entry1.lastInsertRowid);
+  const attempt2 = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 1)').run(entry2.lastInsertRowid);
+
+  const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+  const insertAssignment = db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)');
+
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('HJ Head Judge', 'hjhead@test.com', bcrypt.hashSync('hj123', 10), 'head_judge');
+  const headJudge = db.prepare("SELECT id FROM users WHERE email='hjhead@test.com'").get();
+  insertAssignment.run(comp.lastInsertRowid, roleIds.head_judge, headJudge.id);
+
+  for (let i = 1; i <= 4; i++) {
+    db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+      .run(`Exec Judge ${i}`, `hjexec${i}@test.com`, bcrypt.hashSync('ref123', 10), 'referee');
+    const u = db.prepare('SELECT id FROM users WHERE email=?').get(`hjexec${i}@test.com`);
+    insertAssignment.run(comp.lastInsertRowid, roleIds.execution, u.id);
+  }
+
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Diff Judge', 'hjdiff@test.com', bcrypt.hashSync('ref123', 10), 'referee');
+  const diffJudge = db.prepare("SELECT id FROM users WHERE email='hjdiff@test.com'").get();
+  insertAssignment.run(comp.lastInsertRowid, roleIds.difficulty, diffJudge.id);
+
+  res.json({
+    competitionId: Number(comp.lastInsertRowid),
+    groupId: Number(group.lastInsertRowid),
+    roundId: Number(round.lastInsertRowid),
+    attempt1Id: Number(attempt1.lastInsertRowid),
+    attempt2Id: Number(attempt2.lastInsertRowid),
+    sportsman1Id: Number(sp1.lastInsertRowid),
+    sportsman2Id: Number(sp2.lastInsertRowid),
+  });
+});
+
 // Always ensure the test admin user exists so auth tests work without seeding
 const adminHash = bcrypt.hashSync('admin123', 10);
 db.prepare('INSERT OR IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')

@@ -83,6 +83,8 @@
     <% if (!input.contribution.isComplete) { %> (partial — not every judge has submitted yet)<% } %>
   </p>
   <% } %>
+  <% } else if (input.notApplicable) { %>
+  <p class="text-muted small mb-0"><i class="bi bi-dash-circle me-1"></i>No skills were performed for this attempt — this role does not apply.</p>
   <% } else { %>
   <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">

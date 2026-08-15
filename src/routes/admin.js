@@ -11,7 +11,7 @@ function loadPanelSlots(panelTemplateId) {
   if (!panelTemplateId) return [];
   return db.prepare(`
     SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
-           s.drop_low AS dropLow, s.combine, s.multiplier,
+           s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
            jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
            jr.is_deduction AS isDeduction, jr.max_value AS maxValue
     FROM panel_template_slots s
@@ -686,7 +686,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
       WHERE e.round_id = ?
     `).all(prevRound.id);
     const elementScoreRows = db.prepare(`
-      SELECT es.attempt_id, es.judge_role_id, es.element_number, es.value
+      SELECT es.attempt_id, es.judge_role_id, es.panel_assignment_id, es.element_number, es.value
       FROM element_scores es JOIN attempts a ON a.id = es.attempt_id JOIN entries e ON e.id = a.entry_id
       WHERE e.round_id = ?
     `).all(prevRound.id);
@@ -699,6 +699,7 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
       byRole.get(row.judge_role_id).push(row.score);
     }
     const elementScoresByAttempt = new Map();
+    const elementScoresByAssignmentAttempt = new Map();
     for (const row of elementScoreRows) {
       if (!elementScoresByAttempt.has(row.attempt_id)) elementScoresByAttempt.set(row.attempt_id, new Map());
       const byRole = elementScoresByAttempt.get(row.attempt_id);
@@ -706,6 +707,13 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
       const byElement = byRole.get(row.judge_role_id);
       if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
       byElement.get(row.element_number).push(row.value);
+
+      if (!elementScoresByAssignmentAttempt.has(row.attempt_id)) elementScoresByAssignmentAttempt.set(row.attempt_id, new Map());
+      const byRoleAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id);
+      if (!byRoleAssignment.has(row.judge_role_id)) byRoleAssignment.set(row.judge_role_id, new Map());
+      const byAssignment = byRoleAssignment.get(row.judge_role_id);
+      if (!byAssignment.has(row.panel_assignment_id)) byAssignment.set(row.panel_assignment_id, new Map());
+      byAssignment.get(row.panel_assignment_id).set(row.element_number, row.value);
     }
 
     const spMap = new Map();
@@ -715,7 +723,8 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
       const elementScoresByJudgeRoleId = elementScoresByAttempt.get(row.attempt_id) || new Map();
       const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
       if (!hasAnyScore) continue;
-      const { total } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count);
+      const elementScoresByAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id) || new Map();
+      const { total } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count, elementScoresByAssignment);
       spMap.get(row.sportsman_id).push(total);
     }
 

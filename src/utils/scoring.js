@@ -23,8 +23,10 @@ exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', m
 };
 
 // panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction,
-// maxValue, judgeCount, dropHigh, dropLow, combine, multiplier }
-exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount) => {
+// maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
+// elementScoresByAssignment (optional): judgeRoleId -> assignmentId -> elementNumber -> value,
+// only needed for slots with aggregation='per_judge'
+exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment = new Map()) => {
   let total = 0;
   let isComplete = true;
   const breakdown = [];
@@ -37,7 +39,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
     if (slot.granularity === 'element') {
       const elementScores = elementScoresByJudgeRoleId.get(slot.judgeRoleId) || new Map();
       let combinedTotal = 0;
-      let roleComplete = true;
+      let perTrickComplete = true;
       let submittedCount = 0;
       const perTrick = [];
 
@@ -47,28 +49,24 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         combinedTotal += elementValue ?? 0;
         submittedCount += values.length;
         const elementComplete = values.length >= slot.judgeCount;
-        if (!elementComplete) roleComplete = false;
+        if (!elementComplete) perTrickComplete = false;
         perTrick.push({ elementNumber, value: elementValue, count: values.length, required: slot.judgeCount, isComplete: elementComplete });
       }
 
-      // Landing (is_deduction roles, e.g. execution — full 10-skill routines only): per CoP
-      // §17.2.3.2, "the sum of the median deductions [considering landing deductions]" — the
-      // landing penalty is judged by the same panel as an 11th element, using the same
-      // drop/combine rule as tricks 1-10, and required for completeness just like any other trick.
+      // Landing deduction
+      const hasExtra = (slot.isDeduction && elementCount === 10) || (!slot.isDeduction && elementCount > 0);
       if (slot.isDeduction && elementCount === 10) {
         const values = elementScores.get(11) || [];
         const landingValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
         combinedTotal += landingValue ?? 0;
         submittedCount += values.length;
         const landingComplete = values.length >= slot.judgeCount;
-        if (!landingComplete) roleComplete = false;
+        if (!landingComplete) perTrickComplete = false;
         perTrick.push({ elementNumber: 11, value: landingValue, count: values.length, required: slot.judgeCount, isComplete: landingComplete, isLanding: true });
       }
 
-      // Bonus (non-deduction element roles, e.g. difficulty): an optional extra addition on top
-      // of the per-trick sum. Always available regardless of elementCount, defaults to 0, and
-      // never required/blocking (unlike landing) — "usually 0" per the product owner.
-      if (!slot.isDeduction) {
+      // Bonus, e.g. triple bonus
+      if (!slot.isDeduction && elementCount > 0) {
         const values = elementScores.get(11) || [];
         if (values.length > 0) {
           const bonusValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
@@ -77,7 +75,29 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         }
       }
 
-      const roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
+      let roleValue, roleComplete;
+      if (slot.aggregation === 'per_judge') {
+        // Each judge sums their own deductions across the routine first, then those per-judge
+        // final scores are dropped/combined the same way combineScores handles any other list
+        const byAssignment = (elementScoresByAssignment.get(slot.judgeRoleId)) || new Map();
+        const perJudgeScores = [];
+        let fullyDoneCount = 0;
+        const requiredElements = elementCount + (hasExtra ? 1 : 0);
+        for (const elementsMap of byAssignment.values()) {
+          if (elementsMap.size === 0) continue;
+          let personalTotal = 0;
+          for (let n = 1; n <= elementCount; n++) personalTotal += elementsMap.get(n) ?? 0;
+          if (hasExtra) personalTotal += elementsMap.get(11) ?? 0;
+          perJudgeScores.push(slot.isDeduction ? elementCount - personalTotal : personalTotal);
+          if (elementsMap.size >= requiredElements) fullyDoneCount++;
+        }
+        roleValue = exports.combineScores({ scores: perJudgeScores, dropHigh, dropLow, combine, multiplier: 1 }) ?? 0;
+        roleComplete = fullyDoneCount >= slot.judgeCount;
+      } else {
+        roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
+        roleComplete = perTrickComplete;
+      }
+
       const contribution = roleValue * slot.multiplier;
       total += contribution;
       if (!roleComplete) isComplete = false;
@@ -89,6 +109,17 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         required: slot.judgeCount,
         isComplete: roleComplete,
         perTrick,
+      });
+    } else if (elementCount === 0 && slot.judgeRoleKey !== 'head_judge') {
+      // No skills were performed
+      breakdown.push({
+        judgeRoleKey: slot.judgeRoleKey,
+        name: slot.judgeRoleName,
+        value: 0,
+        count: 0,
+        required: slot.judgeCount,
+        isComplete: true,
+        isNotApplicable: true,
       });
     } else {
       const scores = scoresByJudgeRoleId.get(slot.judgeRoleId) || [];

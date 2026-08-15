@@ -10,7 +10,7 @@ function loadPanelSlots(panelTemplateId) {
   if (!panelTemplateId) return [];
   return db.prepare(`
     SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
-           s.drop_low AS dropLow, s.combine, s.multiplier,
+           s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
            jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
            jr.is_deduction AS isDeduction, jr.max_value AS maxValue
     FROM panel_template_slots s
@@ -27,13 +27,19 @@ function loadAttemptScoreMaps(attemptId) {
     scoresByJudgeRoleId.get(row.judge_role_id).push(row.score);
   }
   const elementScoresByJudgeRoleId = new Map();
-  for (const row of db.prepare('SELECT judge_role_id, element_number, value FROM element_scores WHERE attempt_id=?').all(attemptId)) {
+  const elementScoresByAssignment = new Map();
+  for (const row of db.prepare('SELECT judge_role_id, panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=?').all(attemptId)) {
     if (!elementScoresByJudgeRoleId.has(row.judge_role_id)) elementScoresByJudgeRoleId.set(row.judge_role_id, new Map());
     const byElement = elementScoresByJudgeRoleId.get(row.judge_role_id);
     if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
     byElement.get(row.element_number).push(row.value);
+
+    if (!elementScoresByAssignment.has(row.judge_role_id)) elementScoresByAssignment.set(row.judge_role_id, new Map());
+    const byAssignment = elementScoresByAssignment.get(row.judge_role_id);
+    if (!byAssignment.has(row.panel_assignment_id)) byAssignment.set(row.panel_assignment_id, new Map());
+    byAssignment.get(row.panel_assignment_id).set(row.element_number, row.value);
   }
-  return { scoresByJudgeRoleId, elementScoresByJudgeRoleId };
+  return { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment };
 }
 
 // Groups a panel template's slots by shared_assignment_group (slots that must be filled by the
@@ -79,8 +85,8 @@ function rosterReadiness(competitionId, panelTemplateId) {
 function recomputeAttemptCompletion(attemptId, panelTemplateId) {
   const attempt = db.prepare('SELECT element_count FROM attempts WHERE id=?').get(attemptId);
   const panelSlots = loadPanelSlots(panelTemplateId);
-  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attemptId);
-  const result = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attemptId);
+  const result = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count, elementScoresByAssignment);
   db.prepare("UPDATE attempts SET status=? WHERE id=?").run(result.isComplete ? 'scored' : 'pending', attemptId);
   return result;
 }
@@ -251,8 +257,8 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
   `).get(round.current_attempt_id);
 
   const panelSlots = loadPanelSlots(round.panel_template_id);
-  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attempt.attempt_id);
-  const { total, breakdown, isComplete } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attempt.attempt_id);
+  const { total, breakdown, isComplete } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count, elementScoresByAssignment);
   const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
   const judgeStatus = loadJudgeSubmissionStatus(round.panel_template_id, round.competition_id, attempt.attempt_id, attempt.element_count);
 

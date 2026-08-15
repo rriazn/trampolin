@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
+import bcrypt from 'bcryptjs';
 import {
   createApp, loginReferee, seedRefereeScoringData, assignJudge, startRound, getUserIdByEmail, db,
 } from './helpers/createApp.js';
@@ -219,5 +220,144 @@ describe('POST /referee/score/elements (element-granularity roles)', () => {
       .all(data.attemptId, data.roleIds.difficulty);
     expect(rows).toHaveLength(3);
     expect(rows.every(r => r.value === 2.0)).toBe(true);
+  });
+});
+
+describe('POST /referee/score/elements (landing, full 10-skill routines)', () => {
+  let landingData, landingAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Landing Cup', 'active', panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'LC');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Test Athlete', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 10)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+    landingData = { attemptId: attempt.lastInsertRowid, roleIds };
+    landingAgent = await loginReferee(app);
+    assignJudge(comp.lastInsertRowid, roleIds.execution, getUserIdByEmail('ref@test.com'));
+  });
+
+  function fullElementsPayload(overrides = {}) {
+    const payload = { attemptId: landingData.attemptId, judgeRoleId: landingData.roleIds.execution };
+    for (let n = 1; n <= 10; n++) payload[`element_${n}`] = '0.1';
+    payload.element_11 = '0.2';
+    return { ...payload, ...overrides };
+  }
+
+  it('requires element_11 (landing) when the attempt has all 10 skills', async () => {
+    const payload = fullElementsPayload();
+    delete payload.element_11;
+    const res = await landingAgent.post('/referee/score/elements').type('form').send(payload);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a landing value above 1.0', async () => {
+    const res = await landingAgent.post('/referee/score/elements').type('form').send(fullElementsPayload({ element_11: '1.5' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects a regular trick value above 0.5, even though landing allows up to 1.0', async () => {
+    const res = await landingAgent.post('/referee/score/elements').type('form').send(fullElementsPayload({ element_1: '0.8' }));
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts a landing value up to 1.0 and saves it as element_number 11', async () => {
+    const res = await landingAgent.post('/referee/score/elements').type('form').send(fullElementsPayload({ element_11: '1.0' }));
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=11')
+      .get(landingData.attemptId, landingData.roleIds.execution);
+    expect(saved.value).toBe(1.0);
+  });
+});
+
+describe('POST /referee/score/elements (bonus, difficulty)', () => {
+  let bonusData, bonusAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Bonus Cup', 'active', panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'BC');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Test Athlete', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 2)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+    bonusData = { attemptId: attempt.lastInsertRowid, roleIds };
+    bonusAgent = await loginReferee(app);
+    assignJudge(comp.lastInsertRowid, roleIds.difficulty, getUserIdByEmail('ref@test.com'));
+  });
+
+  it('does not require element_11 (bonus is optional)', async () => {
+    const res = await bonusAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: bonusData.attemptId, judgeRoleId: bonusData.roleIds.difficulty, element_1: '10', element_2: '10' });
+    expect(res.status).toBe(302);
+    const bonus = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=11')
+      .get(bonusData.attemptId, bonusData.roleIds.difficulty);
+    expect(bonus).toBeUndefined();
+  });
+
+  it('accepts a bonus value, x10-scaled the same as regular tricks', async () => {
+    const res = await bonusAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: bonusData.attemptId, judgeRoleId: bonusData.roleIds.difficulty, element_1: '10', element_2: '10', element_11: '3' });
+    expect(res.status).toBe(302);
+    const bonus = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=11')
+      .get(bonusData.attemptId, bonusData.roleIds.difficulty);
+    expect(bonus.value).toBe(0.3);
+  });
+});
+
+describe('elementCount 0 (no skills performed for this attempt)', () => {
+  let zeroData, execAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Zero Cup', 'active', panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'ZC');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Test Athlete', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 0)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+    zeroData = { competitionId: comp.lastInsertRowid, groupId: group.lastInsertRowid, roundId: round.lastInsertRowid, attemptId: attempt.lastInsertRowid, roleIds };
+    startRound(zeroData.roundId, zeroData.attemptId);
+
+    const hash = bcrypt.hashSync('secret', 10);
+    db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('Zero Exec Judge', 'zeroexec@test.com', hash, 'referee');
+    db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('Zero TOF Judge', 'zerotof@test.com', hash, 'referee');
+    assignJudge(comp.lastInsertRowid, roleIds.execution, getUserIdByEmail('zeroexec@test.com'));
+    assignJudge(comp.lastInsertRowid, roleIds.time_of_flight, getUserIdByEmail('zerotof@test.com'));
+
+    execAgent = request.agent(app);
+    await execAgent.post('/login').type('form').send({ email: 'zeroexec@test.com', password: 'secret' });
+  });
+
+  it('shows a "does not apply" message for time_of_flight instead of a score form', async () => {
+    const tofAgent = request.agent(app);
+    await tofAgent.post('/login').type('form').send({ email: 'zerotof@test.com', password: 'secret' });
+    const res = await tofAgent.get(`/referee/competitions/${zeroData.competitionId}/groups/${zeroData.groupId}/rounds/${zeroData.roundId}`);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('does not apply');
+  });
+
+  it('rejects a direct POST /score for time_of_flight even though the form is hidden', async () => {
+    const tofAgent = request.agent(app);
+    await tofAgent.post('/login').type('form').send({ email: 'zerotof@test.com', password: 'secret' });
+    const res = await tofAgent.post('/referee/score').type('form')
+      .send({ attemptId: zeroData.attemptId, judgeRoleId: zeroData.roleIds.time_of_flight, score: '8.0' });
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts an empty execution submission as a harmless no-op (no tricks to score)', async () => {
+    const res = await execAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: zeroData.attemptId, judgeRoleId: zeroData.roleIds.execution });
+    expect(res.status).toBe(302);
+    const rows = db.prepare('SELECT COUNT(*) AS n FROM element_scores WHERE attempt_id=?').get(zeroData.attemptId);
+    expect(rows.n).toBe(0);
   });
 });

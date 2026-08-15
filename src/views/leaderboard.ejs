@@ -77,6 +77,11 @@
           <span class="fw-600" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
             <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="text-muted">*</sup><% } %>
           </span>
+          <% if (a.perTrickDetail.length > 0) { %>
+          <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>" title="Per-trick detail">
+            <i class="bi bi-table"></i>
+          </button>
+          <% } %>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
       <% } %>
@@ -90,6 +95,50 @@
     </tbody>
   </table>
 </div>
+
+<% leaderboard.forEach(row => { %>
+<% row.attempts.forEach(a => { %>
+<% if (a.perTrickDetail.length > 0) { %>
+<div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><%= row.name %> — Attempt <%= a.number %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <% a.perTrickDetail.forEach(detail => { %>
+        <h6 class="fw-700"><%= detail.roleName %></h6>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th>Judge</th>
+                <% detail.elementNumbers.forEach(n => { %>
+                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? 'Landing' : 'Bonus') : n %></th>
+                <% }) %>
+              </tr>
+            </thead>
+            <tbody>
+              <% detail.judges.forEach(j => { %>
+              <tr>
+                <td class="fw-600"><%= j.name %></td>
+                <% j.values.forEach(v => { %>
+                <td class="text-center"><%= v !== null ? v : '–' %></td>
+                <% }) %>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+<% }) %>
+<% }) %>
 <% } %>
 </div>
 <%- include('partials/footer') %>

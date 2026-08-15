@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS panel_template_slots (
     -- (e.g. time_of_flight + horizontal_displacement are read off one machine by one judge),
     -- while each slot's own score stays a distinct value/component in the final formula.
     shared_assignment_group  TEXT,
+    -- element-granularity roles only: combine per trick then sum, or per judge then combine
+    aggregation              TEXT    NOT NULL CHECK(aggregation IN ('per_trick','per_judge')) DEFAULT 'per_trick',
     UNIQUE(panel_template_id, judge_role_id)
 );
 

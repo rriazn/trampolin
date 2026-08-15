@@ -19,8 +19,8 @@ function getAttemptContext(attemptId) {
 
 function findAssignment(competitionId, userId, judgeRoleId) {
   return db.prepare(`
-    SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.granularity, jr.score_min, jr.score_max,
-           jr.is_deduction AS isDeduction
+    SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.key AS roleKey, jr.granularity,
+           jr.score_min, jr.score_max, jr.is_deduction AS isDeduction
     FROM panel_assignments pa
     JOIN judge_roles jr ON jr.id = pa.judge_role_id
     WHERE pa.competition_id = ? AND pa.user_id = ? AND pa.judge_role_id = ?
@@ -44,7 +44,7 @@ function loadPanelSlots(competitionId) {
   if (!competition || !competition.panel_template_id) return [];
   return db.prepare(`
     SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
-           s.drop_low AS dropLow, s.combine, s.multiplier,
+           s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
            jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
            jr.is_deduction AS isDeduction, jr.max_value AS maxValue
     FROM panel_template_slots s
@@ -61,20 +61,26 @@ function loadAttemptScoreMaps(attemptId) {
     scoresByJudgeRoleId.get(row.judge_role_id).push(row.score);
   }
   const elementScoresByJudgeRoleId = new Map();
-  for (const row of db.prepare('SELECT judge_role_id, element_number, value FROM element_scores WHERE attempt_id=?').all(attemptId)) {
+  const elementScoresByAssignment = new Map();
+  for (const row of db.prepare('SELECT judge_role_id, panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=?').all(attemptId)) {
     if (!elementScoresByJudgeRoleId.has(row.judge_role_id)) elementScoresByJudgeRoleId.set(row.judge_role_id, new Map());
     const byElement = elementScoresByJudgeRoleId.get(row.judge_role_id);
     if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
     byElement.get(row.element_number).push(row.value);
+
+    if (!elementScoresByAssignment.has(row.judge_role_id)) elementScoresByAssignment.set(row.judge_role_id, new Map());
+    const byAssignment = elementScoresByAssignment.get(row.judge_role_id);
+    if (!byAssignment.has(row.panel_assignment_id)) byAssignment.set(row.panel_assignment_id, new Map());
+    byAssignment.get(row.panel_assignment_id).set(row.element_number, row.value);
   }
-  return { scoresByJudgeRoleId, elementScoresByJudgeRoleId };
+  return { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment };
 }
 
 function recomputeAttemptCompletion(attemptId, competitionId) {
   const attempt = db.prepare('SELECT element_count FROM attempts WHERE id=?').get(attemptId);
   const panelSlots = loadPanelSlots(competitionId);
-  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attemptId);
-  const result = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attemptId);
+  const result = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count, elementScoresByAssignment);
   db.prepare("UPDATE attempts SET status=? WHERE id=?").run(result.isComplete ? 'scored' : 'pending', attemptId);
 }
 
@@ -140,8 +146,8 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
   `).get(round.current_attempt_id);
 
   const panelSlots = loadPanelSlots(round.competition_id);
-  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId } = loadAttemptScoreMaps(attempt.attempt_id);
-  const { breakdown } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attempt.attempt_id);
+  const { breakdown } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count, elementScoresByAssignment);
   const breakdownByRoleId = new Map(panelSlots.map((slot, i) => [slot.judgeRoleId, breakdown[i]]));
 
   const inputs = assignments.map(a => {
@@ -155,14 +161,18 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
       for (let n = 1; n <= attempt.element_count; n++) {
         elements.push({ number: n, value: valueByElement.has(n) ? valueByElement.get(n) : null, kind: 'trick' });
       }
-      // 11th line: landing deduction/bonus
+      // 11th line: landing (full 10-skill routines) or bonus for difficulty
       if (a.isDeduction && attempt.element_count === 10) {
         elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'landing' });
-      } else if (!a.isDeduction) {
+      } else if (!a.isDeduction && attempt.element_count > 0) {
         elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'bonus' });
       }
       const hasSubmitted = existing.length > 0;
       return { ...a, elements, contribution: hasSubmitted ? contribution : null };
+    }
+    // No skills were performed at all
+    if (attempt.element_count === 0 && a.key !== 'head_judge') {
+      return { ...a, notApplicable: true };
     }
     const existing = db.prepare(
       'SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?'
@@ -183,6 +193,9 @@ router.post('/score', (req, res) => {
   const assignment = findAssignment(ctx.competitionId, userId, judgeRoleId);
   if (!assignment) return res.status(403).send('Forbidden');
   if (assignment.granularity !== 'attempt') return res.status(400).send('This role is scored per trick, not per attempt.');
+  if (ctx.elementCount === 0 && assignment.roleKey !== 'head_judge') {
+    return res.status(400).send('No skills were performed for this attempt — this role does not apply.');
+  }
 
   const parsed = parseFloat(score);
   if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
@@ -222,16 +235,14 @@ router.post('/score/elements', (req, res) => {
     parsedValues.push([n, parsed]);
   }
 
-  // 11th line: landing (deduction roles, full 10-skill routines, required) or bonus (non-deduction
-  // roles, always optional). Landing's range is 0-1.0, wider than a regular trick's 0-0.5 cap
-  // (assignment.score_max), so it's validated against a hardcoded bound here, not that field.
+  // 11th line: landing or bonus
   if (assignment.isDeduction && ctx.elementCount === 10) {
     const raw = parseFloat(req.body.element_11);
     if (isNaN(raw) || raw < 0 || raw > 1.0) {
       return res.status(400).send('Landing: score must be between 0 and 1.0.');
     }
     parsedValues.push([11, raw]);
-  } else if (!assignment.isDeduction && req.body.element_11 !== undefined && req.body.element_11 !== '') {
+  } else if (!assignment.isDeduction && ctx.elementCount > 0 && req.body.element_11 !== undefined && req.body.element_11 !== '') {
     const raw = parseFloat(req.body.element_11);
     const parsed = isNaN(raw) ? NaN : raw / scale;
     if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {

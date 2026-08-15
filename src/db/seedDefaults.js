@@ -1,7 +1,5 @@
 const JUDGE_ROLES = [
-  // execution/difficulty are scored per trick (see element_scores); the others are one value per attempt.
-  // Per-trick deduction: 0, 0.1, 0.2, 0.3 or 0.5 (score_max here). Landing is the exception —
-  // it goes up to 1.0 and is validated against a hardcoded bound in referee.js, not this field.
+  // execution/difficulty are scored per trick (see element_scores); the others are one value per attempt
   { key: 'execution',               name: 'Execution',                granularity: 'element', is_deduction: 1, max_value: 10,   score_min: 0, score_max: 0.5 },
   { key: 'difficulty',              name: 'Difficulty',                granularity: 'element', is_deduction: 0, max_value: null, score_min: 0, score_max: null },
   { key: 'time_of_flight',          name: 'Time of Flight',            granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },
@@ -15,7 +13,7 @@ const PANEL_TEMPLATES = [
     name: 'FIG Panel',
     description: 'Full FIG-style panel: 6 execution, 1 difficulty, 1 time of flight, 1 horizontal displacement, 1 head judge (penalties).',
     slots: [
-      // execution: per trick, drop 2 highest + 2 lowest deductions, sum the remaining 2, sum across tricks, then 10 - total (is_deduction).
+      // execution: per trick, drop 2 highest + 2 lowest deductions, sum the remaining 2, sum across tricks, then 10 - total (is_deduction)
       { role: 'execution',               judge_count: 6, drop_high: 2, drop_low: 2, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty',              judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'time_of_flight',          judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 3, shared_assignment_group: 'tof_hd' },
@@ -28,7 +26,9 @@ const PANEL_TEMPLATES = [
     name: 'Local Panel',
     description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties).',
     slots: [
-      { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1 },
+      // per_judge: each judge sums their own deductions across the routine, then drop 1 high/1
+      // low of those per-judge final scores and sum what's left
+      { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1, aggregation: 'per_judge' },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },
     ],
@@ -63,8 +63,8 @@ module.exports = function applySeedDefaults(db) {
   );
   const insertSlot = db.prepare(`
     INSERT OR IGNORE INTO panel_template_slots
-      (panel_template_id,judge_role_id,judge_count,drop_high,drop_low,combine,multiplier,sort_order,shared_assignment_group)
-    VALUES (?,?,?,?,?,?,?,?,?)
+      (panel_template_id,judge_role_id,judge_count,drop_high,drop_low,combine,multiplier,sort_order,shared_assignment_group,aggregation)
+    VALUES (?,?,?,?,?,?,?,?,?,?)
   `);
 
   for (const t of PANEL_TEMPLATES) {
@@ -80,7 +80,8 @@ module.exports = function applySeedDefaults(db) {
         s.combine,
         s.multiplier,
         s.sort_order,
-        s.shared_assignment_group || null
+        s.shared_assignment_group || null,
+        s.aggregation || 'per_trick'
       );
     }
   }

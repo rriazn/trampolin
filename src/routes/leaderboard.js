@@ -6,7 +6,7 @@ function loadPanelSlots(panelTemplateId) {
   if (!panelTemplateId) return [];
   return db.prepare(`
     SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
-           s.drop_low AS dropLow, s.combine, s.multiplier,
+           s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
            jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
            jr.is_deduction AS isDeduction, jr.max_value AS maxValue
     FROM panel_template_slots s
@@ -65,6 +65,17 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     JOIN entries e ON e.id = a.entry_id
     WHERE e.round_id = ?
   `).all(rid);
+  // Raw per-judge per-trick values for the audit table, separate from the combined breakdown above
+  const elementDetailRows = db.prepare(`
+    SELECT es.attempt_id, es.judge_role_id, es.panel_assignment_id, es.element_number, es.value, u.name AS judge_name
+    FROM element_scores es
+    JOIN attempts a ON a.id = es.attempt_id
+    JOIN entries e ON e.id = a.entry_id
+    JOIN panel_assignments pa ON pa.id = es.panel_assignment_id
+    JOIN users u ON u.id = pa.user_id
+    WHERE e.round_id = ?
+    ORDER BY u.name
+  `).all(rid);
 
   const scoresByAttempt = new Map();
   for (const row of scoreRows) {
@@ -82,6 +93,23 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
     byElement.get(row.element_number).push(row.value);
   }
+  const detailByAttempt = new Map();
+  const elementScoresByAssignmentAttempt = new Map();
+  for (const row of elementDetailRows) {
+    if (!detailByAttempt.has(row.attempt_id)) detailByAttempt.set(row.attempt_id, new Map());
+    const byRole = detailByAttempt.get(row.attempt_id);
+    if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, new Map());
+    const byJudge = byRole.get(row.judge_role_id);
+    if (!byJudge.has(row.judge_name)) byJudge.set(row.judge_name, new Map());
+    byJudge.get(row.judge_name).set(row.element_number, row.value);
+
+    if (!elementScoresByAssignmentAttempt.has(row.attempt_id)) elementScoresByAssignmentAttempt.set(row.attempt_id, new Map());
+    const byRoleAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id);
+    if (!byRoleAssignment.has(row.judge_role_id)) byRoleAssignment.set(row.judge_role_id, new Map());
+    const byAssignment = byRoleAssignment.get(row.judge_role_id);
+    if (!byAssignment.has(row.panel_assignment_id)) byAssignment.set(row.panel_assignment_id, new Map());
+    byAssignment.get(row.panel_assignment_id).set(row.element_number, row.value);
+  }
 
   const map = new Map();
   for (const row of entryRows) {
@@ -98,15 +126,32 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid', (req, res) => {
     const scoresByJudgeRoleId = scoresByAttempt.get(row.attempt_id) || new Map();
     const elementScoresByJudgeRoleId = elementScoresByAttempt.get(row.attempt_id) || new Map();
     const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
+    const elementScoresByAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id) || new Map();
     const result = panelSlots.length > 0
-      ? computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count)
+      ? computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count, elementScoresByAssignment)
       : { total: 0, breakdown: [], isComplete: false };
+
+    const roleDetail = detailByAttempt.get(row.attempt_id) || new Map();
+    const perTrickDetail = panelSlots
+      .filter(slot => slot.granularity === 'element')
+      .map(slot => {
+        const byJudge = roleDetail.get(slot.judgeRoleId) || new Map();
+        if (byJudge.size === 0) return null;
+        const elementNumbers = [...new Set([...byJudge.values()].flatMap(m => [...m.keys()]))].sort((a, b) => a - b);
+        const judges = [...byJudge.entries()].map(([name, values]) => ({
+          name,
+          values: elementNumbers.map(n => values.has(n) ? values.get(n) : null),
+        }));
+        return { roleName: slot.judgeRoleName, isDeduction: slot.isDeduction, elementNumbers, judges };
+      })
+      .filter(Boolean);
 
     sp.attempts.push({
       number: row.attempt_number,
       finalScore: hasAnyScore ? result.total : null,
       breakdown: result.breakdown,
       isComplete: result.isComplete,
+      perTrickDetail,
     });
   }
 
