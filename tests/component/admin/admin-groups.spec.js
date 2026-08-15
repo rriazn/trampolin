@@ -23,7 +23,7 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto(`/admin/competitions/${seed.competitionId}/groups`);
+    await page.goto(`/admin/competitions/${seed.competitionId}/groups`);
   });
 
   // Page structure

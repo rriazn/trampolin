@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const xlsxFixtures = require('../fixtures/xlsx');
 
 let seed;
 
@@ -23,7 +24,7 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
+    await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
   });
 
   // Page Structure
@@ -145,8 +146,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file shows a success message', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-empty.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importEmpty());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 0 skipped (missing name).')).toBeVisible();
   });
@@ -154,8 +154,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file adds the athletes to the list and skips athletes without name', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/sportsmen-import.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.sportsmenImport());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 1 added, 1 skipped (missing name).')).toBeVisible();
     const newAthleteRow = page.getByRole('row').filter({ hasText: 'Charlie' });
@@ -166,7 +165,7 @@ test.describe('when logged in as admin', () => {
   test('importing with a matching group abbreviation assigns the athlete to that group', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    await form.locator('input[type=file]').setInputFiles('tests/component/fixtures/sportsmen-import-group.xlsx');
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.sportsmenImportGroup());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 1 added, 0 skipped (missing name).')).toBeVisible();
     const row = page.getByRole('row').filter({ hasText: 'David' });
@@ -177,7 +176,7 @@ test.describe('when logged in as admin', () => {
   test('importing with an unknown group abbreviation adds the athlete and shows a warning', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    await form.locator('input[type=file]').setInputFiles('tests/component/fixtures/sportsmen-import-unknown-group.xlsx');
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.sportsmenImportUnknownGroup());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('1 without group (unknown abbreviation)')).toBeVisible();
     const row = page.getByRole('row').filter({ hasText: 'Eve' });
@@ -188,8 +187,7 @@ test.describe('when logged in as admin', () => {
   test('submitting an invalid file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-invalid.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importInvalid());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (missing name).')).toBeVisible();
   });
@@ -209,8 +207,7 @@ test.describe('when logged in as admin', () => {
   test('submitting a non-Excel file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import.txt';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.nonExcelFile());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (missing name).')).toBeVisible();
   });

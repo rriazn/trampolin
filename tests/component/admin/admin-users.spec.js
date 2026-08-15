@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const xlsxFixtures = require('../fixtures/xlsx');
 
 let seed;
 
@@ -167,8 +168,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file shows a success message', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-empty.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importEmpty());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 0 skipped (duplicate/invalid).')).toBeVisible();
   });
@@ -176,8 +176,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file adds the users to the list and skips duplicates', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.usersImport());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 1 added, 1 skipped (duplicate/invalid).')).toBeVisible();
     const newUserRow = page.getByRole('row').filter({ hasText: 'Referee Six' });
@@ -188,8 +187,7 @@ test.describe('when logged in as admin', () => {
   test('submitting an invalid file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-invalid.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importInvalid());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
   });
@@ -197,8 +195,7 @@ test.describe('when logged in as admin', () => {
   test('submitting a non-Excel file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import.txt';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.nonExcelFile());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
   });
