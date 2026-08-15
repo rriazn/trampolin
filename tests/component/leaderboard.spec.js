@@ -107,11 +107,14 @@ test.describe('with scored athletes', () => {
     await expect(bobRow.locator('td').nth(5)).toContainText('9.100');
   });
 
-  test('shows judge count below each attempt score', async ({ page }) => {
+  test('shows a per-role breakdown tooltip and a partial marker on each attempt score', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    // scored seed has 1 referee → each scored attempt shows "(1 judges)"
+    // scored seed only submits the time_of_flight role, so every attempt is partial (marked *)
+    // and the other roles are absent from the breakdown title.
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
-    await expect(bobRow.locator('td').nth(4)).toContainText('1 judges');
+    const scoreSpan = bobRow.locator('td').nth(4).locator('span');
+    await expect(scoreSpan).toHaveAttribute('title', /Time of Flight: 9\.20/);
+    await expect(bobRow.locator('td').nth(4)).toContainText('*');
   });
 
   test('renders one attempt column per attempt number in the round', async ({ page }) => {
@@ -127,5 +130,70 @@ test.describe('with scored athletes', () => {
     // Alice only has 1 attempt; her Attempt 2 cell (td index 5: rank/athlete/club/group/attempt1/attempt2) should be "–"
     const aliceRow = page.locator('table tbody tr').filter({ hasText: 'Alice' });
     await expect(aliceRow.locator('td').nth(5)).toContainText('–');
+  });
+});
+
+test.describe('per-trick transparency table', () => {
+  let hjSeed;
+
+  async function loginAs(page, email, password) {
+    await page.goto('/login');
+    await page.locator('input[name=email]').fill(email);
+    await page.locator('input[name=password]').fill(password);
+    await page.locator('button[type=submit]').click();
+  }
+
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post('/test/seed/head-judge');
+    hjSeed = await res.json();
+  });
+
+  test.beforeAll(async ({ browser }) => {
+    // Start the round and submit real execution/difficulty scores through the actual UI so the
+    // leaderboard has real element_scores rows to build the transparency table from.
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    await loginAs(page, 'hjhead@test.com', 'hj123');
+    await page.waitForURL('/head-judge');
+    await page.goto(`/head-judge/competitions/${hjSeed.competitionId}/groups/${hjSeed.groupId}/rounds/${hjSeed.roundId}`);
+    await page.getByRole('button', { name: /Start Round/ }).click();
+    await page.getByRole('button', { name: /Logout/ }).click();
+    await page.waitForURL('/login');
+
+    await loginAs(page, 'hjexec1@test.com', 'ref123');
+    await page.waitForURL('/referee');
+    await page.getByText('Group A · Finals').click();
+    await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
+    await page.locator('input[type=radio][name=element_1][value="0.3"]').check();
+    await page.getByRole('button', { name: /Save/ }).click();
+    await page.getByRole('button', { name: /Logout/ }).click();
+    await page.waitForURL('/login');
+
+    await loginAs(page, 'hjdiff@test.com', 'ref123');
+    await page.waitForURL('/referee');
+    await page.getByText('Group A · Finals').click();
+    await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
+    await page.locator('input[name=element_1]').fill('15');
+    await page.getByRole('button', { name: /Save/ }).click();
+
+    await context.close();
+  });
+
+  test('shows a per-trick detail button once execution/difficulty scores exist', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${hjSeed.competitionId}/groups/${hjSeed.groupId}/rounds/${hjSeed.roundId}`);
+    await expect(page.locator('button[data-bs-toggle="modal"]')).toBeVisible();
+  });
+
+  test('opening the modal shows Execution and Difficulty tables with the judges\' raw values', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${hjSeed.competitionId}/groups/${hjSeed.groupId}/rounds/${hjSeed.roundId}`);
+    await page.locator('button[data-bs-toggle="modal"]').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('heading', { name: 'Execution' })).toBeVisible();
+    await expect(modal.getByRole('heading', { name: 'Difficulty' })).toBeVisible();
+    await expect(modal.getByText('Exec Judge 1')).toBeVisible();
+    await expect(modal.getByText('Diff Judge')).toBeVisible();
+    await expect(modal).toContainText('0.3');
+    await expect(modal).toContainText('1.5'); // difficulty's "15" entry, true value 1.5
   });
 });

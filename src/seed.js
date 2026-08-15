@@ -2,21 +2,29 @@ const bcrypt = require('bcryptjs');
 require('./db/database');
 const db = require('./db/database');
 
+// 6 execution + 1 difficulty + 1 time_of_flight/horizontal_displacement (shared machine, one
+// person) = 8 distinct referees. A judge may only hold one role per competition.
 const REFEREES = [
   { name: 'Maria Schmidt',   email: 'maria@example.com' },
   { name: 'Thomas Müller',   email: 'thomas@example.com' },
   { name: 'Anna Kovacs',     email: 'anna@example.com' },
   { name: 'Pierre Dupont',   email: 'pierre@example.com' },
   { name: 'Sofia Rossi',     email: 'sofia@example.com' },
+  { name: 'Julia Novak',     email: 'julia@example.com' },
+  { name: 'Erik Larsson',    email: 'erik@example.com' },
+  { name: 'Nina Petrova',    email: 'nina@example.com' },
 ];
 
+const HEAD_JUDGE = { name: 'Karl Weber', email: 'karl@example.com' };
+
 const COMPETITION_NAME = 'Spring Championship';
+const PANEL_TEMPLATE_KEY = 'fig';
 
 const GROUPS = [
-  { name: 'Junior Men' },
-  { name: 'Junior Women' },
-  { name: 'Senior Men' },
-  { name: 'Senior Women' },
+  { name: 'Junior Men',   abbreviation: 'JM' },
+  { name: 'Junior Women', abbreviation: 'JW' },
+  { name: 'Senior Men',   abbreviation: 'SM' },
+  { name: 'Senior Women', abbreviation: 'SW' },
 ];
 
 const SPORTSMEN = [
@@ -52,19 +60,48 @@ async function seed() {
   }
   console.log(`Created ${refCount} referee(s) (password: referee123)`);
 
+  const refereeIds = REFEREES.map(r => db.prepare('SELECT id FROM users WHERE email=?').get(r.email).id);
+
+  const headJudgeHash = await bcrypt.hash('headjudge123', 10);
+  const headJudgeInfo = insertUser.run(HEAD_JUDGE.name, HEAD_JUDGE.email, headJudgeHash, 'head_judge');
+  if (headJudgeInfo.changes) console.log(`Created head judge: ${HEAD_JUDGE.email} / headjudge123`);
+  const headJudgeId = db.prepare('SELECT id FROM users WHERE email=?').get(HEAD_JUDGE.email).id;
+
+  const panelTemplate = db.prepare('SELECT id FROM panel_templates WHERE key=?').get(PANEL_TEMPLATE_KEY);
+
   let comp = db.prepare('SELECT id FROM competitions WHERE name=?').get(COMPETITION_NAME);
   if (!comp) {
-    const result = db.prepare("INSERT INTO competitions (name, status) VALUES (?, 'active')").run(COMPETITION_NAME);
+    const result = db.prepare("INSERT INTO competitions (name, status, panel_template_id) VALUES (?, 'active', ?)")
+      .run(COMPETITION_NAME, panelTemplate.id);
     comp = { id: result.lastInsertRowid };
     console.log(`Created competition: ${COMPETITION_NAME}`);
   } else {
+    db.prepare('UPDATE competitions SET panel_template_id=? WHERE id=? AND panel_template_id IS NULL')
+      .run(panelTemplate.id, comp.id);
     console.log('Competition already exists, skipping.');
   }
 
-  const insertGroup = db.prepare('INSERT OR IGNORE INTO groups (name, competition_id) VALUES (?,?)');
+  const roleIdByKey = new Map(
+    db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id])
+  );
+  const insertAssignment = db.prepare(
+    'INSERT OR IGNORE INTO panel_assignments (competition_id,judge_role_id,user_id) VALUES (?,?,?)'
+  );
+  // referees[0..5] -> execution (6), referees[6] -> difficulty, referees[7] -> time_of_flight
+  // + horizontal_displacement (one person covers both, read off the same machine).
+  for (const refereeId of refereeIds.slice(0, 6)) {
+    insertAssignment.run(comp.id, roleIdByKey.get('execution'), refereeId);
+  }
+  insertAssignment.run(comp.id, roleIdByKey.get('difficulty'), refereeIds[6]);
+  insertAssignment.run(comp.id, roleIdByKey.get('time_of_flight'), refereeIds[7]);
+  insertAssignment.run(comp.id, roleIdByKey.get('horizontal_displacement'), refereeIds[7]);
+  insertAssignment.run(comp.id, roleIdByKey.get('head_judge'), headJudgeId);
+  console.log(`Assigned judge panel for "${COMPETITION_NAME}" (fig panel).`);
+
+  const insertGroup = db.prepare('INSERT OR IGNORE INTO groups (name, competition_id, abbreviation) VALUES (?,?,?)');
   const groupMap = {};
   for (const g of GROUPS) {
-    insertGroup.run(g.name, comp.id);
+    insertGroup.run(g.name, comp.id, g.abbreviation);
     const row = db.prepare('SELECT id FROM groups WHERE name=? AND competition_id=?').get(g.name, comp.id);
     groupMap[g.name] = row.id;
   }

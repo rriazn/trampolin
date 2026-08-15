@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const xlsxFixtures = require('../fixtures/xlsx');
 
 let seed;
 
@@ -23,7 +24,7 @@ test.describe('when logged in as admin', () => {
 
   test.beforeEach(async ({ page }) => {
     await loginAsAdmin(page);
-    page.goto('/admin/users');
+    await page.goto('/admin/users');
   });
 
   // Page structure
@@ -49,7 +50,7 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Referee One' });
     await expect(row.getByRole('cell', { name: 'Referee One' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'referee1@test.com' })).toBeVisible();
-    await expect(row.getByRole('cell', { name: 'referee', exact: true })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'Referee', exact: true })).toBeVisible();
     await expect(row.getByRole('cell', { name: seed.referee1.created_at })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
@@ -59,10 +60,25 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Test Admin' });
     await expect(row.getByRole('cell', { name: 'Test Admin' })).toBeVisible();
     await expect(row.getByRole('cell', { name: 'admin@test.com' })).toBeVisible();
-    await expect(row.getByRole('cell', { name: 'admin', exact: true })).toBeVisible();
+    await expect(row.getByRole('cell', { name: 'Admin', exact: true })).toBeVisible();
     await expect(row.getByRole('cell', { name: seed.admin.created_at })).toBeVisible();
     await expect(row.locator('a.btn-outline-secondary')).toBeVisible();   // edit link
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
+  });
+
+  test('shows a head_judge user with a gold "Head Judge" badge', async ({ page }) => {
+    await page.goto('/admin/users/new');
+    await page.locator('input[name=name]').fill('Badge Head Judge');
+    await page.locator('input[name=email]').fill('badgeheadjudge@test.com');
+    await page.locator('input[name=password]').fill('secret123');
+    await page.locator('select[name=role]').selectOption('head_judge');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.waitForURL('/admin/users');
+
+    const row = page.getByRole('row').filter({ hasText: 'Badge Head Judge' });
+    const badge = row.locator('.badge');
+    await expect(badge).toHaveText('Head Judge');
+    await expect(badge).toHaveClass(/bg-gold/);
   });
 
   // Buttons
@@ -152,8 +168,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file shows a success message', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-empty.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importEmpty());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 0 skipped (duplicate/invalid).')).toBeVisible();
   });
@@ -161,8 +176,7 @@ test.describe('when logged in as admin', () => {
   test('submitting the form with a file adds the users to the list and skips duplicates', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.usersImport());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 1 added, 1 skipped (duplicate/invalid).')).toBeVisible();
     const newUserRow = page.getByRole('row').filter({ hasText: 'Referee Six' });
@@ -173,8 +187,7 @@ test.describe('when logged in as admin', () => {
   test('submitting an invalid file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import-invalid.xlsx';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.importInvalid());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
   });
@@ -182,8 +195,7 @@ test.describe('when logged in as admin', () => {
   test('submitting a non-Excel file skips all rows', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
-    const filePath = 'tests/component/fixtures/users-import.txt';
-    await form.locator('input[type=file]').setInputFiles(filePath);
+    await form.locator('input[type=file]').setInputFiles(xlsxFixtures.nonExcelFile());
     await form.getByRole('button', { name: /Upload/ }).click();
     await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
   });

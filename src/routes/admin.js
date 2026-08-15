@@ -5,9 +5,25 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
-const { trimmedMean } = require('../utils/scoring');
+const { computeAttemptScore } = require('../utils/scoring');
+
+function loadPanelSlots(panelTemplateId) {
+  if (!panelTemplateId) return [];
+  return db.prepare(`
+    SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
+           s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
+           jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
+           jr.is_deduction AS isDeduction, jr.max_value AS maxValue
+    FROM panel_template_slots s
+    JOIN judge_roles jr ON jr.id = s.judge_role_id
+    WHERE s.panel_template_id = ?
+    ORDER BY s.sort_order
+  `).all(panelTemplateId);
+}
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+
+const normalizeRole = (role) => ['admin', 'head_judge'].includes(role) ? role : 'referee';
 
 router.use(requireAdmin);
 
@@ -63,7 +79,7 @@ router.post('/users', async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
-      .run(name, email, hash, role === 'admin' ? 'admin' : 'referee');
+      .run(name, email, hash, normalizeRole(role));
   } catch {
     return res.status(422).render('admin/user-form', {
       user: null, action: '/admin/users',
@@ -98,7 +114,7 @@ router.post('/users/upload', upload.single('file'), async (req, res) => {
       ? await bcrypt.hash(String(row['Password'] || row['password']), 10)
       : defaultHash;
     const role = String(row['Role'] || row['role'] || 'referee').trim().toLowerCase();
-    const info = insert.run(name, email, hash, role === 'admin' ? 'admin' : 'referee');
+    const info = insert.run(name, email, hash, normalizeRole(role));
     info.changes ? created++ : skipped++;
   }
   req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (duplicate/invalid).` };
@@ -125,10 +141,10 @@ router.post('/users/:id', async (req, res) => {
     if (password) {
       const hash = await bcrypt.hash(password, 12);
       db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?')
-        .run(name, email, hash, role === 'admin' ? 'admin' : 'referee', req.params.id);
+        .run(name, email, hash, normalizeRole(role), req.params.id);
     } else {
       db.prepare('UPDATE users SET name=?,email=?,role=? WHERE id=?')
-        .run(name, email, role === 'admin' ? 'admin' : 'referee', req.params.id);
+        .run(name, email, normalizeRole(role), req.params.id);
     }
   } catch {
     return res.status(422).render('admin/user-form', {
@@ -148,18 +164,21 @@ router.get('/competitions', (req, res) => {
 });
 
 router.get('/competitions/new', (req, res) => {
-  res.render('admin/competition-form', { competition: null, action: '/admin/competitions' });
+  const panelTemplates = db.prepare('SELECT * FROM panel_templates ORDER BY name').all();
+  res.render('admin/competition-form', { competition: null, action: '/admin/competitions', panelTemplates });
 });
 
 router.post('/competitions', (req, res) => {
-  const { name, date } = req.body;
+  const { name, date, panel_template_id } = req.body;
   if (!name || !name.trim()) {
+    const panelTemplates = db.prepare('SELECT * FROM panel_templates ORDER BY name').all();
     return res.status(400).render('admin/competition-form', {
-      competition: null, action: '/admin/competitions',
+      competition: null, action: '/admin/competitions', panelTemplates,
       error: 'Competition name is required.',
     });
   }
-  db.prepare('INSERT INTO competitions (name,date) VALUES (?,?)').run(name.trim(), date || null);
+  db.prepare('INSERT INTO competitions (name,date,panel_template_id) VALUES (?,?,?)')
+    .run(name.trim(), date || null, panel_template_id || null);
   req.session.flash = { success: `Competition "${name}" created.` };
   res.redirect('/admin/competitions');
 });
@@ -167,18 +186,21 @@ router.post('/competitions', (req, res) => {
 router.get('/competitions/:id/edit', (req, res) => {
   const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
   if (!competition) return res.status(404).send('Not found');
-  res.render('admin/competition-form', { competition, action: `/admin/competitions/${competition.id}` });
+  const panelTemplates = db.prepare('SELECT * FROM panel_templates ORDER BY name').all();
+  res.render('admin/competition-form', { competition, action: `/admin/competitions/${competition.id}`, panelTemplates });
 });
 
 router.post('/competitions/:id', (req, res) => {
-  const { name, date } = req.body;
+  const { name, date, panel_template_id } = req.body;
   if (!name || !name.trim()) {
+    const panelTemplates = db.prepare('SELECT * FROM panel_templates ORDER BY name').all();
     return res.status(400).render('admin/competition-form', {
-      competition: null, action: '/admin/competitions',
+      competition: null, action: '/admin/competitions', panelTemplates,
       error: 'Competition name is required.',
     });
   }
-  db.prepare('UPDATE competitions SET name=?,date=? WHERE id=?').run(name, date || null, req.params.id);
+  db.prepare('UPDATE competitions SET name=?,date=?,panel_template_id=? WHERE id=?')
+    .run(name, date || null, panel_template_id || null, req.params.id);
   req.session.flash = { success: 'Competition updated.' };
   res.redirect('/admin/competitions');
 });
@@ -195,6 +217,158 @@ router.post('/competitions/:id/delete', (req, res) => {
   db.prepare('DELETE FROM competitions WHERE id=?').run(req.params.id);
   req.session.flash = { success: 'Competition and all associated data deleted.' };
   res.redirect('/admin/competitions');
+});
+
+
+// ── Judges ───────────────────────────────────────────────────────────────────
+
+// Groups a panel template's slots by shared_assignment_group (slots that must be filled by the
+// same person, e.g. time_of_flight + horizontal_displacement), falling back to a solo group per
+// slot for everything else. Returns an array in slot/sort_order.
+function groupPanelSlots(panelTemplateId) {
+  const slots = db.prepare(`
+    SELECT s.judge_role_id, s.judge_count, s.shared_assignment_group, jr.key AS role_key, jr.name AS role_name
+    FROM panel_template_slots s
+    JOIN judge_roles jr ON jr.id = s.judge_role_id
+    WHERE s.panel_template_id = ?
+    ORDER BY s.sort_order
+  `).all(panelTemplateId);
+
+  const groups = new Map();
+  for (const slot of slots) {
+    const groupKey = slot.shared_assignment_group || `solo_${slot.judge_role_id}`;
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, { groupKey, judgeRoleIds: [], names: [], required: slot.judge_count, roleKey: slot.role_key });
+    }
+    const group = groups.get(groupKey);
+    group.judgeRoleIds.push(slot.judge_role_id);
+    group.names.push(slot.role_name);
+  }
+  return [...groups.values()];
+}
+
+// Resolves the full shared-assignment group (all sibling judge_role_ids) a given judge_role_id
+// belongs to, for the given panel template.
+function resolveAssignmentGroup(panelTemplateId, judgeRoleId) {
+  return groupPanelSlots(panelTemplateId).find(g => g.judgeRoleIds.includes(judgeRoleId));
+}
+
+router.get('/competitions/:id/judges', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+
+  if (!competition.panel_template_id) {
+    return res.render('admin/judges', { competition, panelTemplate: null, roles: [] });
+  }
+
+  const panelTemplate = db.prepare('SELECT * FROM panel_templates WHERE id=?').get(competition.panel_template_id);
+  const groups = groupPanelSlots(competition.panel_template_id);
+
+  const candidateQuery = db.prepare('SELECT id, name, email FROM users WHERE role = ? ORDER BY name');
+  // A user may only hold one role (one shared-assignment group) per competition, so anyone
+  // already assigned to ANY role here is ineligible for every other role's candidate list.
+  const assignedAnywhereIds = new Set(
+    db.prepare('SELECT DISTINCT user_id FROM panel_assignments WHERE competition_id = ?').all(competition.id).map(r => r.user_id)
+  );
+
+  const roles = groups.map(group => {
+    const placeholders = group.judgeRoleIds.map(() => '?').join(',');
+    const rows = db.prepare(`
+      SELECT pa.id AS assignment_id, pa.judge_role_id, u.id AS user_id, u.name, u.email
+      FROM panel_assignments pa
+      JOIN users u ON u.id = pa.user_id
+      WHERE pa.competition_id = ? AND pa.judge_role_id IN (${placeholders})
+      ORDER BY u.name
+    `).all(competition.id, ...group.judgeRoleIds);
+
+    const byUser = new Map();
+    for (const row of rows) {
+      if (!byUser.has(row.user_id)) byUser.set(row.user_id, { user_id: row.user_id, name: row.name, email: row.email, assignment_id: row.assignment_id, roleIds: new Set() });
+      byUser.get(row.user_id).roleIds.add(row.judge_role_id);
+    }
+    // Only users covering EVERY role in the group count as fully assigned to it.
+    const assigned = [...byUser.values()].filter(u => u.roleIds.size === group.judgeRoleIds.length);
+    const eligibleRole = group.roleKey === 'head_judge' ? 'head_judge' : 'referee';
+    const candidates = candidateQuery.all(eligibleRole).filter(u => !assignedAnywhereIds.has(u.id));
+
+    return {
+      groupKey: group.groupKey,
+      judgeRoleId: group.judgeRoleIds[0], // representative id posted back on assign
+      name: group.names.join(' & '),
+      required: group.required,
+      assigned,
+      candidates,
+    };
+  });
+
+  res.render('admin/judges', { competition, panelTemplate, roles });
+});
+
+router.post('/competitions/:id/judges', (req, res) => {
+  const { judge_role_id, user_id } = req.body;
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+
+  const group = resolveAssignmentGroup(competition.panel_template_id, Number(judge_role_id));
+  if (!group) return res.status(400).send('Unknown role for this competition\'s panel.');
+  const anchor = `#role-${group.groupKey}`;
+
+  // A user may only hold one role (one shared-assignment group) per competition.
+  const alreadyAssignedElsewhere = db.prepare(
+    'SELECT 1 FROM panel_assignments WHERE competition_id = ? AND user_id = ? AND judge_role_id NOT IN (' +
+      group.judgeRoleIds.map(() => '?').join(',') + ')'
+  ).get(competition.id, user_id, ...group.judgeRoleIds);
+  if (alreadyAssignedElsewhere) {
+    req.session.flash = { error: 'This user is already assigned to another judge role in this competition.' };
+    return res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
+  }
+
+  const placeholders = group.judgeRoleIds.map(() => '?').join(',');
+  const fullyAssignedCount = db.prepare(`
+    SELECT COUNT(*) AS n FROM (
+      SELECT user_id FROM panel_assignments
+      WHERE competition_id = ? AND judge_role_id IN (${placeholders})
+      GROUP BY user_id HAVING COUNT(DISTINCT judge_role_id) = ?
+    )
+  `).get(competition.id, ...group.judgeRoleIds, group.judgeRoleIds.length).n;
+
+  if (fullyAssignedCount >= group.required) {
+    req.session.flash = { error: `${group.names.join(' & ')} is already fully staffed.` };
+    return res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
+  }
+
+  try {
+    const insert = db.prepare('INSERT INTO panel_assignments (competition_id,judge_role_id,user_id) VALUES (?,?,?)');
+    db.transaction(() => {
+      for (const roleId of group.judgeRoleIds) insert.run(competition.id, roleId, user_id);
+    })();
+    req.session.flash = { success: 'Judge assigned.' };
+  } catch {
+    req.session.flash = { error: 'This judge is already assigned to that role.' };
+  }
+  res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
+});
+
+router.post('/competitions/:id/judges/:assignmentId/delete', (req, res) => {
+  const competition = db.prepare('SELECT * FROM competitions WHERE id=?').get(req.params.id);
+  if (!competition) return res.status(404).send('Competition not found');
+
+  const assignment = db.prepare('SELECT * FROM panel_assignments WHERE id=? AND competition_id=?')
+    .get(req.params.assignmentId, competition.id);
+  if (!assignment) return res.status(404).send('Assignment not found');
+
+  const group = resolveAssignmentGroup(competition.panel_template_id, assignment.judge_role_id);
+  const anchor = group ? `#role-${group.groupKey}` : '';
+
+  if (group) {
+    const placeholders = group.judgeRoleIds.map(() => '?').join(',');
+    db.prepare(`DELETE FROM panel_assignments WHERE competition_id=? AND user_id=? AND judge_role_id IN (${placeholders})`)
+      .run(competition.id, assignment.user_id, ...group.judgeRoleIds);
+  } else {
+    db.prepare('DELETE FROM panel_assignments WHERE id=? AND competition_id=?').run(assignment.id, competition.id);
+  }
+  req.session.flash = { success: 'Judge unassigned.' };
+  res.redirect(`/admin/competitions/${req.params.id}/judges${anchor}`);
 });
 
 
@@ -496,26 +670,66 @@ router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', (req, res) => {
   `).get(round.group_id, round.round_order);
 
   if (prevRound) {
-    const rows = db.prepare(`
-      SELECT e.sportsman_id, a.attempt_number, s.score
+    const panelSlots = loadPanelSlots(competition.panel_template_id);
+
+    const attemptRows = db.prepare(`
+      SELECT a.id AS attempt_id, a.element_count, e.sportsman_id
       FROM entries e
       JOIN attempts a ON a.entry_id = e.id
-      LEFT JOIN scores s ON s.attempt_id = a.id
       WHERE e.round_id = ?
       ORDER BY e.sportsman_id, a.attempt_number
     `).all(prevRound.id);
 
+    const scoreRows = db.prepare(`
+      SELECT s.attempt_id, s.judge_role_id, s.score
+      FROM scores s JOIN attempts a ON a.id = s.attempt_id JOIN entries e ON e.id = a.entry_id
+      WHERE e.round_id = ?
+    `).all(prevRound.id);
+    const elementScoreRows = db.prepare(`
+      SELECT es.attempt_id, es.judge_role_id, es.panel_assignment_id, es.element_number, es.value
+      FROM element_scores es JOIN attempts a ON a.id = es.attempt_id JOIN entries e ON e.id = a.entry_id
+      WHERE e.round_id = ?
+    `).all(prevRound.id);
+
+    const scoresByAttempt = new Map();
+    for (const row of scoreRows) {
+      if (!scoresByAttempt.has(row.attempt_id)) scoresByAttempt.set(row.attempt_id, new Map());
+      const byRole = scoresByAttempt.get(row.attempt_id);
+      if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, []);
+      byRole.get(row.judge_role_id).push(row.score);
+    }
+    const elementScoresByAttempt = new Map();
+    const elementScoresByAssignmentAttempt = new Map();
+    for (const row of elementScoreRows) {
+      if (!elementScoresByAttempt.has(row.attempt_id)) elementScoresByAttempt.set(row.attempt_id, new Map());
+      const byRole = elementScoresByAttempt.get(row.attempt_id);
+      if (!byRole.has(row.judge_role_id)) byRole.set(row.judge_role_id, new Map());
+      const byElement = byRole.get(row.judge_role_id);
+      if (!byElement.has(row.element_number)) byElement.set(row.element_number, []);
+      byElement.get(row.element_number).push(row.value);
+
+      if (!elementScoresByAssignmentAttempt.has(row.attempt_id)) elementScoresByAssignmentAttempt.set(row.attempt_id, new Map());
+      const byRoleAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id);
+      if (!byRoleAssignment.has(row.judge_role_id)) byRoleAssignment.set(row.judge_role_id, new Map());
+      const byAssignment = byRoleAssignment.get(row.judge_role_id);
+      if (!byAssignment.has(row.panel_assignment_id)) byAssignment.set(row.panel_assignment_id, new Map());
+      byAssignment.get(row.panel_assignment_id).set(row.element_number, row.value);
+    }
+
     const spMap = new Map();
-    for (const row of rows) {
-      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, new Map());
-      const attempts = spMap.get(row.sportsman_id);
-      if (!attempts.has(row.attempt_number)) attempts.set(row.attempt_number, []);
-      if (row.score !== null) attempts.get(row.attempt_number).push(row.score);
+    for (const row of attemptRows) {
+      if (!spMap.has(row.sportsman_id)) spMap.set(row.sportsman_id, []);
+      const scoresByJudgeRoleId = scoresByAttempt.get(row.attempt_id) || new Map();
+      const elementScoresByJudgeRoleId = elementScoresByAttempt.get(row.attempt_id) || new Map();
+      const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
+      if (!hasAnyScore) continue;
+      const elementScoresByAssignment = elementScoresByAssignmentAttempt.get(row.attempt_id) || new Map();
+      const { total } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, row.element_count, elementScoresByAssignment);
+      spMap.get(row.sportsman_id).push(total);
     }
 
     const ranked = [];
-    for (const [spId, attempts] of spMap) {
-      const scores = [...attempts.values()].map(trimmedMean).filter(s => s !== null);
+    for (const [spId, scores] of spMap) {
       ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
     }
     ranked.sort((a, b) => {

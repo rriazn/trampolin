@@ -28,7 +28,8 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   if (req.session.user) {
-    return res.redirect(req.session.user.role === 'admin' ? '/admin' : '/referee');
+    const landing = { admin: '/admin', head_judge: '/head-judge' }[req.session.user.role] || '/referee';
+    return res.redirect(landing);
   }
   res.redirect('/login');
 });
@@ -39,6 +40,7 @@ if (process.env.ENABLE_TEST_SEED === 'true') {
 }
 app.use('/admin', require('./routes/admin'));
 app.use('/referee', require('./routes/referee'));
+app.use('/head-judge', require('./routes/head-judge'));
 app.use('/leaderboard', require('./routes/leaderboard'));
 
 app.use((err, req, res, _next) => {

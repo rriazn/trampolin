@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
-import { createApp, loginAdmin, seedCompetitionData, seedReferee } from '../helpers/createApp.js';
+import { createApp, loginAdmin, seedCompetitionData, seedReferee, db } from '../helpers/createApp.js';
 
 const app = createApp();
 let agent;
@@ -63,6 +63,21 @@ describe('POST /admin/competitions', () => {
         expect(res.status).toBe(400);
         expect(res.text).toContain('Competition name is required.');
     });
+
+    it('persists the selected panel_template_id', async () => {
+        const figId = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get().id;
+        const res = await agent.post('/admin/competitions').type('form').send({ name: 'Test Comp With Panel', panel_template_id: figId });
+        expect(res.status).toBe(302);
+        const comp = db.prepare('SELECT panel_template_id FROM competitions WHERE name=?').get('Test Comp With Panel');
+        expect(comp.panel_template_id).toBe(figId);
+    });
+
+    it('leaves panel_template_id null when not provided', async () => {
+        const res = await agent.post('/admin/competitions').type('form').send({ name: 'Test Comp No Panel' });
+        expect(res.status).toBe(302);
+        const comp = db.prepare('SELECT panel_template_id FROM competitions WHERE name=?').get('Test Comp No Panel');
+        expect(comp.panel_template_id).toBeNull();
+    });
 });
 
 describe('GET /admin/competitions/:id/edit', () => {
@@ -101,6 +116,14 @@ describe('POST /admin/competitions/:id', () => {
         const res = await agent.post(`/admin/competitions/${data.competitionId}`).type('form').send({ name: '' });
         expect(res.status).toBe(400);
         expect(res.text).toContain('Competition name is required.');
+    });
+
+    it('updates the panel_template_id', async () => {
+        const localId = db.prepare("SELECT id FROM panel_templates WHERE key='local'").get().id;
+        const res = await agent.post(`/admin/competitions/${data.competitionId}`).type('form').send({ name: 'Updated Name', panel_template_id: localId });
+        expect(res.status).toBe(302);
+        const comp = db.prepare('SELECT panel_template_id FROM competitions WHERE id=?').get(data.competitionId);
+        expect(comp.panel_template_id).toBe(localId);
     });
 });
 

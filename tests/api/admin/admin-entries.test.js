@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
-import { createApp, loginAdmin, seedCompetitionData, seedReferee, entryExists, getEntryStartOrders } from '../helpers/createApp.js';
+import { createApp, loginAdmin, seedCompetitionData, seedReferee, entryExists, getEntryStartOrders, assignJudge, getUserIdByEmail, db } from '../helpers/createApp.js';
+import bcrypt from 'bcryptjs';
 
 const app = createApp();
 let agent;
@@ -123,5 +124,46 @@ describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/entries/add-all'
         expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries`);
         expect(listRes.text).toContain('Alice');
+    });
+});
+
+describe('GET .../entries ranks athletes by their real panel-computed score from the previous round', () => {
+    let compId, groupId, round2Id;
+
+    beforeAll(() => {
+        const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+        const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Ranking Cup', 'active', panelTemplate.id);
+        compId = comp.lastInsertRowid;
+        const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', compId, 'RC');
+        groupId = group.lastInsertRowid;
+        const round1 = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(groupId, 'Qualifications', 1);
+        const round2 = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(groupId, 'Finals', 2);
+        round2Id = round2.lastInsertRowid;
+
+        const eve = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Eve', compId, groupId);
+        const frank = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Frank', compId, groupId);
+        const entryEve = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round1.lastInsertRowid, eve.lastInsertRowid);
+        const entryFrank = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 2)').run(round1.lastInsertRowid, frank.lastInsertRowid);
+        const attemptEve = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 1)').run(entryEve.lastInsertRowid);
+        const attemptFrank = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 1)').run(entryFrank.lastInsertRowid);
+
+        const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+        const hash = bcrypt.hashSync('secret', 10);
+        db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('Ranking Judge', 'rankingjudge@test.com', hash, 'referee');
+        const judgeId = getUserIdByEmail('rankingjudge@test.com');
+        const assignmentId = assignJudge(compId, roleIds.time_of_flight, judgeId);
+
+        db.prepare('INSERT INTO scores (attempt_id, panel_assignment_id, judge_role_id, score) VALUES (?,?,?,?)')
+            .run(attemptEve.lastInsertRowid, assignmentId, roleIds.time_of_flight, 9.0);
+        db.prepare('INSERT INTO scores (attempt_id, panel_assignment_id, judge_role_id, score) VALUES (?,?,?,?)')
+            .run(attemptFrank.lastInsertRowid, assignmentId, roleIds.time_of_flight, 7.0);
+    });
+
+    it('ranks the higher real computed score #1 in the sportsman dropdown', async () => {
+        const res = await agent.get(`/admin/competitions/${compId}/groups/${groupId}/rounds/${round2Id}/entries`);
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('ranked by Qualifications');
+        expect(res.text).toMatch(/#1[^<]*·[^<]*Eve/);
+        expect(res.text).toMatch(/#2[^<]*·[^<]*Frank/);
     });
 });

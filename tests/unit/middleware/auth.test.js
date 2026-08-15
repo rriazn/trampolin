@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { requireAuth, requireAdmin, requireReferee } from '../../../src/middleware/auth.js';
+import { requireAuth, requireAdmin, requireReferee, requireHeadJudge } from '../../../src/middleware/auth.js';
 
 function mockRes() {
   const res = {};
@@ -93,6 +93,45 @@ describe('requireReferee', () => {
     const res = mockRes();
     const next = vi.fn();
     requireReferee(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe('requireHeadJudge', () => {
+  it('returns 403 when no session user', () => {
+    const req = { session: {} };
+    const res = mockRes();
+    const next = vi.fn();
+    requireHeadJudge(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.send).toHaveBeenCalledWith('Forbidden');
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 for a referee', () => {
+    const req = { session: { user: { id: 1, role: 'referee' } } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireHeadJudge(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next when user is head_judge', () => {
+    const req = { session: { user: { id: 1, role: 'head_judge' } } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireHeadJudge(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('calls next when user is admin', () => {
+    const req = { session: { user: { id: 1, role: 'admin' } } };
+    const res = mockRes();
+    const next = vi.fn();
+    requireHeadJudge(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
   });

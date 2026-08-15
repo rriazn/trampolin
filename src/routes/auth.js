@@ -16,7 +16,8 @@ router.post('/login', async (req, res) => {
   req.session.regenerate((err) => {
     if (err) throw err;
     req.session.user = { id: user.id, name: user.name, role: user.role };
-    res.redirect(user.role === 'admin' ? '/admin' : '/referee');
+    const landing = { admin: '/admin', head_judge: '/head-judge' }[user.role] || '/referee';
+    res.redirect(landing);
   });
 });
 

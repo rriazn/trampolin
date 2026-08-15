@@ -35,6 +35,22 @@ test.describe('when logged in as admin', () => {
   test('has the correct form fields', async ({ page }) => {
     await expect(page.locator('input[name=name]')).toBeVisible();
     await expect(page.locator('input[name=date]')).toBeVisible();
+    await expect(page.locator('select[name=panel_template_id]')).toBeVisible();
+  });
+
+  test('shows the Judge Panel label and hint text', async ({ page }) => {
+    await expect(page.getByText('Judge Panel')).toBeVisible();
+    await expect(page.getByText('Applies to every group and round in this competition.')).toBeVisible();
+  });
+
+  test('defaults to no panel selected', async ({ page }) => {
+    await expect(page.locator('select[name=panel_template_id]')).toHaveValue('');
+  });
+
+  test('offers the FIG and Local judge panel options', async ({ page }) => {
+    const select = page.locator('select[name=panel_template_id]');
+    await expect(select.locator('option', { hasText: 'FIG Panel' })).toHaveCount(1);
+    await expect(select.locator('option', { hasText: 'Local Panel' })).toHaveCount(1);
   });
 
   test('has a "Create" button', async ({ page }) => {
@@ -69,8 +85,21 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByText('Name is required.')).toBeVisible();
   });
 
+  test('creating a competition with a judge panel selected persists it', async ({ page }) => {
+    await page.locator('input[name=name]').fill('Panel Selected Cup');
+    await page.locator('select[name=panel_template_id]').selectOption({ label: 'FIG Panel' });
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.waitForURL('/admin/competitions');
+
+    const row = page.getByRole('row').filter({ hasText: 'Panel Selected Cup' });
+    await row.locator('a.btn-outline-secondary').click();
+    await page.waitForURL(/\/admin\/competitions\/\d+\/edit/);
+    const selected = page.locator('select[name=panel_template_id] option:checked');
+    await expect(selected).toHaveText('FIG Panel');
+  });
+
   //------------- Editing competitions --------------
-  
+
   test.describe('edit competitions form', () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(`/admin/competitions/${seed.competitionId}/edit`);
@@ -111,5 +140,11 @@ test.describe('when logged in as admin', () => {
       await page.waitForURL('/admin/competitions');
       await expect(page.getByRole('row').filter({ hasText: 'Spring Open' })).toBeVisible();
     });
+  });
+
+  test('editing a competition already on the FIG panel pre-selects it', async ({ page }) => {
+    await page.goto(`/admin/competitions/${seed.panelCompetitionId}/edit`);
+    const selected = page.locator('select[name=panel_template_id] option:checked');
+    await expect(selected).toHaveText('FIG Panel');
   });
 });

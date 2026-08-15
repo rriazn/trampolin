@@ -21,13 +21,14 @@ test.beforeAll(async ({ request }) => {
   expect(res.ok()).toBeTruthy();
 });
 
-test('admin creates and fully sets up a competition, and a referee can score it', async ({ page }) => {
+test('admin creates and fully sets up a competition with a judge panel and staffs it', async ({ page }) => {
   await loginAsAdmin(page);
 
-  // Create a new competition
+  // Create a new competition on the FIG judge panel
   await page.goto('/admin/competitions');
   await page.getByRole('link', { name: /New Competition/ }).click();
   await page.locator('input[name=name]').fill('Winter Cup');
+  await page.locator('select[name=panel_template_id]').selectOption({ label: 'FIG Panel' });
   await page.getByRole('button', { name: /Create/ }).click();
   await page.waitForURL('/admin/competitions');
 
@@ -79,12 +80,19 @@ test('admin creates and fully sets up a competition, and a referee can score it'
     page.getByRole('button', { name: /Create All Attempts/ }).click(),
   ]);
 
-  // Switch to referee and verify the round appears on the scoring dashboard
+  // Staff the panel: assign Maria (the seeded referee) to the difficulty role
+  await page.goto(`/admin/competitions/${compId}/judges`);
+  const difficultyCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Difficulty' }) });
+  await difficultyCard.locator('select[name=user_id]').selectOption({ label: 'Maria Schmidt · maria@example.com' });
+  await difficultyCard.getByRole('button', { name: /Assign/ }).click();
+  await expect(difficultyCard.getByText('Maria Schmidt')).toBeVisible();
+
+  // The round hasn't been started yet (that's the head judge's job, not built here), so it
+  // correctly does not appear on the referee's scoring dashboard until then.
   await page.getByRole('button', { name: /Logout/ }).click();
   await page.waitForURL('/login');
   await loginAsReferee(page);
-  await expect(page.getByText('Finals')).toBeVisible();
-  await expect(page.getByText('Winter Cup')).toBeVisible();
+  await expect(page.getByText('Finals')).not.toBeVisible();
 });
 
 test('admin deletes a group and its rounds disappear from the referee scoring dashboard', async ({ page }) => {

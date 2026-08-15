@@ -2,6 +2,28 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Reset Database",
+      "type": "shell",
+      "command": "rm -f src/data/trampolin.db src/data/trampolin.db-shm src/data/trampolin.db-wal",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Seed Database",
+      "type": "shell",
+      "command": "node src/seed.js",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Start Dev Server",
       "type": "shell",
       "command": "npm run dev",

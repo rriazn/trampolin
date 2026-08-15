@@ -12,7 +12,13 @@
 </div>
 
 <div class="container" style="padding-bottom:3rem">
-<% if (leaderboard.length === 0) { %>
+<% if (!panelConfigured) { %>
+<div class="card p-5 text-center text-muted mt-4">
+  <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
+  <h5>Panel not configured</h5>
+  <p class="mb-0 small">This competition doesn't have a judge panel selected yet.</p>
+</div>
+<% } else if (leaderboard.length === 0) { %>
 <div class="card p-5 text-center text-muted mt-4">
   <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5>No athletes scored yet</h5>
@@ -20,6 +26,9 @@
 <% } else { %>
 <div class="lb-table-wrap mt-0">
   <table class="table table-hover mb-0" style="background:#fff">
+    <caption class="text-muted small px-2" style="caption-side:bottom">
+      <sup>*</sup> not every judge has submitted yet · hover a score for its per-role breakdown
+    </caption>
     <thead>
       <tr>
         <th style="width:70px;background:var(--brand)" class="text-white text-center">Rank</th>
@@ -62,9 +71,17 @@
            const a = row.attempts.find(a => a.number === n);
       %>
       <td class="text-center align-middle">
-        <% if (a && a.finalScore !== null) { %>
-          <span class="fw-600"><%= a.finalScore.toFixed(3) %></span>
-          <span class="text-muted small d-block">(<%= a.scoreCount %> judges)</span>
+        <% if (a && a.finalScore !== null) {
+             const breakdownTitle = a.breakdown.map(b => `${b.name}: ${b.value.toFixed(2)}`).join(' · ');
+        %>
+          <span class="fw-600" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
+            <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="text-muted">*</sup><% } %>
+          </span>
+          <% if (a.perTrickDetail.length > 0) { %>
+          <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>" title="Per-trick detail">
+            <i class="bi bi-table"></i>
+          </button>
+          <% } %>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
       <% } %>
@@ -78,6 +95,50 @@
     </tbody>
   </table>
 </div>
+
+<% leaderboard.forEach(row => { %>
+<% row.attempts.forEach(a => { %>
+<% if (a.perTrickDetail.length > 0) { %>
+<div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><%= row.name %> — Attempt <%= a.number %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <% a.perTrickDetail.forEach(detail => { %>
+        <h6 class="fw-700"><%= detail.roleName %></h6>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th>Judge</th>
+                <% detail.elementNumbers.forEach(n => { %>
+                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? 'Landing' : 'Bonus') : n %></th>
+                <% }) %>
+              </tr>
+            </thead>
+            <tbody>
+              <% detail.judges.forEach(j => { %>
+              <tr>
+                <td class="fw-600"><%= j.name %></td>
+                <% j.values.forEach(v => { %>
+                <td class="text-center"><%= v !== null ? v : '–' %></td>
+                <% }) %>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+<% }) %>
+<% }) %>
 <% } %>
 </div>
 <%- include('partials/footer') %>

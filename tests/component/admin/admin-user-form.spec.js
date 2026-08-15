@@ -39,6 +39,11 @@ test.describe('when logged in as admin', () => {
     await expect(page.locator('select[name=role]')).toBeVisible();
   });
 
+  test('offers a Head Judge role option', async ({ page }) => {
+    const option = page.locator('select[name=role] option[value=head_judge]');
+    await expect(option).toHaveText('Head Judge');
+  });
+
   test('has a "Create" button', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
   });
@@ -71,7 +76,18 @@ test.describe('when logged in as admin', () => {
     const newUserRow = page.getByRole('row').filter({ hasText: 'New Referee' });
     await expect(newUserRow.getByRole('cell', { name: 'New Referee' })).toBeVisible();
     await expect(newUserRow.getByRole('cell', { name: 'newreferee@test.com' })).toBeVisible();
-    await expect(newUserRow.getByRole('cell', { name: 'referee', exact: true })).toBeVisible();
+    await expect(newUserRow.getByRole('cell', { name: 'Referee', exact: true })).toBeVisible();
+  });
+
+  test('creating a new user with the head_judge role labels it "Head Judge" in the list', async ({ page }) => {
+    await page.locator('input[name=name]').fill('New Head Judge');
+    await page.locator('input[name=email]').fill('newheadjudge@test.com');
+    await page.locator('input[name=password]').fill('secret123');
+    await page.locator('select[name=role]').selectOption('head_judge');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.waitForURL('/admin/users');
+    const newUserRow = page.getByRole('row').filter({ hasText: 'New Head Judge' });
+    await expect(newUserRow.getByRole('cell', { name: 'Head Judge', exact: true })).toBeVisible();
   });
 
   test('creating a user with an email that already exists shows an error', async ({ page }) => {
@@ -148,6 +164,20 @@ test.describe('when logged in as admin', () => {
       await page.waitForURL('/admin/users');
       await expect(page.getByRole('row').filter({ hasText: 'Referee Renamed' })).toBeVisible();
     });
+  });
+
+  test('editing a head_judge user pre-selects the Head Judge role', async ({ page }) => {
+    await page.locator('input[name=name]').fill('Existing Head Judge');
+    await page.locator('input[name=email]').fill('existingheadjudge@test.com');
+    await page.locator('input[name=password]').fill('secret123');
+    await page.locator('select[name=role]').selectOption('head_judge');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.waitForURL('/admin/users');
+
+    const row = page.getByRole('row').filter({ hasText: 'Existing Head Judge' });
+    await row.locator('a.btn-outline-secondary').click();
+    await page.waitForURL(/\/admin\/users\/\d+\/edit/);
+    await expect(page.locator('select[name=role]')).toHaveValue('head_judge');
   });
 
   // Breadcrumbs (same on both new and edit forms)

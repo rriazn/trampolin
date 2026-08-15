@@ -1,0 +1,92 @@
+<%- include('../partials/header', { title: 'Judges – ' + competition.name, activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
+        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
+        <li class="breadcrumb-item active text-white"><%= competition.name %></li>
+      </ol>
+    </nav>
+    <h1><i class="bi bi-person-badge me-2"></i>Judges</h1>
+    <p>
+      <%= competition.name %>
+      <% if (panelTemplate) { %>
+        &nbsp;·&nbsp; <%= panelTemplate.name %>
+      <% } %>
+    </p>
+  </div>
+</div>
+
+<div class="container">
+<% if (!panelTemplate) { %>
+  <div class="card p-4 text-center text-muted">
+    <i class="bi bi-exclamation-circle fs-1 mb-2 d-block" style="color:#b0b8d4"></i>
+    <h5>No judge panel selected</h5>
+    <p class="mb-3">Choose a judge panel on the competition's edit page before assigning judges.</p>
+    <a href="/admin/competitions/<%= competition.id %>/edit" class="btn btn-brand rounded-pill mx-auto" style="width:fit-content">
+      <i class="bi bi-pencil me-1"></i>Edit Competition
+    </a>
+  </div>
+<% } else { %>
+  <p class="text-muted small mb-4">
+    <i class="bi bi-info-circle me-1"></i>
+    Judges are assigned once per competition and apply to every group and round within it.
+  </p>
+
+  <% roles.forEach(role => { %>
+  <div class="card p-4 mb-4" id="role-<%= role.groupKey %>">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-700 mb-0"><i class="bi bi-person-video3 me-2"></i><%= role.name %></h5>
+      <span class="badge rounded-pill <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
+        <%= role.assigned.length %> of <%= role.required %> filled
+      </span>
+    </div>
+
+    <% if (role.assigned.length === 0) { %>
+    <p class="text-muted small mb-3">No judges assigned yet.</p>
+    <% } else { %>
+    <div class="table-card card mb-3">
+      <table class="table mb-0">
+        <thead><tr><th>Name</th><th>Email</th><th></th></tr></thead>
+        <tbody>
+        <% role.assigned.forEach(a => { %>
+        <tr>
+          <td class="fw-600"><i class="bi bi-person me-2 text-muted"></i><%= a.name %></td>
+          <td class="text-muted"><%= a.email %></td>
+          <td class="text-end">
+            <form method="POST" action="/admin/competitions/<%= competition.id %>/judges/<%= a.assignment_id %>/delete" class="d-inline"
+                  onsubmit="return confirm('Remove <%= a.name %> from <%= role.name %>?')">
+              <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <% if (role.assigned.length >= role.required) { %>
+    <p class="text-muted small mb-0"><i class="bi bi-check-circle me-1"></i>This role is fully staffed.</p>
+    <% } else if (role.candidates.length === 0) { %>
+    <p class="text-muted small mb-0"><i class="bi bi-exclamation-circle me-1"></i>No more eligible users to assign. Add users with the right role first.</p>
+    <% } else { %>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/judges" class="row g-3 align-items-end">
+      <input type="hidden" name="judge_role_id" value="<%= role.judgeRoleId %>">
+      <div class="col-md-9">
+        <select name="user_id" class="form-select" required>
+          <% role.candidates.forEach(c => { %>
+          <option value="<%= c.id %>"><%= c.name %> · <%= c.email %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Assign</button>
+      </div>
+    </form>
+    <% } %>
+  </div>
+  <% }) %>
+<% } %>
+</div>
+<%- include('../partials/footer') %>
