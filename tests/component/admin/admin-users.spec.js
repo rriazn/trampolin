@@ -192,11 +192,11 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
   });
 
-  test('submitting a non-Excel file skips all rows', async ({ page }) => {
+  test('submitting a non-Excel file is rejected', async ({ page }) => {
     await page.getByRole('button', { name: /Import Excel/ }).click();
     const form = page.locator('#uploadForm');
     await form.locator('input[type=file]').setInputFiles(xlsxFixtures.nonExcelFile());
     await form.getByRole('button', { name: /Upload/ }).click();
-    await expect(page.getByText('Import complete: 0 added, 2 skipped (duplicate/invalid).')).toBeVisible();
+    await expect(page.getByText('Invalid file type. Please upload an Excel file.')).toBeVisible();
   });
 });

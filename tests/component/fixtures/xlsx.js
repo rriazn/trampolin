@@ -26,9 +26,9 @@ function importInvalid() {
   ]);
 }
 
+// content sniffing (file-type) rejects this outright before it ever reaches XLSX.read
 function nonExcelFile() {
-  const csv = 'not,a,header\nrow1,x,y\nrow2,a,b\n';
-  return { name: 'not-excel.txt', mimeType: 'text/plain', buffer: Buffer.from(csv) };
+  return { name: 'not-excel.txt', mimeType: 'text/plain', buffer: Buffer.from('not an excel file\n') };
 }
 
 function usersImport() {
