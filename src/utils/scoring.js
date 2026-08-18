@@ -24,8 +24,6 @@ exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', m
 
 // panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction,
 // maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
-// elementScoresByAssignment (optional): judgeRoleId -> assignmentId -> elementNumber -> value,
-// only needed for slots with aggregation='per_judge'
 exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment = new Map()) => {
   let total = 0;
   let isComplete = true;

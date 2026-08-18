@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const fileType = require('file-type');
 const XLSX = require('xlsx');
 const { requireAdmin } = require('../middleware/auth');
 const db = require('../db/database');
@@ -22,6 +23,14 @@ function loadPanelSlots(panelTemplateId) {
 }
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+
+async function isXlsxBuffer(buffer) {
+  const type = await fileType.fileTypeFromBuffer(buffer);
+  return !!type && type.mime === XLSX_MIME;
+}
 
 const normalizeRole = (role) => ['admin', 'head_judge'].includes(role) ? role : 'referee';
 
@@ -101,8 +110,18 @@ router.post('/users/upload', upload.single('file'), async (req, res) => {
     req.session.flash = { error: 'No file uploaded.' };
     return res.redirect('/admin/users');
   }
-  const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
-  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  if (!(await isXlsxBuffer(req.file.buffer))) {
+    req.session.flash = { error: 'Invalid file type. Please upload an Excel file.' };
+    return res.redirect('/admin/users');
+  }
+
+  let rows = [];
+  try {
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+  } catch {
+    // structurally valid enough to pass the magic-byte check, but unparseable — treat as empty
+  }
   const defaultHash = await bcrypt.hash('referee123', 10);
   const insert = db.prepare('INSERT OR IGNORE INTO users (name,email,password_hash,role) VALUES (?,?,?,?)');
   let created = 0, skipped = 0;
@@ -471,9 +490,13 @@ router.post('/competitions/:id/sportsmen/:sid/delete', (req, res) => {
   res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 });
 
-router.post('/competitions/:id/sportsmen/upload', upload.single('file'), (req, res) => {
+router.post('/competitions/:id/sportsmen/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     req.session.flash = { error: 'No file uploaded.' };
+    return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
+  }
+  if (!(await isXlsxBuffer(req.file.buffer))) {
+    req.session.flash = { error: 'Invalid file type. Please upload an Excel file.' };
     return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
   }
   let rows = [];

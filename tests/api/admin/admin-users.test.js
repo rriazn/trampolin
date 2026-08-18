@@ -302,6 +302,12 @@ describe('POST /admin/users/upload', () => {
         expect(res.headers.location).toBe('/admin/users');
     });
 
+    it('rejects a file that is not a valid XLSX', async () => {
+        const res = await agent.post('/admin/users/upload').attach('file', Buffer.from('Not an XLSX'), 'users.xlsx').redirects(1);
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('Invalid file type');
+    });
+
     it('skips rows with missing required fields', async () => {
         const workbook = XLSX.utils.book_new();
         const worksheetData = [
