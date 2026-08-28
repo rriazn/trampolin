@@ -1,5 +1,6 @@
-
-
+const { getUserByEmail } = require("../services/db/users.crud");
+const bcrypt = require('bcryptjs');
+ 
 exports.getLoginForm = (req, res) => {
     if (req.session.user) return res.redirect('/');
     res.render('login', { error: null });
@@ -7,7 +8,7 @@ exports.getLoginForm = (req, res) => {
 
 exports.login = async (req, res) => {
     const { email, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = getUserByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
         return res.render('login', { error: 'Invalid email or password' });
     }
