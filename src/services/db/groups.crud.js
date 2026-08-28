@@ -25,9 +25,19 @@ exports.getGroupsRoundCount = (competitionId) => {
 };
 
 exports.addGroupDB = (name, abbreviation, competitionId) => {
-    db.prepare('INSERT INTO groups (name, abbreviation, competition_id) VALUES (?, ?, ?)').run(name.trim(), abbreviation.trim(), competitionId);
+    return db.prepare('INSERT INTO groups (name, abbreviation, competition_id) VALUES (?, ?, ?)').run(name.trim(), abbreviation.trim(), competitionId);
+};
+
+exports.addGroupIgnoreDB = (name, abbreviation, competitionId) => {
+    db.prepare('INSERT OR IGNORE INTO groups (name, abbreviation, competition_id) VALUES (?, ?, ?)')
+        .run(name.trim(), abbreviation.trim(), competitionId);
+    return db.prepare('SELECT id FROM groups WHERE name=? AND competition_id=?').get(name.trim(), competitionId).id;
 };
 
 exports.deleteGroupDB = (groupId, competitionId) => {
     db.prepare('DELETE FROM groups WHERE id=? AND competition_id=?').run(groupId, competitionId);
 }
+
+exports.deleteAllGroupsDB = () => {
+    db.prepare('DELETE FROM groups').run();
+};

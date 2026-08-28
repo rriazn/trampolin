@@ -22,8 +22,12 @@ exports.getUsersByRole = (role) => {
 };
 
 exports.createUserDB = (name, email, passwordHash, role) => {
-    db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
+    return db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)')
         .run(name, email, passwordHash, role);
+};
+
+exports.getFirstAdminUser = () => {
+    return db.prepare("SELECT id FROM users WHERE role='admin' LIMIT 1").get();
 };
 
 exports.createOrIgnoreUserDB = (name, email, passwordHash, role) => {
@@ -44,3 +48,7 @@ exports.updateUserPasswordDB = (id, name, email, passwordHash, role) => {
 exports.deleteUserDB = (id) => {
     db.prepare('DELETE FROM users WHERE id=?').run(id);
 }
+
+exports.deleteAllUsersDB = () => {
+    db.prepare('DELETE FROM users').run();
+};

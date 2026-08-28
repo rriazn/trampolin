@@ -41,7 +41,7 @@ exports.getAvailableSportsmen = (competitionId, roundId) => {
 }
 
 exports.addSportsmanDB = (name, club, gender, birth_year, routine, competitionId, groupId) => {
-    db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id,group_id) VALUES (?,?,?,?,?,?,?)')
+    return db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id,group_id) VALUES (?,?,?,?,?,?,?)')
         .run(name.trim(), club || null, gender || null, birth_year ? parseInt(birth_year) : null, routine || null, competitionId, groupId || null);
 };
 
@@ -52,4 +52,8 @@ exports.updateSportsmanDB = (id, name, club, gender, birth_year, routine, group_
 
 exports.deleteSportsmanDB = (id) => {
     db.prepare('DELETE FROM sportsmen WHERE id=?').run(id);
+};
+
+exports.deleteAllSportsmenDB = () => {
+    db.prepare('DELETE FROM sportsmen').run();
 };

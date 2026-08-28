@@ -92,7 +92,7 @@ exports.getAttemptContext = (attemptId) => {
 };
 
 exports.addEntryDB = (roundId, sportsmanId, startOrder) => {
-    db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)')
+    return db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)')
         .run(roundId, sportsmanId, parseInt(startOrder) || 0);
 };
 
@@ -100,6 +100,10 @@ exports.addAllEntriesDB = (available, roundId, maxOrder) => {
     let nextOrder = (maxOrder.max || 0) + 1;
     const insert = db.prepare('INSERT INTO entries (round_id,sportsman_id,start_order) VALUES (?,?,?)');
     db.transaction(() => { for (const sp of available) insert.run(roundId, sp.id, nextOrder++); })();
+};
+
+exports.addAttemptDB = (entryId, attemptNumber) => {
+    return db.prepare('INSERT INTO attempts (entry_id,attempt_number) VALUES (?,?)').run(entryId, attemptNumber);
 };
 
 exports.addAttemptsDB = (entries, count) => {
@@ -128,4 +132,12 @@ exports.updateAttemptSkippedDB = (attemptId) => {
 
 exports.deleteEntryDB = (entryId, roundId) => {
     db.prepare('DELETE FROM entries WHERE id=? AND round_id=?').run(entryId, roundId);
+};
+
+exports.deleteAllEntriesDB = () => {
+    db.prepare('DELETE FROM entries').run();
+};
+
+exports.deleteAllAttemptsDB = () => {
+    db.prepare('DELETE FROM attempts').run();
 };

@@ -5,6 +5,10 @@ exports.getPanels = () => {
     return db.prepare('SELECT * FROM panel_templates ORDER BY name').all();
 };
 
+exports.getJudgeRoles = () => {
+    return db.prepare('SELECT * FROM judge_roles').all();
+};
+
 exports.getPanelById = (id) => {
     return db.prepare('SELECT * FROM panel_templates WHERE id=?').get(id);
 };
@@ -122,6 +126,11 @@ exports.addAssignment = (competitionId, userId, judgeRoleIds) => {
     })();
 };
 
+exports.addAssignmentIgnoreDB = (competitionId, judgeRoleId, userId) => {
+    db.prepare('INSERT OR IGNORE INTO panel_assignments (competition_id,judge_role_id,user_id) VALUES (?,?,?)')
+        .run(competitionId, judgeRoleId, userId);
+};
+
 exports.removeAssignment = (competitionId, assignmentId) => {
     db.prepare('DELETE FROM panel_assignments WHERE id=? AND competition_id=?').run(assignmentId, competitionId);
 };
@@ -131,3 +140,7 @@ exports.removeAssignmentGroup = (competitionId, userId, judgeRoleIds) => {
     db.prepare(`DELETE FROM panel_assignments WHERE competition_id=? AND user_id=? AND judge_role_id IN (${placeholders})`)
     .run(competitionId, userId, ...judgeRoleIds);
 }
+
+exports.deleteAllPanelAssignmentsDB = () => {
+    db.prepare('DELETE FROM panel_assignments').run();
+};

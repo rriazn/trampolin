@@ -113,6 +113,7 @@ describe('getJudgesForCompetition', () => {
     const comp = makeCompetition({ panelKey: 'test' });
     const roleIds = getJudgeRoleIds();
     const execJudge = makeUser('referee', 'Exec Judge');
+    makeUser('referee', 'Spare Referee'); // left unassigned so it shows up as an available candidate below
     assignJudge(comp.id, roleIds.execution, execJudge.id);
 
     const { panelTemplate, groups } = getJudgesForCompetition(comp);

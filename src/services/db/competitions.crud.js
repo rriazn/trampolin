@@ -18,7 +18,7 @@ exports.getCompetitionById = (id) => {
 };
 
 exports.createCompetitionDB = (name, date, panel_template_id) => {
-    db.prepare('INSERT INTO competitions (name,date,panel_template_id) VALUES (?,?,?)')
+    return db.prepare('INSERT INTO competitions (name,date,panel_template_id) VALUES (?,?,?)')
         .run(name.trim(), date || null, panel_template_id || null);
 };
 
@@ -33,4 +33,17 @@ exports.updateCompetitionStatusDB = (id, status) => {
 
 exports.deleteCompetitionDB = (id) => {
     db.prepare('DELETE FROM competitions WHERE id=?').run(id);
+};
+
+exports.getCompetitionByName = (name) => {
+    return db.prepare('SELECT * FROM competitions WHERE name=?').get(name);
+};
+
+exports.setPanelTemplateIfUnset = (competitionId, panelTemplateId) => {
+    db.prepare('UPDATE competitions SET panel_template_id=? WHERE id=? AND panel_template_id IS NULL')
+        .run(panelTemplateId, competitionId);
+};
+
+exports.deleteAllCompetitionsDB = () => {
+    db.prepare('DELETE FROM competitions').run();
 };

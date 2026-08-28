@@ -88,3 +88,11 @@ exports.addAllElementScoresDB = (parsedValues, attemptId, assignmentId, judgeRol
 exports.updateAttemptElementCount = (attemptId, elementCount) => {
     db.prepare('UPDATE attempts SET element_count=? WHERE id=?').run(elementCount, attemptId);
 };
+
+exports.deleteAllScoresDB = () => {
+    db.prepare('DELETE FROM scores').run();
+};
+
+exports.deleteAllElementScoresDB = () => {
+    db.prepare('DELETE FROM element_scores').run();
+};
