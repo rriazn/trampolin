@@ -1,6 +1,6 @@
 const { getAssignmentForCompetition } = require("./db/panels.crud");
 const {
-  getScoresForAttempt, getElementScoresForAttempt, getElementScoresForAttemptWithinElementCount,
+  getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getElementScoresForAttemptWithinElementCount,
   getElementScoresLandingBonus, getAttemptElementCount,
 } = require("./db/scores.crud");
 const { getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB } = require("./db/entries.crud");
@@ -37,8 +37,7 @@ exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, 
   const assignments = getAssignmentForCompetition(competitionId, panelTemplateId);
 
   const scoresByAssignment = new Map();
-  const elementScores = getElementScoresForAttempt(attemptId);
-  for (const row of elementScores) {
+  for (const row of getScoresForAssignment(attemptId)) {
     scoresByAssignment.set(row.panel_assignment_id, row.score);
   }
   // Disregard elements over the elementCount

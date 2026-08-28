@@ -10,6 +10,10 @@ exports.getScoresForAttempt = (attemptId) => {
     return db.prepare('SELECT judge_role_id, score FROM scores WHERE attempt_id=?').all(attemptId);
 };
 
+exports.getScoresForAssignment = (attemptId) => {
+    return db.prepare('SELECT panel_assignment_id, score FROM scores WHERE attempt_id=?').all(attemptId);
+};
+
 exports.getElementScoresForAttempt = (attemptId) => {
     return db.prepare('SELECT judge_role_id, panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=?').all(attemptId);
 };
