@@ -1,3 +1,5 @@
+const { isWithinRange, rangeErrorMessage } = require("./referee-helpers");
+
 // combine scores and drop high/low values
 exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', multiplier = 1 }) => {
   if (!scores || scores.length === 0) return null;
@@ -139,4 +141,43 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
   }
 
   return { total, breakdown, isComplete };
+};
+
+exports.parseAndValidateScore = (score, assignment) => {
+    const parsed = parseFloat(score);
+    const inRange = !isNaN(parsed) && parsed >= assignment.score_min && (assignment.score_max === null || parsed <= assignment.score_max);
+    return { parsed, inRange };
+};
+
+exports.parseAndValidateElementScores = (assignment, elementCount, elements) => {
+    // Non-deduction element roles (difficulty) are entered x10 for easier typing 
+    const scale = assignment.isDeduction ? 1 : 10;
+    const parsedValues = [];
+    for (let n = 1; n <= elementCount; n++) {
+        const raw = parseFloat(elements[`element_${n}`]);
+        const parsed = isNaN(raw) ? NaN : raw / scale;
+        if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
+            throw new RangeError(`Trick ${n}: ${rangeErrorMessage(assignment)}`);
+        }
+        parsedValues.push([n, parsed]);
+    }
+    return parsedValues;
+};
+
+exports.parseAndValidate11thScore = (assignment, elementCount, element_11) => {
+    if (assignment.isDeduction && elementCount === 10) {
+        const raw = parseFloat(element_11);
+        if (isNaN(raw) || raw < 0 || raw > 1.0) {
+            throw new RangeError('Landing: score must be between 0 and 1.0.');
+        }
+        return [11, raw];
+    } else if (!assignment.isDeduction && elementCount > 0 && element_11 !== undefined && element_11 !== '') {
+        const raw = parseFloat(element_11);
+        const parsed = isNaN(raw) ? NaN : raw / 10;
+        if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
+            throw new RangeError(`Bonus: ${rangeErrorMessage(assignment)}`);
+        }
+        return [11, parsed];
+    }
+    return null;
 };
