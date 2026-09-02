@@ -47,6 +47,27 @@ body {
   font-size: .82rem;
 }
 
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.app-footer {
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-light) 100%);
+}
+.app-footer-text {
+  font-size: .85rem;
+  font-weight: 500;
+  color: rgba(255,255,255,.7);
+}
+.app-footer-text .dot {
+  color: var(--accent);
+}
+.app-footer-version {
+  background: rgba(255,255,255,.12);
+  border-radius: 20px;
+  padding: .2rem .75rem;
+  color: rgba(255,255,255,.7);
+  font-size: .82rem;
+  font-weight: 600;
+}
+
 /* ── Page hero strip ─────────────────────────────────────────────────── */
 .page-hero {
   background: linear-gradient(135deg, var(--brand) 0%, #3a4080 100%);
