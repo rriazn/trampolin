@@ -1,4 +1,4 @@
-name: Trampolin Judge CLI
+name: Trampolin Judge CI/CD
 
 on:
   push:
