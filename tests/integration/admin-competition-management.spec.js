@@ -42,20 +42,23 @@ test('admin creates and fully sets up a competition with a judge panel and staff
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
   const [, compId] = page.url().match(/\/competitions\/(\d+)/);
 
-  // Add an athlete to this competition first (entries are competition-scoped)
-  await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
-  await page.locator('input[name=name]').fill('Jonas Krause');
-  await page.locator('input[name=club]').fill('TSV München');
-  await page.getByRole('button', { name: 'Create' }).click();
-  await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
-
-  // Add a group
+  // Add a group first — entries are scoped to the round's group, so an athlete needs to be
+  // assigned to a group to later show up as available for one of its rounds
   await page.goto(`/admin/competitions/${compId}/groups`);
   await page.locator('input[name=name]').fill('Seniors');
   await page.locator('input[name=abbreviation]').fill('SEN');
   await page.locator('button[type=submit]').click();
 
-  // Navigate to rounds for the new group
+  // Add an athlete to this competition, assigned to the group just created
+  await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
+  await page.locator('input[name=name]').fill('Jonas Krause');
+  await page.locator('input[name=club]').fill('TSV München');
+  await page.locator('select[name=group_id]').selectOption({ label: 'Seniors' });
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
+
+  // Navigate to rounds for the group
+  await page.goto(`/admin/competitions/${compId}/groups`);
   const groupRow = page.getByRole('row').filter({ hasText: 'Seniors' });
   await groupRow.getByRole('link', { name: /Rounds/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds/);

@@ -103,30 +103,47 @@ function buildLeaderboardRows(sportsmenMap) {
     for (const [id, sp] of sportsmenMap) {
         const attemptScores = [...sp.attempts].sort((a, b) => a.number - b.number);
 
-        const scored = attemptScores.filter(a => a.finalScore !== null);
-        const bestScore = scored.length > 0 ? Math.max(...scored.map(a => a.finalScore)) : null;
-        const secondScore = scored.length > 1 ? scored.map(a => a.finalScore).filter(s => s !== bestScore)[0] ?? null : null;
-
-        leaderboard.push({ sportsmanId: id, name: sp.name, club: sp.club, group: sp.group, startOrder: sp.startOrder, attempts: attemptScores, bestScore, secondScore });
+        leaderboard.push({ sportsmanId: id, name: sp.name, club: sp.club, group: sp.group, startOrder: sp.startOrder, attempts: attemptScores });
     }
     return leaderboard;
 }
 
-function sortAndRankLeaderboard(leaderboard) {
-    leaderboard.sort((a, b) => {
-        if (b.bestScore === null && a.bestScore === null) return a.startOrder - b.startOrder;
-        if (b.bestScore === null) return -1;
-        if (a.bestScore === null) return 1;
-        if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
-        return (b.secondScore ?? -1) - (a.secondScore ?? -1);
-    });
+function sortAndRankLeaderboard(leaderboard, scoringMode) {
+    if (scoringMode === 'sum') {
+        for (const row of leaderboard) {
+            const validScores = row.attempts.filter(a => a.finalScore !== null).map(a => a.finalScore);
+            row.total = validScores.length > 0 ? validScores.reduce((sum, s) => sum + s, 0) : null;
+            row.bestScore = validScores.length > 0 ? Math.max(...validScores) : null;
+        }
+        leaderboard.sort((a, b) => {
+            if (b.total === null && a.total === null) return a.startOrder - b.startOrder;
+            if (b.total === null) return -1;
+            if (a.total === null) return 1;
+            if (b.total !== a.total) return b.total - a.total;
+            // Tiebreak: use best individual attempt
+            return b.bestScore - a.bestScore;
+        });
+    } else {
+        for (const row of leaderboard) {
+            const validScores = row.attempts.filter(a => a.finalScore !== null).map(a => a.finalScore);
+            row.total = validScores.length > 0 ? Math.max(...validScores) : null;
+            row.secondScore = validScores.length > 1 ? [...validScores].sort((a, b) => b - a)[1] : null;
+        }
 
+        leaderboard.sort((a, b) => {
+            if (b.total === null && a.total === null) return a.startOrder - b.startOrder;
+            if (b.total === null) return -1;
+            if (a.total === null) return 1;
+            if (b.total !== a.total) return b.total - a.total;
+            return (b.secondScore ?? -1) - (a.secondScore ?? -1);
+        });
+    }
     let rank = 1;
     for (let i = 0; i < leaderboard.length; i++) {
-        if (leaderboard[i].bestScore === null) {
+        if (leaderboard[i].total === null) {
             leaderboard[i].rank = '–';
         } else {
-            if (i > 0 && leaderboard[i].bestScore !== leaderboard[i - 1].bestScore) rank = i + 1;
+            if (i > 0 && leaderboard[i].total !== leaderboard[i - 1].total) rank = i + 1;
             leaderboard[i].rank = rank;
         }
     }
@@ -150,7 +167,7 @@ exports.buildLeaderboard = (competition, round) => {
         entryRows, panelSlots, scoresByAttempt, elementScoresByAttempt, detailByAttempt, elementScoresByAssignmentAttempt
     );
 
-    const leaderboard = sortAndRankLeaderboard(buildLeaderboardRows(sportsmenMap));
+    const leaderboard = sortAndRankLeaderboard(buildLeaderboardRows(sportsmenMap), round.scoring_mode);
     const maxAttempts = leaderboard.reduce((max, row) => Math.max(max, row.attempts.length), 0);
 
     return { leaderboard, maxAttempts, panelSlots };

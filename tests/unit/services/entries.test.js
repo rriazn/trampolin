@@ -80,6 +80,60 @@ describe('orderAvailableByPreviousRound', () => {
     expect(ranked[0].prevRank).toBe(1);
     expect(ranked[1].prevRank).toBe(1);
   });
+
+  describe('sum scoring mode', () => {
+    it('ranks by the sum of all attempts in the previous round, not just the best one', () => {
+      const comp = makeCompetition({ panelKey: 'test' });
+      const group = makeGroup(comp.id);
+      const prevRound = makeRound(group.id, { order: 1, scoringMode: 'sum' });
+      const roleIds = getJudgeRoleIds();
+      const hj = makeUser('head_judge');
+      const hjAssignment = assignJudge(comp.id, roleIds.head_judge, hj.id);
+
+      const consistent = makeSportsman(comp.id, group.id, 'Consistent');
+      const spiky = makeSportsman(comp.id, group.id, 'Spiky');
+      // head_judge is a penalty: contribution -2,-2 (sum -4) for Consistent vs -1,-5 (sum -6) for Spiky,
+      // even though Spiky's best single attempt (-1) beats Consistent's best (-2)
+      const consistentEntry = makeEntry(prevRound.id, consistent.id, 1);
+      [2, 2].forEach((score, i) => {
+        const attempt = makeAttempt(consistentEntry.id, i + 1, 1);
+        addScore(attempt.id, hjAssignment, roleIds.head_judge, score);
+      });
+      const spikyEntry = makeEntry(prevRound.id, spiky.id, 2);
+      [1, 5].forEach((score, i) => {
+        const attempt = makeAttempt(spikyEntry.id, i + 1, 1);
+        addScore(attempt.id, hjAssignment, roleIds.head_judge, score);
+      });
+
+      const available = [{ id: spiky.id, name: 'Spiky' }, { id: consistent.id, name: 'Consistent' }];
+      const ranked = orderAvailableByPreviousRound(comp, prevRound, available);
+
+      expect(ranked.map(s => s.name)).toEqual(['Consistent', 'Spiky']);
+      expect(ranked[0].prevRank).toBe(1);
+      expect(ranked[1].prevRank).toBe(2);
+    });
+
+    // Regression: Array.prototype.reduce(fn, 0) on an empty attempts array used to return 0
+    // instead of null, so an athlete unscored in the previous round ranked as if they'd scored 0.
+    it('gives an athlete unscored in the previous round a null rank, not a 0 total', () => {
+      const comp = makeCompetition({ panelKey: 'test' });
+      const group = makeGroup(comp.id);
+      const prevRound = makeRound(group.id, { order: 1, scoringMode: 'sum' });
+      const roleIds = getJudgeRoleIds();
+      const hj = makeUser('head_judge');
+      const hjAssignment = assignJudge(comp.id, roleIds.head_judge, hj.id);
+
+      const scored = makeSportsman(comp.id, group.id, 'Scored');
+      scoreSportsmanInRound(comp, prevRound, roleIds, hjAssignment, scored, 3);
+      const unscored = makeSportsman(comp.id, group.id, 'Unscored');
+
+      const available = [{ id: scored.id, name: 'Scored' }, { id: unscored.id, name: 'Unscored' }];
+      const ranked = orderAvailableByPreviousRound(comp, prevRound, available);
+
+      expect(ranked.find(s => s.name === 'Unscored').prevRank).toBeNull();
+      expect(ranked.map(s => s.name)).toEqual(['Scored', 'Unscored']);
+    });
+  });
 });
 
 describe('randomizeEntryOrder', () => {

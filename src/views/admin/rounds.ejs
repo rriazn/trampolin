@@ -21,12 +21,19 @@
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th style="width:80px">Order</th><th>Round Name</th><th></th></tr></thead>
+      <thead><tr><th style="width:80px">Order</th><th>Round Name</th><th>Scoring Mode</th><th></th></tr></thead>
       <tbody>
       <% rounds.forEach(r => { %>
       <tr>
         <td><span class="badge bg-secondary rounded-pill"><%= r.round_order %></span></td>
         <td class="fw-600"><i class="bi bi-flag me-2 text-muted"></i><%= r.name %></td>
+        <td class="fw-700">
+          <% if (r.scoring_mode === 'sum') { %>
+            Sum
+          <% } else { %>
+            Best Attempt
+          <% } %>  
+        </td>
         <td class="text-end">
           <a href="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>/entries" class="btn btn-sm btn-brand rounded-pill me-1">
             <i class="bi bi-people me-1"></i>Entries
@@ -59,6 +66,13 @@
       <div class="col-md-2">
         <label class="form-label small fw-600 text-muted text-uppercase">Order</label>
         <input type="number" name="round_order" class="form-control" value="<%= rounds.length + 1 %>">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-600 text-muted text-uppercase">Scoring Mode</label>
+        <select name="scoring_mode" class="form-select" required>
+          <option value="sum">Sum</option>
+          <option value="best_attempt">Best Attempt</option>
+        </select>
       </div>
       <div class="col-md-2">
         <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>

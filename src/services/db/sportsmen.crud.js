@@ -29,15 +29,16 @@ exports.getSportsmenWithGroup = (competitionId) => {
     `).all(competitionId);
 };
 
-exports.getAvailableSportsmen = (competitionId, roundId) => {
+exports.getAvailableSportsmen = (competitionId, groupId, roundId) => {
     return db.prepare(`
         SELECT s.*, g.name AS group_name
         FROM sportsmen s
         LEFT JOIN groups g ON g.id = s.group_id
         WHERE s.competition_id = ?
+        AND s.group_id = ?
         AND s.id NOT IN (SELECT sportsman_id FROM entries WHERE round_id = ?)
         ORDER BY s.name
-    `).all(competitionId, roundId);
+    `).all(competitionId, groupId, roundId);
 }
 
 exports.addSportsmanDB = (name, club, gender, birth_year, routine, competitionId, groupId) => {

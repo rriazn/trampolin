@@ -74,8 +74,8 @@ exports.getPreviousRoundInfo = (groupId, roundOrder) => {
     `).get(groupId, roundOrder);
 }
 
-exports.addRoundDB = (groupId, name, roundOrder) => {
-    return db.prepare('INSERT INTO rounds (group_id,name,round_order) VALUES (?,?,?)').run(groupId, name.trim(), parseInt(roundOrder) || 0);
+exports.addRoundDB = (groupId, name, roundOrder, scoringMode) => {
+    return db.prepare('INSERT INTO rounds (group_id,name,round_order,scoring_mode) VALUES (?,?,?,?)').run(groupId, name.trim(), parseInt(roundOrder) || 0, scoringMode);
 };
 
 exports.updateRoundStartedDB = (roundId, attemptId) => {

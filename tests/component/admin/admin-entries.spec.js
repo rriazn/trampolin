@@ -188,6 +188,29 @@ test.describe('when logged in as admin', () => {
   });
 });
 
+// Regression: getAvailableSportsmen used to select from every athlete in the competition
+// instead of scoping to the round's own group, so athletes from unrelated groups showed up
+// as assignable to a round they don't belong to.
+test.describe('available athletes are scoped to the round\'s group', () => {
+  let multiGroupSeed;
+
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post('/test/seed/multi-group');
+    multiGroupSeed = await res.json();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`/admin/competitions/${multiGroupSeed.competitionId}/groups/${multiGroupSeed.groupAId}/rounds/${multiGroupSeed.roundAId}/entries`);
+  });
+
+  test('only offers athletes from the round\'s own group', async ({ page }) => {
+    const options = page.locator('select[name=sportsman_id] option');
+    await expect(options.filter({ hasText: 'Fiona' })).toHaveCount(1);
+    await expect(options.filter({ hasText: 'Grace' })).toHaveCount(0);
+  });
+});
+
 test.describe('when a previous round exists with scores', () => {
   let finalsSeed;
 

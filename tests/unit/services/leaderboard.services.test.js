@@ -5,10 +5,10 @@ import {
 } from './testHelpers.js';
 const { buildLeaderboard } = require('../../../src/services/leaderboard.services.js');
 
-function setupRoundWithHeadJudge(panelKey = 'test') {
+function setupRoundWithHeadJudge(panelKey = 'test', scoringMode = 'best_attempt') {
   const comp = makeCompetition({ panelKey });
   const group = makeGroup(comp.id);
-  const round = makeRound(group.id);
+  const round = makeRound(group.id, { scoringMode });
   const roleIds = getJudgeRoleIds();
   const hj = makeUser('head_judge');
   const hjAssignment = assignJudge(comp.id, roleIds.head_judge, hj.id);
@@ -54,7 +54,7 @@ describe('buildLeaderboard', () => {
 
     const { leaderboard } = buildLeaderboard(comp, round);
     const unscored = leaderboard.find(r => r.name === 'Unscored');
-    expect(unscored.bestScore).toBeNull();
+    expect(unscored.total).toBeNull();
     expect(unscored.rank).toBe('–');
     expect(leaderboard[leaderboard.length - 1].name).toBe('Unscored');
   });
@@ -74,7 +74,7 @@ describe('buildLeaderboard', () => {
 
     const { leaderboard } = buildLeaderboard(comp, round);
     const row = leaderboard.find(r => r.name === 'Improving');
-    expect(row.bestScore).toBe(-1);
+    expect(row.total).toBe(-1);
     expect(row.secondScore).toBe(-5);
   });
 
@@ -83,5 +83,42 @@ describe('buildLeaderboard', () => {
     const { leaderboard, maxAttempts } = buildLeaderboard(comp, round);
     expect(leaderboard).toEqual([]);
     expect(maxAttempts).toBe(0);
+  });
+
+  describe('sum scoring mode', () => {
+    it('ranks athletes by the sum of all their attempt scores, not just the best one', () => {
+      const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge('test', 'sum');
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Consistent', [2, 2]); // sum contribution -4
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Spiky', [1, 5]); // best attempt is better (-1) but sum is worse (-6)
+
+      const { leaderboard } = buildLeaderboard(comp, round);
+      expect(leaderboard.map(r => r.name)).toEqual(['Consistent', 'Spiky']);
+      expect(leaderboard[0].total).toBe(-4);
+      expect(leaderboard[1].total).toBe(-6);
+    });
+
+    // Regression: Array.prototype.reduce(fn, 0) on an empty attempts array used to return 0
+    // instead of null, so an unscored athlete in sum mode ranked as if they'd scored a perfect 0.
+    it('does not give an unscored athlete a total of 0', () => {
+      const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge('test', 'sum');
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Scored', [2]);
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Unscored', [null]);
+
+      const { leaderboard } = buildLeaderboard(comp, round);
+      const unscored = leaderboard.find(r => r.name === 'Unscored');
+      expect(unscored.total).toBeNull();
+      expect(unscored.rank).toBe('–');
+      expect(leaderboard[leaderboard.length - 1].name).toBe('Unscored');
+    });
+
+    it('gives tied sums the same rank with no secondary tiebreak', () => {
+      const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge('test', 'sum');
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'A', [1, 3]); // sum -4
+      scoreAttempt(round, group, comp, roleIds, hjAssignment, 'B', [2, 2]); // sum -4, different attempt split
+
+      const { leaderboard } = buildLeaderboard(comp, round);
+      expect(leaderboard[0].rank).toBe(1);
+      expect(leaderboard[1].rank).toBe(1);
+    });
   });
 });
