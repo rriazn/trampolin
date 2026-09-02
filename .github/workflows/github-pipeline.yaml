@@ -3,7 +3,7 @@ name: Trampolin Judge CLI
 on:
   push:
     branches: [main]
-    tags: ['v*.*.*']
+    tags: ['*.*.*']
   pull_request:
     branches: [main]
 
@@ -56,6 +56,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Write VERSION file
+        run: |
+          TAG="${{ needs.checkout-git-tag.outputs.tag }}"
+          echo "${TAG:-latest}" > VERSION
 
       - name: Build and push test image
         uses: docker/build-push-action@v7

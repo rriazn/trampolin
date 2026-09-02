@@ -6,6 +6,11 @@ const session = require('express-session');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
+const { getAppVersion } = require('../../src/services/version');
+
+// A scratch path under tests/component/ so footer.spec.js can create/delete a VERSION file
+// without touching the real one at the project root
+const TEST_VERSION_PATH = path.join(__dirname, 'VERSION');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -22,6 +27,7 @@ app.use(session({
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.flash = req.session.flash || {};
+  res.locals.appVersion = getAppVersion(TEST_VERSION_PATH);
   delete req.session.flash;
   next();
 });

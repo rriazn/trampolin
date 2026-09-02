@@ -140,6 +140,9 @@ dist
 *.db-shm
 *.db-wal
 
+# scratch VERSION file used by component tests
+tests/component/VERSION
+
 # test results
 test-results/
 .last-run.json

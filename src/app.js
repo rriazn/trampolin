@@ -2,9 +2,12 @@ const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
+const { getAppVersion } = require('./services/version');
 require('./db/database');
 
 const app = express();
+
+const appVersion = getAppVersion();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -22,6 +25,7 @@ app.use(session({
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.flash = req.session.flash || {};
+  res.locals.appVersion = appVersion;
   delete req.session.flash;
   next();
 });
