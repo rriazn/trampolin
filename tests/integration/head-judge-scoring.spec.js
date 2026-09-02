@@ -64,16 +64,20 @@ async function seedSingleAttemptCompetition(page, { competitionName, panelLabel,
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
   const [, compId] = page.url().match(/\/competitions\/(\d+)/);
 
-  await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
-  await page.locator('input[name=name]').fill(sportsmanName);
-  await page.locator('input[name=club]').fill(club);
-  await page.getByRole('button', { name: 'Create' }).click();
-  await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
-
   await page.goto(`/admin/competitions/${compId}/groups`);
   await page.locator('input[name=name]').fill('Group A');
   await page.locator('input[name=abbreviation]').fill('GA');
   await page.locator('button[type=submit]').click();
+
+  // Entries are scoped to the round's group, so the athlete must be assigned to it here
+  await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
+  await page.locator('input[name=name]').fill(sportsmanName);
+  await page.locator('input[name=club]').fill(club);
+  await page.locator('select[name=group_id]').selectOption({ label: 'Group A' });
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
+
+  await page.goto(`/admin/competitions/${compId}/groups`);
   const groupRow = page.getByRole('row').filter({ hasText: 'Group A' });
   await groupRow.getByRole('link', { name: /Rounds/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds/);

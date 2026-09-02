@@ -23,8 +23,10 @@
       <% if (currentUser.role === 'admin') { %>
       <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-gear-fill me-1"></i>Admin</a>
       <% } %>
+      <% if (currentUser.role === 'head_judge' || currentUser.role === 'referee') { %>
       <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>" href="/referee"><i class="bi bi-pencil-square me-1"></i>Scoring</a>
-      <% if (currentUser.role === 'admin' || currentUser.role === 'head_judge') { %>
+      <% } %>
+      <% if (currentUser.role === 'head_judge') { %>
       <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><i class="bi bi-flag-fill me-1"></i>Head Judge</a>
       <% } %>
       <form method="POST" action="/logout" class="m-0">

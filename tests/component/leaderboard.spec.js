@@ -133,6 +133,30 @@ test.describe('with scored athletes', () => {
   });
 });
 
+test.describe('sum scoring mode', () => {
+  let sumSeed;
+
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post('/test/seed/scored-sum');
+    sumSeed = await res.json();
+  });
+
+  test('shows the "Total Score" column header', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
+    await expect(page.getByRole('columnheader', { name: 'Total Score' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Best Score' })).not.toBeVisible();
+  });
+
+  // Regression: ranking must use the summed total, not just each athlete's best single attempt
+  test('ranks by summed total rather than best single attempt', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
+    // Ellie's sum (16.6) beats Dana's (16.5) even though Dana's best single attempt (9.0) is higher
+    await expect(page.locator('table tbody tr').first()).toContainText('Ellie');
+    await expect(page.locator('table')).toContainText('16.600');
+    await expect(page.locator('table')).toContainText('16.500');
+  });
+});
+
 test.describe('per-trick transparency table', () => {
   let hjSeed;
 

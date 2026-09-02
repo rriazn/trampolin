@@ -35,16 +35,12 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('link', { name: /Admin/ })).toBeVisible();
   });
 
-  test('shows the Scoring nav link', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Scoring/ })).toBeVisible();
+  test('does not show the Scoring nav link', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /Scoring/ })).not.toBeVisible();
   });
 
   test('the Admin nav link is active on admin pages', async ({ page }) => {
     await expect(page.getByRole('link', { name: /Admin/ })).toHaveClass(/active/);
-  });
-
-  test('the Scoring nav link is not active on admin pages', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Scoring/ })).not.toHaveClass(/active/);
   });
 
   test('shows the Logout button', async ({ page }) => {

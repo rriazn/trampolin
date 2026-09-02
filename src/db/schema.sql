@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS panel_template_slots (
     multiplier                REAL    NOT NULL DEFAULT 1,
     sort_order                INTEGER NOT NULL DEFAULT 0,
     -- Slots sharing the same non-null value here must be assigned to the SAME person
-    -- (e.g. time_of_flight + horizontal_displacement are read off one machine by one judge),
-    -- while each slot's own score stays a distinct value/component in the final formula.
     shared_assignment_group  TEXT,
     -- element-granularity roles only: combine per trick then sum, or per judge then combine
     aggregation              TEXT    NOT NULL CHECK(aggregation IN ('per_trick','per_judge')) DEFAULT 'per_trick',
@@ -90,6 +88,7 @@ CREATE TABLE IF NOT EXISTS rounds (
     name               TEXT    NOT NULL,
     round_order        INTEGER NOT NULL DEFAULT 0,
     status             TEXT    NOT NULL CHECK(status IN ('not_started','in_progress','completed')) DEFAULT 'not_started',
+    scoring_mode       TEXT    NOT NULL CHECK(scoring_mode IN ('sum','best_attempt')) DEFAULT 'sum',
     current_attempt_id INTEGER REFERENCES attempts(id) ON DELETE SET NULL
 );
 

@@ -60,20 +60,35 @@ exports.orderAvailableByPreviousRound = (competition, prevRound, available) => {
 
     const ranked = [];
     for (const [spId, scores] of spMap) {
-        ranked.push({ spId, bestScore: scores.length > 0 ? Math.max(...scores) : null });
+        if (prevRound.scoring_mode === 'sum') {
+            ranked.push({ spId, total: scores.length > 0 ? scores.reduce((sum, s) => sum + s, 0) : null, bestScore: scores.length > 0 ? Math.max(...scores) : null });
+        } else {
+            ranked.push({ spId, total: scores.length > 0 ? Math.max(...scores) : null, secondScore: scores.length > 1 ? [...scores].sort((a, b) => b - a)[1] : null });
+        }
     }
-    ranked.sort((a, b) => {
-        if (a.bestScore === null && b.bestScore === null) return 0;
-        if (a.bestScore === null) return 1;
-        if (b.bestScore === null) return -1;
-        return b.bestScore - a.bestScore;
-    });
-
+    if (prevRound.scoring_mode === 'sum') {
+        ranked.sort((a, b) => {
+            if (b.total === null && a.total === null) return 0;
+            if (b.total === null) return -1;
+            if (a.total === null) return 1;
+            if (b.total !== a.total) return b.total - a.total;
+            // Tiebreak: use best individual attempt
+            return b.bestScore - a.bestScore;
+        });
+    } else {
+        ranked.sort((a, b) => {
+            if (a.total === null && b.total === null) return 0;
+            if (a.total === null) return 1;
+            if (b.total === null) return -1;
+            if (b.total !== a.total) return b.total - a.total;
+            return (b.secondScore ?? -1) - (a.secondScore ?? -1);
+        });
+    }
     const rankMap = new Map();
     let rank = 1;
     for (let i = 0; i < ranked.length; i++) {
-        if (ranked[i].bestScore !== null) {
-            if (i > 0 && ranked[i].bestScore !== ranked[i - 1].bestScore) rank = i + 1;
+        if (ranked[i].total !== null) {
+            if (i > 0 && ranked[i].total !== ranked[i - 1].total) rank = i + 1;
             rankMap.set(ranked[i].spId, rank);
         }
     }

@@ -21,6 +21,8 @@ test('admin adds a new athlete who appears as available to add to a round', asyn
   await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen/new`);
   await page.locator('input[name=name]').fill('Jonas Krause');
   await page.locator('input[name=club]').fill('TSV München');
+  // Entries are scoped to the round's group, so the athlete must be assigned to it here
+  await page.locator('select[name=group_id]').selectOption({ label: 'Junior' });
   await page.getByRole('button', { name: 'Create' }).click();
   await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   await expect(page.getByRole('cell', { name: 'Jonas Krause' })).toBeVisible();

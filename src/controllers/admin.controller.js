@@ -392,7 +392,7 @@ exports.getRounds = async (req, res) => {
 };
 
 exports.addRound = async (req, res) => {
-    const { name, round_order } = req.body;
+    const { name, round_order, scoring_mode } = req.body;
     const competition = getCompetitionById(req.params.cid);
     if (!competition) 
         return res.status(404).send('Not found');
@@ -408,7 +408,8 @@ exports.addRound = async (req, res) => {
         return renderWithError('Round name is required.');
     if (round_order !== undefined && round_order !== '' && (isNaN(round_order) || Number(round_order) < 0))
         return renderWithError('Round order must be a non-negative number.');
-    addRoundDB(req.params.gid, name, round_order)
+    const validScoringMode = ['sum', 'best_attempt'].includes(scoring_mode) ? scoring_mode : 'sum';
+    addRoundDB(req.params.gid, name, round_order, validScoringMode);
     req.session.flash = { success: `Round "${name}" added.` };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
 };
@@ -437,8 +438,8 @@ exports.getEntries = async (req, res) => {
 
     const entries = getEntriesWithAttemptsInfo(rid);
 
-    // Get all sportsmen that are not in this round
-    let available = getAvailableSportsmen(round.competition_id, rid);
+    // Get all sportsmen in this round's group that are not already in this round
+    let available = getAvailableSportsmen(round.competition_id, round.group_id, rid);
 
     // If a previous round exists in this group, rank available athletes by their placement there
     const prevRound = getPreviousRoundInfo(round.group_id, round.round_order);
@@ -467,7 +468,7 @@ exports.addAllEntries = async (req, res) => {
     if (!round) 
         return res.status(404).send('Round not found');
 
-    const available = getAvailableSportsmen(round.competition_id, rid);
+    const available = getAvailableSportsmen(round.competition_id, round.group_id, rid);
 
     const maxOrder = getEntryMaxOrder(rid);
 

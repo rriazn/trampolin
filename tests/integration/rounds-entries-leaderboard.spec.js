@@ -92,19 +92,22 @@ test('referee scores both attempts for all athletes and the leaderboard shows co
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
   const [, compId] = page.url().match(/\/competitions\/(\d+)/);
 
-  // Athletes (entries are competition-scoped)
+  await page.goto(`/admin/competitions/${compId}/groups`);
+  await page.locator('input[name=name]').fill('Group A');
+  await page.locator('input[name=abbreviation]').fill('GA');
+  await page.locator('button[type=submit]').click();
+
+  // Athletes — entries are scoped to the round's group, so each athlete is assigned to it here
   for (const [name, club] of [['Leon Weber', 'TSV München'], ['Emma Fischer', 'SV Hamburg']]) {
     await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
     await page.locator('input[name=name]').fill(name);
     await page.locator('input[name=club]').fill(club);
+    await page.locator('select[name=group_id]').selectOption({ label: 'Group A' });
     await page.getByRole('button', { name: 'Create' }).click();
     await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
   }
 
   await page.goto(`/admin/competitions/${compId}/groups`);
-  await page.locator('input[name=name]').fill('Group A');
-  await page.locator('input[name=abbreviation]').fill('GA');
-  await page.locator('button[type=submit]').click();
   const groupRow = page.getByRole('row').filter({ hasText: 'Group A' });
   await groupRow.getByRole('link', { name: /Rounds/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds/);
@@ -112,6 +115,7 @@ test('referee scores both attempts for all athletes and the leaderboard shows co
 
   await page.locator('input[name=name]').fill('Qualifications');
   await page.locator('input[name=round_order]').fill('1');
+  await page.locator('select[name=scoring_mode]').selectOption('best_attempt');
   await page.locator('button[type=submit]').click();
   const roundRow = page.getByRole('row').filter({ hasText: 'Qualifications' });
   await roundRow.getByRole('link', { name: /Entries/ }).click();
@@ -258,6 +262,7 @@ test('admin adds a second round to a group and referee sees both rounds on the d
 
   await page.locator('input[name=name]').fill('Finals');
   await page.locator('input[name=round_order]').fill('2');
+  await page.locator('select[name=scoring_mode]').selectOption('best_attempt');
   await page.locator('button[type=submit]').click();
 
   // Navigate to entries for the new Finals round
@@ -315,4 +320,131 @@ test('entries dropdown for a later round sorts athletes by their previous round 
   const firstOption = page.locator('select[name=sportsman_id] option').first();
   await expect(firstOption).toContainText('#2');
   await expect(firstOption).toContainText('Emma Fischer');
+});
+
+// A standalone competition/round so this test isn't coupled to the "Regional Cup" fixture's
+// state — it only needs its own athlete scored across two attempts. Reuses Maria/Judge Dana/Petra
+// (already created above) to staff the panel, same as the "Regional Cup" flow.
+test('a round set to "sum" scoring mode totals all attempts on the leaderboard, not just the best one', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loginAsAdmin(page);
+
+  await page.goto('/admin/competitions/new');
+  await page.locator('input[name=name]').fill('Sum Mode Cup');
+  await page.locator('select[name=panel_template_id]').selectOption({ label: 'Test Panel' });
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.waitForURL('/admin/competitions');
+
+  const compRow = page.getByRole('row').filter({ hasText: 'Sum Mode Cup' });
+  await compRow.getByRole('button', { name: /Activate/ }).click();
+  await expect(compRow.getByRole('cell', { name: 'active' })).toBeVisible();
+  await compRow.getByRole('link', { name: /Groups/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
+  const [, compId] = page.url().match(/\/competitions\/(\d+)/);
+
+  await page.goto(`/admin/competitions/${compId}/groups`);
+  await page.locator('input[name=name]').fill('Group A');
+  await page.locator('input[name=abbreviation]').fill('GA');
+  await page.locator('button[type=submit]').click();
+
+  await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
+  await page.locator('input[name=name]').fill('Sam Weiss');
+  await page.locator('input[name=club]').fill('TV Köln');
+  await page.locator('select[name=group_id]').selectOption({ label: 'Group A' });
+  await page.getByRole('button', { name: 'Create' }).click();
+  await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
+
+  await page.goto(`/admin/competitions/${compId}/groups`);
+  const groupRow = page.getByRole('row').filter({ hasText: 'Group A' });
+  await groupRow.getByRole('link', { name: /Rounds/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds/);
+  const [, groupId] = page.url().match(/\/groups\/(\d+)/);
+
+  await page.locator('input[name=name]').fill('Finals');
+  await page.locator('input[name=round_order]').fill('1');
+  await page.locator('select[name=scoring_mode]').selectOption('sum');
+  await page.locator('button[type=submit]').click();
+  const roundRow = page.getByRole('row').filter({ hasText: 'Finals' });
+  await roundRow.getByRole('link', { name: /Entries/ }).click();
+  await page.waitForURL(adminEntriesUrlPattern);
+  const [, roundId] = page.url().match(/\/rounds\/(\d+)\/entries/);
+
+  await page.locator('select[name=sportsman_id]').selectOption({ label: 'Sam Weiss · TV Köln' });
+  await page.locator('input[name=start_order]').fill('1');
+  await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
+  await page.waitForURL(adminEntriesUrlPattern);
+
+  await page.locator('input[name=attempt_count]').fill('2');
+  page.once('dialog', dialog => dialog.accept());
+  await Promise.all([
+    page.waitForURL(adminEntriesUrlPattern),
+    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+  ]);
+
+  await page.goto(`/admin/competitions/${compId}/judges`);
+  const executionCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Execution' }) });
+  await executionCard.locator('select[name=user_id]').selectOption({ label: 'Maria Schmidt · maria@example.com' });
+  await executionCard.getByRole('button', { name: /Assign/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
+
+  const difficultyCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Difficulty' }) });
+  await difficultyCard.locator('select[name=user_id]').selectOption({ label: 'Judge Dana · judgedana@example.com' });
+  await difficultyCard.getByRole('button', { name: /Assign/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
+
+  const headJudgeCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Head Judge (Penalties)' }) });
+  await headJudgeCard.locator('select[name=user_id]').selectOption({ label: 'Petra Voss · petra@example.com' });
+  await headJudgeCard.getByRole('button', { name: /Assign/ }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
+
+  await logout(page);
+
+  const hjUrl = `/head-judge/competitions/${compId}/groups/${groupId}/rounds/${roundId}`;
+  const refUrl = `/referee/competitions/${compId}/groups/${groupId}/rounds/${roundId}`;
+
+  await loginAsHeadJudge(page);
+  await page.goto(hjUrl);
+  await page.getByRole('button', { name: /Start Round/ }).click();
+  await logout(page);
+
+  // Sam's best single attempt (10.0) would rank lower than a hypothetical better single attempt
+  // elsewhere, but in "sum" mode what matters is the total across both: 7.0 + 10.0 = 17.0
+  const attempts = [
+    { difficultyEntry: '60' }, // attempt 1 → 1 + 6.0 = 7.0
+    { difficultyEntry: '90' }, // attempt 2 → 1 + 9.0 = 10.0
+  ];
+
+  for (const { difficultyEntry } of attempts) {
+    await loginAsHeadJudge(page);
+    await page.goto(hjUrl);
+    const trickCountCard = page.locator('.card').filter({ hasText: 'Trick count' });
+    await trickCountCard.locator('input[name=element_count]').fill('1');
+    await trickCountCard.getByRole('button', { name: /Save/ }).click();
+    const penaltyCard = page.locator('.card').filter({ hasText: 'head judge penalty' });
+    await penaltyCard.locator('input[name=score]').fill('0');
+    await penaltyCard.getByRole('button', { name: /Save/ }).click();
+    await logout(page);
+
+    await loginAsReferee(page);
+    await page.goto(refUrl);
+    await page.locator('input[type=radio][name=element_1][value="0"]').check();
+    await page.getByRole('button', { name: /Save/ }).click();
+    await logout(page);
+
+    await loginAsDifficultyJudge(page);
+    await page.goto(refUrl);
+    await page.locator('input[name=element_1]').fill(difficultyEntry);
+    await page.getByRole('button', { name: /Save/ }).click();
+    await logout(page);
+
+    await loginAsHeadJudge(page);
+    await page.goto(hjUrl);
+    await page.getByRole('button', { name: /Next/ }).click();
+    await logout(page);
+  }
+
+  await page.goto(`/leaderboard/competitions/${compId}/groups/${groupId}/rounds/${roundId}`);
+  await expect(page.getByRole('columnheader', { name: 'Total Score' })).toBeVisible();
+  const row = page.locator('tbody tr').filter({ hasText: 'Sam Weiss' });
+  await expect(row).toContainText('17.000');
 });

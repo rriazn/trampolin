@@ -47,11 +47,13 @@ export function makeGroup(competitionId, name) {
   return { id: info.lastInsertRowid };
 }
 
-export function makeRound(groupId, { name, order = 1, status = 'not_started', currentAttemptId = null } = {}) {
+// Returns the real round row (so round.scoring_mode etc. are populated, not just {id}) — services
+// take the row itself, and a bare {id} silently reads as scoring_mode: undefined downstream
+export function makeRound(groupId, { name, order = 1, status = 'not_started', currentAttemptId = null, scoringMode = 'best_attempt' } = {}) {
   const n = nextSeq();
-  const info = db.prepare('INSERT INTO rounds (group_id, name, round_order, status, current_attempt_id) VALUES (?, ?, ?, ?, ?)')
-    .run(groupId, name || `Round ${n}`, order, status, currentAttemptId);
-  return { id: info.lastInsertRowid };
+  const info = db.prepare('INSERT INTO rounds (group_id, name, round_order, status, current_attempt_id, scoring_mode) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(groupId, name || `Round ${n}`, order, status, currentAttemptId, scoringMode);
+  return db.prepare('SELECT * FROM rounds WHERE id=?').get(info.lastInsertRowid);
 }
 
 export function makeSportsman(competitionId, groupId, name) {

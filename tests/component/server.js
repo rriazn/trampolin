@@ -74,8 +74,8 @@ app.post('/test/seed', (req, res) => {
   const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
   const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Qualifications', 1);
   const sp = db.prepare('INSERT INTO sportsmen (name, club, gender, birth_year, routine, competition_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Alice', 'Test Club', 'f', 2013, 'W11', comp.lastInsertRowid, group.lastInsertRowid);
-  const sp2 = db.prepare('INSERT INTO sportsmen (name, club, competition_id) VALUES (?, ?, ?)').run('Bob', 'Test Club 2', comp.lastInsertRowid);
-  const sp3 = db.prepare('INSERT INTO sportsmen (name, club, competition_id) VALUES (?, ?, ?)').run('Dave', 'Test Club 3', comp.lastInsertRowid);
+  const sp2 = db.prepare('INSERT INTO sportsmen (name, club, competition_id, group_id) VALUES (?, ?, ?, ?)').run('Bob', 'Test Club 2', comp.lastInsertRowid, group.lastInsertRowid);
+  const sp3 = db.prepare('INSERT INTO sportsmen (name, club, competition_id, group_id) VALUES (?, ?, ?, ?)').run('Dave', 'Test Club 3', comp.lastInsertRowid, group.lastInsertRowid);
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Referee One', 'referee1@test.com', bcrypt.hashSync('ref123', 10), 'referee');
   const referee = db.prepare('SELECT id, email, created_at FROM users WHERE email=?').get('referee1@test.com');
   db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sp.lastInsertRowid, 1);
@@ -141,7 +141,7 @@ app.post('/test/seed/scored', (req, res) => {
   const figPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
   const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Championship', 'active', figPanel.id);
   const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
-  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1);
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order, scoring_mode) VALUES (?, ?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1, 'best_attempt');
   const { assignmentId, roleId } = assignJudgeForFixture(comp.lastInsertRowid, 'time_of_flight', referee.id);
 
   function addAthlete(name, startOrder, scores, routine = null) {
@@ -171,6 +171,62 @@ app.post('/test/seed/scored', (req, res) => {
     roundId: Number(round.lastInsertRowid),
     bobAttempt1Id: Number(bob.attemptIds[0]),
     timeOfFlightRoleId: Number(roleId),
+  });
+});
+
+// Sum-mode seed: two athletes with multiple attempts, for leaderboard "Total Score" tests
+app.post('/test/seed/scored-sum', (req, res) => {
+  cleanupDb();
+
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Test Referee', 'ref@test.com', bcrypt.hashSync('ref123', 10), 'referee');
+  const referee = db.prepare('SELECT id FROM users WHERE email=?').get('ref@test.com');
+
+  const figPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+  const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Championship', 'active', figPanel.id);
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order, scoring_mode) VALUES (?, ?, ?, ?)').run(group.lastInsertRowid, 'Finals', 1, 'sum');
+  const { assignmentId, roleId } = assignJudgeForFixture(comp.lastInsertRowid, 'time_of_flight', referee.id);
+
+  function addAthlete(name, startOrder, scores) {
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run(name, comp.lastInsertRowid, group.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sp.lastInsertRowid, startOrder);
+    scores.forEach((score, i) => {
+      const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, status) VALUES (?, ?, ?)').run(entry.lastInsertRowid, i + 1, 'scored');
+      db.prepare('INSERT INTO scores (attempt_id, panel_assignment_id, judge_role_id, score) VALUES (?, ?, ?, ?)')
+        .run(attempt.lastInsertRowid, assignmentId, roleId, score);
+    });
+  }
+
+  // Dana's best single attempt (9.0) beats Ellie's (8.0), but Ellie's sum (16.6) beats Dana's (16.5)
+  addAthlete('Dana', 1, [9.0, 7.5]);
+  addAthlete('Ellie', 2, [8.0, 8.6]);
+
+  res.json({
+    competitionId: Number(comp.lastInsertRowid),
+    groupId: Number(group.lastInsertRowid),
+    roundId: Number(round.lastInsertRowid),
+  });
+});
+
+// Two groups, each with their own round and athlete — for admin-entries.spec.js's regression
+// test that only same-group athletes are offered as available entries for a round.
+app.post('/test/seed/multi-group', (req, res) => {
+  cleanupDb();
+
+  const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Spring Cup', 'active');
+  const groupA = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
+  const groupB = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group B', 'GB');
+  const roundA = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(groupA.lastInsertRowid, 'Qualifications', 1);
+  const spA = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Fiona', comp.lastInsertRowid, groupA.lastInsertRowid);
+  const spB = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Grace', comp.lastInsertRowid, groupB.lastInsertRowid);
+
+  res.json({
+    competitionId: Number(comp.lastInsertRowid),
+    groupAId: Number(groupA.lastInsertRowid),
+    groupBId: Number(groupB.lastInsertRowid),
+    roundAId: Number(roundA.lastInsertRowid),
+    sportsmanAId: Number(spA.lastInsertRowid),
+    sportsmanBId: Number(spB.lastInsertRowid),
   });
 });
 

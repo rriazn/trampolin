@@ -38,7 +38,7 @@
         <% for (let n = 1; n <= maxAttempts; n++) { %>
         <th style="background:var(--brand)" class="text-white text-center">Attempt <%= n %></th>
         <% } %>
-        <th style="background:var(--brand);width:130px" class="text-white text-end">Best Score</th>
+        <th style="background:var(--brand);width:130px" class="text-white text-end"><%= round.scoring_mode === 'sum' ? 'Total Score' : 'Best Score' %></th>
       </tr>
     </thead>
     <tbody>
@@ -86,8 +86,8 @@
       </td>
       <% } %>
       <td class="text-end align-middle">
-        <% if (row.bestScore !== null) { %>
-          <span class="lb-score <%= rankClass %>"><%= row.bestScore.toFixed(3) %></span>
+        <% if (row.total !== null) { %>
+          <span class="lb-score <%= rankClass %>"><%= row.total.toFixed(3) %></span>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
     </tr>

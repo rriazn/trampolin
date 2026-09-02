@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
-import { createApp, loginAdmin, seedCompetitionData, seedReferee } from '../helpers/createApp.js';
+import { createApp, loginAdmin, seedCompetitionData, seedReferee, db } from '../helpers/createApp.js';
 
 const app = createApp();
 let agent;
@@ -47,12 +47,31 @@ describe('POST /admin/competitions/:cid/groups/:gid/rounds', () => {
         expect(res.status).toBe(403);
     });
 
-    it('creates a new round and redirects', async () => {
+    // Regression: addRoundDB used to be called with whatever req.body.scoring_mode was, including
+    // undefined when the field was omitted — better-sqlite3 throws binding undefined, so this used
+    // to 500 instead of falling back to the schema's 'sum' default.
+    it('creates a new round without a scoring_mode and defaults it to "sum"', async () => {
         const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`).type('form').send({ name: 'Round B' });
         expect(res.status).toBe(302);
         expect(res.headers.location).toBe(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`);
         const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`);
         expect(listRes.text).toContain('Round B');
+        const round = db.prepare('SELECT scoring_mode FROM rounds WHERE name=?').get('Round B');
+        expect(round.scoring_mode).toBe('sum');
+    });
+
+    it('creates a round with an explicit "best_attempt" scoring mode', async () => {
+        const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`).type('form').send({ name: 'Round Best', scoring_mode: 'best_attempt' });
+        expect(res.status).toBe(302);
+        const round = db.prepare('SELECT scoring_mode FROM rounds WHERE name=?').get('Round Best');
+        expect(round.scoring_mode).toBe('best_attempt');
+    });
+
+    it('falls back to "sum" for an unrecognized scoring_mode value instead of erroring', async () => {
+        const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`).type('form').send({ name: 'Round Bogus', scoring_mode: 'not-a-real-mode' });
+        expect(res.status).toBe(302);
+        const round = db.prepare('SELECT scoring_mode FROM rounds WHERE name=?').get('Round Bogus');
+        expect(round.scoring_mode).toBe('sum');
     });
 
     it('returns 400 when name is empty', async () => {

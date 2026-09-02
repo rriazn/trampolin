@@ -40,7 +40,7 @@ exports.seedTestData = async () => {
   updateCompetitionStatusDB(competitionId, 'active');
 
   const groupId = addGroupDB('Junior', 'JR', competitionId).lastInsertRowid;
-  const roundId = addRoundDB(groupId, 'Qualifications', 1).lastInsertRowid;
+  const roundId = addRoundDB(groupId, 'Qualifications', 1, 'sum').lastInsertRowid;
 
   const sp1Id = addSportsmanDB('Leon Weber', 'TSV München', null, null, null, competitionId, groupId).lastInsertRowid;
   const sp2Id = addSportsmanDB('Emma Fischer', 'SV Hamburg', null, null, null, competitionId, groupId).lastInsertRowid;
