@@ -33,5 +33,9 @@ module.exports = [
       sourceType: 'commonjs',
       globals: { ...globals.node },
     },
+    rules: {
+      // Express error handlers must declare _next as the 4th arg even when unused
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
   },
 ];

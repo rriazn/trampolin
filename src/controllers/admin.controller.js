@@ -11,6 +11,7 @@ const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../servi
 const { createAttempts } = require("../services/attempts");
 const { getRoundsByGroup, addRoundDB, deleteRoundDB, getRoundByIdWithCompGroupInfo, getPreviousRoundInfo, getRoundById } = require("../services/db/rounds.crud");
 const { getEntriesWithAttemptsInfo, addEntryDB, getEntryMaxOrder, addAllEntriesDB, deleteEntryDB } = require("../services/db/entries.crud");
+const { renderNotFound } = require("../services/errors");
 
 // Dashboard
 exports.getDashboard = async (req, res) => {
@@ -40,7 +41,7 @@ exports.getNewUserForm = async (req, res) => {
 exports.getEditUserForm = async (req, res) => {
     const user = getUserById(req.params.id);
     if (!user) 
-        return res.status(404).send('Not found');
+        return renderNotFound(res, 'Not found');
     res.render('admin/user-form', { user, action: `/admin/users/${user.id}` });
 };
 
@@ -69,7 +70,7 @@ exports.updateUser = async (req, res) => {
     const action = `/admin/users/${req.params.id}`;
     const user = getUserById(req.params.id);
     if (!user) 
-        return res.status(404).send('Not found');
+        return renderNotFound(res, 'Not found');
     if (!name || !email) {
         return res.status(400).render('admin/user-form', {
         user, action, error: 'Name and email are required.',
@@ -134,7 +135,7 @@ exports.addCompetition = async (req, res) => {
 exports.getEditCompetitionForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Not found');
+        return renderNotFound(res, 'Not found');
     const panelTemplates = getPanels();
     res.render('admin/competition-form', { competition, action: `/admin/competitions/${competition.id}`, panelTemplates });
 };
@@ -173,7 +174,7 @@ exports.deleteCompetition = async (req, res) => {
 exports.getJudges = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
 
     if (!competition.panel_template_id)
         return res.render('admin/judges', { competition, panelTemplate: null, roles: [] });
@@ -186,7 +187,7 @@ exports.addJudge = async (req, res) => {
     const { judge_role_id, user_id } = req.body;
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
 
     const group = resolveAssignmentGroup(competition.panel_template_id, Number(judge_role_id));
     if (!group) 
@@ -216,11 +217,11 @@ exports.addJudge = async (req, res) => {
 exports.removeJudge = async (req, res) => {
     const competition = getCompetitionById(req.params.id)
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
 
     const assignment = getAssignmentById(req.params.assignmentId, competition.id);
     if (!assignment) 
-        return res.status(404).send('Assignment not found');
+        return renderNotFound(res, 'Assignment not found');
 
     const group = resolveAssignmentGroup(competition.panel_template_id, assignment.judge_role_id);
     const anchor = group ? `#role-${group.groupKey}` : '';
@@ -234,7 +235,7 @@ exports.removeJudge = async (req, res) => {
 exports.getSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const sportsmen = getSportsmenByCompetition(req.params.id);
     res.render('admin/sportsmen', { competition, sportsmen });
 };
@@ -242,7 +243,7 @@ exports.getSportsmen = async (req, res) => {
 exports.exportSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const clean_comp_name = competition.name
         .toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -259,7 +260,7 @@ exports.exportSportsmen = async (req, res) => {
 exports.getNewSportsmanForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const groups = getGroupsByCompetition(req.params.id);
     res.render('admin/sportsman-form', {
         sportsman: null,
@@ -288,10 +289,10 @@ exports.addSportsman = async (req, res) => {
 exports.getEditSportsmanForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const sportsman = getSportsmenById(req.params.sid);
     if (!sportsman) 
-        return res.status(404).send('Sportsman not found');
+        return renderNotFound(res, 'Sportsman not found');
     const groups = getGroupsByCompetition(req.params.id);
     res.render('admin/sportsman-form', {
         sportsman,
@@ -346,7 +347,7 @@ exports.uploadSportsmen = async (req, res) => {
 exports.getGroups = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const groups = getGroupsRoundCount(req.params.id);
     res.render('admin/groups', { competition, groups });
 };
@@ -356,7 +357,7 @@ exports.addGroup = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     const groups = getGroupsRoundCount(req.params.id);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     if (!name || !name.trim()) {
         return res.status(400).render('admin/groups', { competition, groups, error: 'Group name is required.' });
     }
@@ -383,10 +384,10 @@ exports.deleteGroup = async (req, res) => {
 exports.getRounds = async (req, res) => {
     const competition = getCompetitionById(req.params.cid);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const group = getGroupById(req.params.gid);
     if (!group) 
-        return res.status(404).send('Group not found');
+        return renderNotFound(res, 'Group not found');
     const rounds = getRoundsByGroup(req.params.gid);
     res.render('admin/rounds', { competition, group, rounds });
 };
@@ -395,10 +396,10 @@ exports.addRound = async (req, res) => {
     const { name, round_order, scoring_mode } = req.body;
     const competition = getCompetitionById(req.params.cid);
     if (!competition) 
-        return res.status(404).send('Not found');
+        return renderNotFound(res, 'Not found');
     const group = getGroupById(req.params.gid);
     if (!group) 
-        return res.status(404).send('Not found');
+        return renderNotFound(res, 'Not found');
 
     const renderWithError = (error) => {
         const rounds = getRoundsByGroup(req.params.gid);
@@ -427,14 +428,14 @@ exports.getEntries = async (req, res) => {
 
     const competition = getCompetitionById(cid);
     if (!competition) 
-        return res.status(404).send('Competition not found');
+        return renderNotFound(res, 'Competition not found');
     const group = getGroupById(gid);
     if (!group) 
-        return res.status(404).send('Group not found');
+        return renderNotFound(res, 'Group not found');
 
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
     if (!round) 
-        return res.status(404).send('Round not found');
+        return renderNotFound(res, 'Round not found');
 
     const entries = getEntriesWithAttemptsInfo(rid);
 
@@ -466,7 +467,7 @@ exports.addAllEntries = async (req, res) => {
     const { cid, gid, rid } = req.params;
     const round = getRoundById(rid);
     if (!round) 
-        return res.status(404).send('Round not found');
+        return renderNotFound(res, 'Round not found');
 
     const available = getAvailableSportsmen(round.competition_id, round.group_id, rid);
 
@@ -481,7 +482,7 @@ exports.randomizeEntries = async (req, res) => {
     const { cid, gid, rid } = req.params;
     const round = getRoundById(rid);
     if (!round) 
-        return res.status(404).send('Round not found');
+        return renderNotFound(res, 'Round not found');
 
     randomizeEntryOrder(rid);
 

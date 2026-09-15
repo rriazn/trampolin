@@ -32,7 +32,7 @@ describe('GET /admin/competitions/:id/groups', () => {
   it('returns 404 for non-existent competition', async () => {
     const res = await agent.get(`/admin/competitions/99999/groups`);
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Competition not found');
+    expect(res.text).toContain('Competition not found');
   });
 });
 
@@ -72,7 +72,7 @@ describe('POST /admin/competitions/:id/groups', () => {
   it('returns 404 for non-existent competition', async () => {
     const res = await agent.post(`/admin/competitions/99999/groups`).type('form').send({ name: 'Group X', abbreviation: 'GX' });
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Competition not found');
+    expect(res.text).toContain('Competition not found');
   });
 });
 

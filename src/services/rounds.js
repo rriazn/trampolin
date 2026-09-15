@@ -1,5 +1,6 @@
 const { getCompetitionById } = require("./db/competitions.crud");
 const { getGroupById } = require("./db/groups.crud");
+const { renderNotFound } = require("./errors");
 const {
   getRoundByIdWithCompGroupInfo, getOrderedRoundGroupCompInfoAdmin, getOrderedRoundGroupCompInfoUser,
 } = require("./db/rounds.crud");
@@ -16,11 +17,11 @@ const {
 
 exports.loadRound = (cid, gid, rid) => {
     const competition = getCompetitionById(cid);
-    if (!competition) return { error: res => res.status(404).send('Competition not found') };
+    if (!competition) return { error: res => renderNotFound(res, 'Competition not found') };
     const group = getGroupById(gid);
-    if (!group) return { error: res => res.status(404).send('Group not found') };
+    if (!group) return { error: res => renderNotFound(res, 'Group not found') };
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return { error: res => res.status(404).send('Round not found') };
+    if (!round) return { error: res => renderNotFound(res, 'Round not found') };
     return { round };
 };
 

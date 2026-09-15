@@ -10,7 +10,7 @@ const { loadRound, getRoundSelectionOverview, getRoundOverview, getRefereeRoundI
 function mockRes() {
   const res = {};
   res.status = vi.fn().mockReturnValue(res);
-  res.send = vi.fn().mockReturnValue(res);
+  res.render = vi.fn().mockReturnValue(res);
   return res;
 }
 
@@ -20,7 +20,7 @@ describe('loadRound', () => {
     const res = mockRes();
     error(res);
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.send).toHaveBeenCalledWith('Competition not found');
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Competition not found' });
   });
 
   it('returns a 404 error handler when the group does not exist for that competition', () => {
@@ -28,7 +28,7 @@ describe('loadRound', () => {
     const { error } = loadRound(comp.id, 999999, 1);
     const res = mockRes();
     error(res);
-    expect(res.send).toHaveBeenCalledWith('Group not found');
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Group not found' });
   });
 
   it('returns a 404 error handler when the round does not exist for that group', () => {
@@ -37,7 +37,7 @@ describe('loadRound', () => {
     const { error } = loadRound(comp.id, group.id, 999999);
     const res = mockRes();
     error(res);
-    expect(res.send).toHaveBeenCalledWith('Round not found');
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Round not found' });
   });
 
   it('returns the round with its group/competition info and panel_template_id when everything exists', () => {

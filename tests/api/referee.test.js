@@ -69,15 +69,15 @@ describe('GET /referee/competitions/:cid/groups/:gid/rounds/:rid', () => {
   it('returns 404 for a non-existent round, group or competition', async () => {
     const res = await agent.get(`/referee/competitions/999/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Competition not found');
+    expect(res.text).toContain('Competition not found');
 
     const res2 = await agent.get(`/referee/competitions/${data.competitionId}/groups/999/rounds/${data.roundId}`);
     expect(res2.status).toBe(404);
-    expect(res2.text).toBe('Group not found');
+    expect(res2.text).toContain('Group not found');
 
     const res3 = await agent.get(`/referee/competitions/${data.competitionId}/groups/${data.groupId}/rounds/999`);
     expect(res3.status).toBe(404);
-    expect(res3.text).toBe('Round not found');
+    expect(res3.text).toContain('Round not found');
   });
 
   it('shows the current attempt and the assigned role\'s input (round already started and assigned in prior tests)', async () => {

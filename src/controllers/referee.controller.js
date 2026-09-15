@@ -5,6 +5,7 @@ const { getAssignmentsForUser, getAssignmentWithInfo } = require("../services/db
 const { getAttemptContext } = require("../services/db/entries.crud");
 const { addAttemptScoreDB, addAllElementScoresDB } = require("../services/db/scores.crud");
 const { getRefereeRoundInfo } = require("../services/rounds");
+const { renderNotFound } = require("../services/errors");
 const { recomputeAttemptCompletion } = require("../services/attempts");
 const { isWithinRange, rangeErrorMessage } = require("../services/referee-helpers");
 const { parseAndValidateElementScores, parseAndValidate11thScore } = require("../services/scoring");
@@ -20,13 +21,13 @@ exports.getRound = (req, res) => {
     const userId = req.session.user.id;
 
     const competition = getCompetitionById(cid);
-    if (!competition) return res.status(404).send('Competition not found');
+    if (!competition) return renderNotFound(res, 'Competition not found');
 
     const group = getGroupById(gid);
-    if (!group) return res.status(404).send('Group not found');
+    if (!group) return renderNotFound(res, 'Group not found');
 
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return res.status(404).send('Round not found');
+    if (!round) return renderNotFound(res, 'Round not found');
 
     const assignments = getAssignmentsForUser(round.competition_id, userId);
 
@@ -48,13 +49,13 @@ exports.postScore = (req, res) => {
     const userId = req.session.user.id;
 
     const ctx = getAttemptContext(attemptId);
-    if (!ctx) 
-        return res.status(404).send('Attempt not found');
+    if (!ctx)
+        return renderNotFound(res, 'Attempt not found');
 
     const assignment = getAssignmentWithInfo(ctx.competitionId, userId, judgeRoleId);
-    if (!assignment) 
+    if (!assignment)
         return res.status(403).send('Forbidden');
-    if (assignment.granularity !== 'attempt') 
+    if (assignment.granularity !== 'attempt')
         return res.status(400).send('This role is scored per trick, not per attempt.');
     if (ctx.elementCount === 0 && assignment.roleKey !== 'head_judge') {
         return res.status(400).send('No skills were performed for this attempt — this role does not apply.');
@@ -78,13 +79,13 @@ exports.postElementScores = (req, res) => {
     const userId = req.session.user.id;
 
     const ctx = getAttemptContext(attemptId);
-    if (!ctx) 
-        return res.status(404).send('Attempt not found');
+    if (!ctx)
+        return renderNotFound(res, 'Attempt not found');
 
     const assignment = getAssignmentWithInfo(ctx.competitionId, userId, judgeRoleId);
-    if (!assignment) 
+    if (!assignment)
         return res.status(403).send('Forbidden');
-    if (assignment.granularity !== 'element') 
+    if (assignment.granularity !== 'element')
         return res.status(400).send('This role is scored per attempt, not per trick.');
 
     let parsedValues;

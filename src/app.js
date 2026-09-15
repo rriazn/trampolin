@@ -47,9 +47,13 @@ app.use('/referee', require('./routes/referee'));
 app.use('/head-judge', require('./routes/head-judge'));
 app.use('/leaderboard', require('./routes/leaderboard'));
 
+app.use((req, res) => {
+  res.status(404).render('errors/404');
+});
+
 app.use((err, req, res, _next) => {
   console.error(err);
-  res.status(500).send(`<h1>Error</h1><pre>${err.message}</pre><a href="/">Back</a>`);
+  res.status(500).render('errors/500');
 });
 
 const PORT = process.env.PORT || 3000;

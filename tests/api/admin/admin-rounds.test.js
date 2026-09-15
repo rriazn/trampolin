@@ -33,11 +33,11 @@ describe('GET /admin/competitions/:cid/groups/:gid/rounds', () => {
     it('returns 404 for non-existent competition or group', async () => {
         const res = await agent.get(`/admin/competitions/99999/groups/${data.groupId}/rounds`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Competition not found');
+        expect(res.text).toContain('Competition not found');
 
         const res2 = await agent.get(`/admin/competitions/${data.competitionId}/groups/99999/rounds`);
         expect(res2.status).toBe(404);
-        expect(res2.text).toBe('Group not found');
+        expect(res2.text).toContain('Group not found');
     });
 });
 

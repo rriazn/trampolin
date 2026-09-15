@@ -126,15 +126,25 @@ describe('GET /head-judge/competitions/:cid/groups/:gid/rounds/:rid (control pag
   it('returns 404 for a non-existent competition, group or round', async () => {
     const res = await agent.get(`/head-judge/competitions/999/groups/${data.groupId}/rounds/${data.roundId}`);
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Competition not found');
+    expect(res.text).toContain('Competition not found');
 
     const res2 = await agent.get(`/head-judge/competitions/${data.competitionId}/groups/999/rounds/${data.roundId}`);
     expect(res2.status).toBe(404);
-    expect(res2.text).toBe('Group not found');
+    expect(res2.text).toContain('Group not found');
 
     const res3 = await agent.get(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/999`);
     expect(res3.status).toBe(404);
-    expect(res3.text).toBe('Round not found');
+    expect(res3.text).toContain('Round not found');
+  });
+
+  // Regression: a non-existent round used to return a bare 'Round not found' string
+  // instead of the app's custom 404 page
+  it('renders the custom 404 page, not a bare text response, for a non-existent round', async () => {
+    const res = await agent.get(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/999`);
+    expect(res.status).toBe(404);
+    expect(res.text).not.toBe('Round not found');
+    expect(res.text).toContain('error-page');
+    expect(res.text).toContain('Round not found');
   });
 
   it('shows the panel readiness banner before the round is started', async () => {

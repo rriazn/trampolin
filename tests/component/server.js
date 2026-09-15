@@ -46,6 +46,11 @@ app.use('/referee', require('../../src/routes/referee'));
 app.use('/head-judge', require('../../src/routes/head-judge'));
 app.use('/admin', require('../../src/routes/admin'));
 
+// Test-only route for errors.spec.js to exercise the 500 error page
+app.get('/test/throw', () => {
+  throw new Error('boom');
+});
+
 // Deletes all test data while keeping the permanent admin account.
 // Called automatically at the start of every seed so each test file
 // gets a clean database regardless of what the previous file left behind.
@@ -323,5 +328,14 @@ app.post('/test/seed/head-judge', (req, res) => {
 const adminHash = bcrypt.hashSync('admin123', 10);
 db.prepare('INSERT OR IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
   .run('Test Admin', 'admin@test.com', adminHash, 'admin');
+
+app.use((req, res) => {
+  res.status(404).render('errors/404');
+});
+
+app.use((err, req, res, _next) => {
+  console.error(err);
+  res.status(500).render('errors/500');
+});
 
 app.listen(3001, () => process.stdout.write('Component test server ready on :3001\n'));

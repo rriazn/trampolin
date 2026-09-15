@@ -28,15 +28,15 @@ describe('GET /leaderboard/competitions/:competitionId/groups/:groupId/rounds/:r
   it('returns 404 for a non-existent round, group or competition', async () => {
     const res = await request(app).get(`/leaderboard/competitions/999/groups/${groupId}/rounds/${roundId}`);
     expect(res.status).toBe(404);
-    expect(res.text).toBe('Competition not found');
+    expect(res.text).toContain('Competition not found');
 
     const res2 = await request(app).get(`/leaderboard/competitions/${competitionId}/groups/999/rounds/${roundId}`);
     expect(res2.status).toBe(404);
-    expect(res2.text).toBe('Group not found');
+    expect(res2.text).toContain('Group not found');
 
     const res3 = await request(app).get(`/leaderboard/competitions/${competitionId}/groups/${groupId}/rounds/999`);
     expect(res3.status).toBe(404);
-    expect(res3.text).toBe('Round not found');
+    expect(res3.text).toContain('Round not found');
   });
 
   it('shows a "panel not configured" message for a competition with no panel template', async () => {

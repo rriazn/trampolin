@@ -34,7 +34,7 @@ describe('GET /admin/competitions/:id/sportsmen', () => {
     it('returns 404 for non-existent competition', async () => {
         const res = await agent.get(`/admin/competitions/99999/sportsmen`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Competition not found');
+        expect(res.text).toContain('Competition not found');
     });
 });
 
@@ -66,7 +66,7 @@ describe('GET /admin/competitions/:id/sportsmen/export', () => {
     it('returns 404 for non-existent competition', async () => {
         const res = await agent.get(`/admin/competitions/99999/sportsmen/export`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Competition not found');
+        expect(res.text).toContain('Competition not found');
     });
 });
 
@@ -85,7 +85,7 @@ describe('GET /admin/competitions/:id/sportsmen/new', () => {
     it('returns 404 for non-existent competition', async () => {
         const res = await agent.get(`/admin/competitions/99999/sportsmen/new`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Competition not found');
+        expect(res.text).toContain('Competition not found');
     });
 });
 
@@ -125,13 +125,13 @@ describe('GET /admin/competitions/:id/sportsmen/:sid/edit', () => {
     it('returns 404 for non-existent competition', async () => {
         const res = await agent.get(`/admin/competitions/99999/sportsmen/${data.sportsmanId}/edit`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Competition not found');
+        expect(res.text).toContain('Competition not found');
     });
 
     it('returns 404 for non-existent sportsman', async () => {
         const res = await agent.get(`/admin/competitions/${data.competitionId}/sportsmen/99999/edit`);
         expect(res.status).toBe(404);
-        expect(res.text).toBe('Sportsman not found');
+        expect(res.text).toContain('Sportsman not found');
     });
 });
 
