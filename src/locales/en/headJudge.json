@@ -1,0 +1,63 @@
+{
+  "dashboard": {
+    "pageTitle": "Head Judge",
+    "heading": "Head Judge Dashboard",
+    "subtitle": "Select a round to control scoring flow",
+    "noRoundsTitle": "No active competitions right now",
+    "noRoundsBody": "Check back when the admin activates a competition and assigns you as head judge.",
+    "statusInProgress": "In progress",
+    "statusCompleted": "Completed",
+    "statusReady": "Ready to start",
+    "statusNotStaffed": "Not staffed"
+  },
+  "round": {
+    "readinessHeading": "Panel readiness",
+    "noPanelSelected": "No judge panel selected for this competition. Choose one on the competition's edit page.",
+    "assignedCount": "{{assigned}} of {{required}} assigned",
+    "startRound": "Start Round",
+    "notReadyNote": "The panel isn't fully staffed yet — starting will show an error until it is.",
+    "completedHeading": "Round completed",
+    "completedBody": "Every attempt in this round has been judged.",
+    "viewLeaderboard": "View Leaderboard",
+    "backToLastAttempt": "Back to Last Attempt",
+    "attemptNumber": "Attempt #{{number}}",
+    "partialNote": "partial — not every judge has submitted yet, total will change",
+    "checklistHeading": "Judging checklist",
+    "submittedCount": "{{count}} of {{required}} submitted",
+    "penaltyHeading": "Your head judge penalty",
+    "saved": "Saved",
+    "trickCountHeading": "Trick count",
+    "trickCountHelp": "Lower this if the routine was interrupted before all tricks were performed. Judges pick up the new count on their next page load.",
+    "numberOfTricks": "Number of tricks",
+    "next": "Next",
+    "skipAthlete": "Skip Athlete",
+    "confirmSkip": "Skip {{name}}'s attempt #{{number}}? This cannot be undone and no score will be recorded for it.",
+    "completeRound": "Complete Round",
+    "confirmComplete": "Mark this round as completed? Any un-judged attempts will be left as-is."
+  },
+  "rangeError": {
+    "max": "Score must be between {{min}} and {{max}}.",
+    "min": "Score must be at least {{min}}."
+  },
+  "flash": {
+    "alreadyStarted": "This round has already been started.",
+    "notFullyStaffed": "The judge panel is not fully staffed yet. Assign all required judges first.",
+    "noAttempts": "This round has no attempts to score yet.",
+    "started": "Round started.",
+    "notStartedYet": "This round has not been started yet.",
+    "alreadyAtFirst": "Already at the first attempt, there is nothing before it.",
+    "movedBack": "Moved back to the previous attempt.",
+    "notInProgress": "This round is not in progress.",
+    "notAllSubmitted": "Not every judge has submitted a score for the current attempt yet.",
+    "advanced": "Advanced to the next attempt.",
+    "completed": "Round completed — every attempt has been scored.",
+    "skippedAdvanced": "Attempt skipped; advanced to the next attempt.",
+    "skippedCompleted": "Attempt skipped; round completed, no attempts remain.",
+    "notCurrentAttempt": "That attempt is not the round's current attempt.",
+    "noPenaltyRole": "You do not hold the head judge scoring role for this competition.",
+    "penaltySaved": "Head judge penalty {{score}} saved.",
+    "markedCompleted": "Round marked as completed.",
+    "trickCountInvalid": "Trick count must be between 0 and 10.",
+    "trickCountSet": "Trick count set to {{count}}."
+  }
+}

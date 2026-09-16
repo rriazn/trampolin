@@ -1,0 +1,10 @@
+{
+  "pageTitle": "Login",
+  "subtitle": "Wettkampfwertungssystem",
+  "email": "E-Mail",
+  "emailPlaceholder": "you@beispiel.com",
+  "password": "Passwort",
+  "passwordPlaceholder": "••••••••",
+  "signIn": "Einloggen",
+  "invalidCredentials": "Ungültige E-Mail/Passwort"
+}

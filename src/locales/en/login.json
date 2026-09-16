@@ -1,0 +1,10 @@
+{
+  "pageTitle": "Login",
+  "subtitle": "Tournament Scoring System",
+  "email": "Email",
+  "emailPlaceholder": "you@example.com",
+  "password": "Password",
+  "passwordPlaceholder": "••••••••",
+  "signIn": "Sign In",
+  "invalidCredentials": "Invalid email or password"
+}

@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "admin": "Admin",
+    "scoring": "Scoring",
+    "headJudge": "Head Judge",
+    "logout": "Logout"
+  },
+  "footer": {
+    "versionLatest": "latest"
+  },
+  "status": {
+    "planned": "Planned",
+    "active": "Active",
+    "closed": "Closed"
+  },
+  "scoringMode": {
+    "sum": "Sum",
+    "best_attempt": "Best Attempt"
+  },
+  "roles": {
+    "admin": "Admin",
+    "referee": "Referee",
+    "head_judge": "Head Judge"
+  },
+  "actions": {
+    "save": "Save",
+    "create": "Create",
+    "cancel": "Cancel",
+    "back": "Back",
+    "add": "Add"
+  }
+}

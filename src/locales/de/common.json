@@ -1,0 +1,32 @@
+{
+  "nav": {
+    "admin": "Admin",
+    "scoring": "Wertung",
+    "headJudge": "Wettkampfleiter",
+    "logout": "Logout"
+  },
+  "footer": {
+    "versionLatest": "latest"
+  },
+  "status": {
+    "planned": "Geplant",
+    "active": "Aktiv",
+    "closed": "Beendet"
+  },
+  "scoringMode": {
+    "sum": "Summe",
+    "best_attempt": "Bester Versuch"
+  },
+  "roles": {
+    "admin": "Admin",
+    "referee": "Kampfrichter",
+    "head_judge": "Wettkampfleiter"
+  },
+  "actions": {
+    "save": "Speichern",
+    "create": "Erstellen",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "add": "Hinzufügen"
+  }
+}

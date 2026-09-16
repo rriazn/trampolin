@@ -1,0 +1,228 @@
+{
+  "dashboard": {
+    "pageTitle": "Dashboard",
+    "heading": "Admindashboard",
+    "subtitle": "Wettkampfverwaltung",
+    "referees": "Kampfrichter",
+    "competitions": "Wettkämpfe",
+    "manage": "Verwalten",
+    "recentCompetitions": "Aktuelle Wettkämpfe",
+    "new": "Neu",
+    "noCompetitions": "Noch keine Wettkämpfe.",
+    "createOne": "Erstellen",
+    "table": { "name": "Name", "date": "Datum", "status": "Status", "groups": "Gruppen" }
+  },
+  "competitions": {
+    "heading": "Wettkämpfe",
+    "subtitle": "Erstellen und Verwalten von Wettkämpfen",
+    "newCompetition": "Neuer Wettkampf",
+    "table": { "name": "Name", "date": "Datum", "status": "Status" },
+    "groups": "Gruppen",
+    "judges": "Kampfrichter",
+    "activate": "Aktivieren",
+    "close": "Beenden",
+    "confirmDelete": "Wettkampf mit allen Daten löschen?"
+  },
+  "competitionForm": {
+    "editTitle": "Wettkampf bearbeiten",
+    "newTitle": "Neuer Wettkampf",
+    "breadcrumbCompetitions": "Wettkämpfe",
+    "name": "Wettkampfname",
+    "namePlaceholder": "z.B. Frühlingspokal 2026",
+    "date": "Datum",
+    "optional": "(optional)",
+    "judgePanel": "Kampfgericht",
+    "noneSelected": "— Nichts ausgewählt —",
+    "panelHelp": "Wird für jede Gruppe und Runde in diesem Wettkampf genutzt. Kampfrichter können später in der Wettkampfübersicht zugewiesen werden."
+  },
+  "users": {
+    "pageTitle": "Nutzer",
+    "heading": "Kampfrichter & Admins",
+    "subtitle": "Benutzer- und Zugangsverwaltung",
+    "importExcel": "Excel importieren",
+    "exportExcel": "Excel exportieren",
+    "addUser": "Nutzer hinzufügen",
+    "importHeading": "Aus Excel importieren",
+    "importHelp": "Pflichtfelder: <strong>Name</strong>, <strong>E-Mail</strong> &nbsp;·&nbsp; Optional: <strong>Passwort</strong> (Standard: <code>referee123</code>), <strong>Rolle</strong> (Standard: <code>referee</code>)",
+    "upload": "Upload",
+    "table": { "name": "Name", "email": "E-Mail", "role": "Rolle", "created": "Erstellt am" },
+    "confirmDelete": "Nutzer {{name}} löschen?",
+    "errors": {
+      "noFile": "Keine Datei hochgeladen.",
+      "invalidFileType": "Nicht unterstützter Dateityp. Bitte laden Sie eine Excel-Datei hoch."
+    }
+  },
+  "userForm": {
+    "editTitle": "Nutzer bearbeiten",
+    "newTitle": "Neuer Nutzer",
+    "breadcrumbUsers": "Nutzer",
+    "fullName": "Vor- und Nachname",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordKeepCurrent": "(leer lassen, um das aktuelle Passwort zu behalten)",
+    "role": "Rolle",
+    "errors": {
+      "required": "Name, E-Mail und Passwort sind Pflichtfelder.",
+      "requiredNameEmail": "Name und E-Mail sind Pflichtfelder.",
+      "emailInUse": "E-Mail wird schon genutzt."
+    }
+  },
+  "judges": {
+    "heading": "Kampfrichter",
+    "noPanelTitle": "Kein Kampfgericht ausgewählt",
+    "noPanelBody": "Wählen Sie ein Kampfgericht auf der Bearbeitungsseite des Wettkampfes, dann können Kampfrichter zugewiesen werden.",
+    "editCompetition": "Wettkampf bearbeiten",
+    "infoText": "Kampfrichter werden einmal pro Wettkampf zugewiesen und bewerten jede Gruppe und Runde darin.",
+    "filled": "{{assigned}} von {{required}} zugewiesen",
+    "noneAssigned": "Noch keine Kampfrichter zugewiesen.",
+    "table": { "name": "Name", "email": "E-Mail" },
+    "confirmRemove": "{{judgeName}} von {{roleName}} entfernen?",
+    "fullyStaffed": "Diese Rolle ist voll besetzt.",
+    "noEligible": "Keine übrigen Nutzer mehr. Fügen Sie mehr Nutzer mit der korrekten Rolle hinzu.",
+    "assign": "Zuweisen",
+    "errors": {
+      "unknownRole": "Unbekannte Rolle für dieses Kampfgericht.",
+      "alreadyAssignedElsewhere": "Dieser Nutzer ist schon zu einer anderen Rolle in diesem Wettkampf zugewiesen.",
+      "roleFullyStaffed": "{{roleNames}} ist voll besetzt.",
+      "alreadyAssignedToRole": "Dieser Nutzer ist bereits zu dieser Rolle zugewiesen."
+    }
+  },
+  "sportsmen": {
+    "heading": "Athleten",
+    "importExcel": "Excel importieren",
+    "exportExcel": "Excel exportieren",
+    "addAthlete": "Athleten hinzufügen",
+    "importHeading": "Aus Excel importieren",
+    "importHelp": "Pflichtfelder: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Verein</strong>, <strong>Geschlecht</strong>, <strong>Geburtsjahr</strong>, <strong>Übung</strong>",
+    "upload": "Upload",
+    "noAthletes": "Noch keine Athleten verfügbar.",
+    "addOne": "Einen hinzufügen",
+    "table": { "athlete": "Athlet", "club": "Verein", "group": "Gruppe", "gender": "Geschlecht", "birthYear": "Geburtsjahr", "routine": "Übung" },
+    "confirmDelete": "{{name}} löschen?"
+  },
+  "sportsmanForm": {
+    "editTitle": "Athleten bearbeiten",
+    "newTitle": "Neuer Athlet",
+    "breadcrumbAthletes": "Athleten",
+    "fullName": "Vor- und Nachname",
+    "club": "Verein",
+    "gender": "Geschlecht",
+    "genderNotSet": "– nicht gesetzt –",
+    "genderMale": "Männlich",
+    "genderFemale": "Weiblich",
+    "birthYear": "Geburtsjahr",
+    "birthYearPlaceholder": "z.B. 2008",
+    "routine": "Übung",
+    "routinePlaceholder": "z.B. W11, P8",
+    "group": "Gruppe",
+    "groupUnassigned": "– nicht zugewiesen –",
+    "errors": { "nameRequired": "Name ist ein Pflichtfeld." }
+  },
+  "groups": {
+    "pageTitle": "Gruppen – {{name}}",
+    "heading": "Gruppen",
+    "athletes": "Athleten",
+    "noGroups": "Noch keine Gruppen. Fügen Sie sie unten hinzu.",
+    "table": { "groupName": "Gruppenname", "abbreviation": "Abkürzung", "rounds": "Runden" },
+    "roundsCount_one": "{{count}} Runde",
+    "roundsCount_other": "{{count}} Runden",
+    "roundsButton": "Runden",
+    "confirmDelete": "Gruppe mit allen Runden und Wertungen löschen?",
+    "addGroup": "Gruppe hinzufügen",
+    "groupName": "Gruppenname",
+    "groupNamePlaceholder": "z.B. Jugendturner",
+    "groupAbbreviation": "Gruppenabkürzung",
+    "groupAbbreviationPlaceholder": "z.B. JT1",
+    "errors": {
+      "nameRequired": "Gruppenname ist Pflichtfeld.",
+      "abbreviationRequired": "Gruppenabkürzung ist Pflichtfeld.",
+      "abbreviationInUse": "Abkürzung \"{{abbreviation}}\" wird bereits von einer anderen Gruppe in diesem Wettkampf genutzt."
+    }
+  },
+  "rounds": {
+    "pageTitle": "Runden – {{name}}",
+    "heading": "Runden",
+    "noRounds": "Noch keine Runden. Fügen Sie sie unten hinzu.",
+    "table": { "order": "Reihenfolge", "roundName": "Rundenname", "scoringMode": "Wertungsmodus" },
+    "entries": "Teilnahmen",
+    "leaderboard": "Wertungsliste",
+    "confirmDelete": "Runde mit allen Teilnahmen/Wertungen löschen?",
+    "addRound": "Runde hinzufügen",
+    "name": "Name",
+    "namePlaceholder": "z.B. Vorkampf",
+    "order": "Reihenfolge",
+    "scoringMode": "Wertungsmodus",
+    "errors": {
+      "nameRequired": "Rundenname ist Pflichtfeld.",
+      "orderInvalid": "Rundenreihenfolge muss nicht-negativ sein."
+    }
+  },
+  "entries": {
+    "pageTitle": "Teilnahmen – {{name}}",
+    "heading": "Teilnahmen",
+    "attemptsPerAthlete": "Versuche pro Athlet",
+    "createAllAttempts": "Alle Versuche erstellen",
+    "confirmCreateAll": "Versuche für alle Teilnahmen erstellen?",
+    "randomize": "Zufällig anordnen",
+    "confirmRandomize": "Reihenfolge aller Athleten in dieser Runde zufällig anordnen?",
+    "leaderboard": "Wertungsliste",
+    "noEntries": "Noch keine Teilnahmen. Fügen Sie unten Athleten hinzu.",
+    "table": { "startOrder": "Startnummer", "athlete": "Athlet", "club": "Verein", "routine": "Übung", "attempts": "Versuche" },
+    "attemptsCount_one": "{{count}} Versuch",
+    "attemptsCount_other": "{{count}} Versuche",
+    "confirmRemove": "Diesen Teilnehmer mit allen Wertungen löschen?",
+    "addEntry": "Teilnahme hinzufügen",
+    "allRegistered": "Alle registrierten Athleten sind bereits in dieser Runde.",
+    "athlete": "Athlet",
+    "rankedBy": "— geordnet nach {{roundName}}",
+    "startOrder": "Startnummer",
+    "addAll": "Alle hinzufügen",
+    "confirmAddAll": "Alle Athleten dieser Gruppe zur Runde hinzufügen?",
+    "errors": { "alreadyInRound": "Athlet ist bereits in dieser Runde." }
+  },
+  "errors": {
+    "badStatus": "Ungültiger Status"
+  },
+  "flash": {
+    "users": {
+      "created": "Nutzer \"{{name}}\" erstellt.",
+      "updated": "Nutzer aktualisiert.",
+      "deleted": "Nutzer gelöscht.",
+      "importComplete": "Import fertig: {{created}} hinzugefügt, {{skipped}} übersprungen (Duplikate/ungültig)."
+    },
+    "competitions": {
+      "created": "Wettkampf \"{{name}}\" erstellt.",
+      "updated": "Wettkampf aktualisiert.",
+      "statusSet": "Status auf \"{{status}}\" gesetzt.",
+      "deleted": "Wettkampf und alle dazugehörigen Daten gelöscht."
+    },
+    "judges": {
+      "assigned": "Kampfrichter zugewiesen.",
+      "unassigned": "Kampfrichterzuweisung entfernt."
+    },
+    "sportsmen": {
+      "added": "Athlet \"{{name}}\" hinzugefügt.",
+      "updated": "Athlet aktualisiert.",
+      "deleted": "Athlet gelöscht.",
+      "importAdded": "{{count}} hinzugefügt",
+      "importSkipped": "{{count}} übersprungen (fehlender Name)",
+      "importUnknownGroup": "{{count}} ohne Gruppe (unbekannte Abkürzung)",
+      "importComplete": "Import fertig: {{parts}}."
+    },
+    "groups": {
+      "created": "Gruppe \"{{name}}\" erstellt.",
+      "deleted": "Gruppe gelöscht."
+    },
+    "rounds": {
+      "added": "Runde \"{{name}}\" hinzugefügt.",
+      "deleted": "Runde gelöscht."
+    },
+    "entries": {
+      "added": "Athlet zur Runde hinzugefügt.",
+      "addedAll": "{{count}} Athleten zur Runde hinzugefügt.",
+      "randomized": "Startreihenfolge zufällig angeordnet.",
+      "removed": "Teilnahme entfernt.",
+      "attemptsCreated": "{{count}} Versuch(e) für alle Teilnahmen erstellt."
+    }
+  }
+}
