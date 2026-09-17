@@ -1,9 +1,9 @@
-<%- include('partials/header', { title: 'Login', hideNav: true }) %>
+<%- include('partials/header', { title: t('login:pageTitle'), hideNav: true }) %>
 <div class="login-bg">
   <div class="login-card card p-4 p-md-5 mx-3">
     <div class="text-center mb-4">
       <div class="login-logo">Trampo<span>·</span>Score</div>
-      <p class="text-muted mt-1 small">Tournament Scoring System</p>
+      <p class="text-muted mt-1 small"><%= t('login:subtitle') %></p>
     </div>
     <% if (error) { %>
     <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
@@ -12,21 +12,21 @@
     <% } %>
     <form method="POST" action="/login">
       <div class="mb-3">
-        <label class="form-label fw-600 small text-muted text-uppercase">Email</label>
+        <label class="form-label fw-600 small text-muted text-uppercase"><%= t('login:email') %></label>
         <div class="input-group">
           <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
-          <input type="email" name="email" class="form-control border-start-0" placeholder="you@example.com" required autofocus>
+          <input type="email" name="email" class="form-control border-start-0" placeholder="<%= t('login:emailPlaceholder') %>" required autofocus>
         </div>
       </div>
       <div class="mb-4">
-        <label class="form-label fw-600 small text-muted text-uppercase">Password</label>
+        <label class="form-label fw-600 small text-muted text-uppercase"><%= t('login:password') %></label>
         <div class="input-group">
           <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
-          <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required>
+          <input type="password" name="password" class="form-control border-start-0" placeholder="<%= t('login:passwordPlaceholder') %>" required>
         </div>
       </div>
       <button type="submit" class="btn btn-brand w-100 py-2 rounded-pill">
-        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        <i class="bi bi-box-arrow-in-right me-1"></i> <%= t('login:signIn') %>
       </button>
     </form>
   </div>

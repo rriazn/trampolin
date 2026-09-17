@@ -14,30 +14,32 @@ function mockRes() {
   return res;
 }
 
+const t = (key) => key;
+
 describe('loadRound', () => {
   it('returns a 404 error handler when the competition does not exist', () => {
-    const { error } = loadRound(999999, 1, 1);
+    const { error } = loadRound(999999, 1, 1, t);
     const res = mockRes();
     error(res);
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Competition not found' });
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'errors:notFound.competition' });
   });
 
   it('returns a 404 error handler when the group does not exist for that competition', () => {
     const comp = makeCompetition();
-    const { error } = loadRound(comp.id, 999999, 1);
+    const { error } = loadRound(comp.id, 999999, 1, t);
     const res = mockRes();
     error(res);
-    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Group not found' });
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'errors:notFound.group' });
   });
 
   it('returns a 404 error handler when the round does not exist for that group', () => {
     const comp = makeCompetition();
     const group = makeGroup(comp.id);
-    const { error } = loadRound(comp.id, group.id, 999999);
+    const { error } = loadRound(comp.id, group.id, 999999, t);
     const res = mockRes();
     error(res);
-    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'Round not found' });
+    expect(res.render).toHaveBeenCalledWith('errors/404', { message: 'errors:notFound.round' });
   });
 
   it('returns the round with its group/competition info and panel_template_id when everything exists', () => {
@@ -45,7 +47,7 @@ describe('loadRound', () => {
     const group = makeGroup(comp.id, 'Group A');
     const round = makeRound(group.id, { name: 'Finals' });
 
-    const { round: loaded, error } = loadRound(comp.id, group.id, round.id);
+    const { round: loaded, error } = loadRound(comp.id, group.id, round.id, t);
     expect(error).toBeUndefined();
     expect(loaded.name).toBe('Finals');
     expect(loaded.group_name).toBe('Group A');

@@ -34,7 +34,7 @@ test.describe('when logged in as admin', () => {
 
   test('shows the competition name and status badge as subtitle', async ({ page }) => {
     await expect(page.locator('.page-hero p').filter({ hasText: 'Spring Cup' })).toBeVisible();
-    await expect(page.locator('.page-hero .badge')).toContainText('active');
+    await expect(page.locator('.page-hero .badge')).toContainText('Active');
   });
 
   test('shows the "Add Group" section header', async ({ page }) => {

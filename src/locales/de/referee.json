@@ -16,7 +16,7 @@
     "bonus": "Bonus",
     "trick": "Element {{number}}",
     "saved": "Gespeichert",
-    "currentValue": "Aktueller Wert für {{name}}: {{value}}",
+    "currentValue": "Aktueller Wert für {{name}}:",
     "partialNote": "(unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben)",
     "notApplicable": "Keine Elemente wurden in diesem Versuch gezeigt."
   },

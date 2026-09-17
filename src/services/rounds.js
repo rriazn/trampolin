@@ -15,13 +15,13 @@ const {
   getScoreForAttemptByPanelId, getElementScoreForAttemptAndAssignment, getScoreForAttemptAndAssignment,
 } = require("./db/scores.crud");
 
-exports.loadRound = (cid, gid, rid) => {
+exports.loadRound = (cid, gid, rid, t) => {
     const competition = getCompetitionById(cid);
-    if (!competition) return { error: res => renderNotFound(res, 'Competition not found') };
+    if (!competition) return { error: res => renderNotFound(res, t('errors:notFound.competition')) };
     const group = getGroupById(gid);
-    if (!group) return { error: res => renderNotFound(res, 'Group not found') };
+    if (!group) return { error: res => renderNotFound(res, t('errors:notFound.group')) };
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return { error: res => renderNotFound(res, 'Round not found') };
+    if (!round) return { error: res => renderNotFound(res, t('errors:notFound.round')) };
     return { round };
 };
 

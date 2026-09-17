@@ -167,6 +167,33 @@ body {
 }
 .login-logo span { color: var(--accent); }
 
+/* ── Language switcher ──────────────────────────────────────────────── */
+.lang-switcher {
+  position: fixed;
+  top: .6rem;
+  right: 1rem;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  background: rgba(0,0,0,.25);
+  border-radius: 999px;
+  padding: .25rem .6rem;
+}
+.lang-switcher-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.6);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  padding: 0;
+  cursor: pointer;
+}
+.lang-switcher-btn.active { color: #fff; }
+.lang-switcher-btn:hover { color: #fff; }
+.lang-switcher-sep { color: rgba(255,255,255,.4); font-size: .75rem; }
+
 /* ── Error pages ─────────────────────────────────────────────────────── */
 .error-page {
   min-height: calc(100vh - 200px);

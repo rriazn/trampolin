@@ -33,7 +33,8 @@
     "optional": "(optional)",
     "judgePanel": "Judge Panel",
     "noneSelected": "— None selected —",
-    "panelHelp": "Applies to every group and round in this competition. Assign judges to it afterwards from the competition list."
+    "panelHelp": "Applies to every group and round in this competition. Assign judges to it afterwards from the competition list.",
+    "errors": { "nameRequired": "Competition name is required." }
   },
   "users": {
     "pageTitle": "Users",
@@ -68,6 +69,7 @@
     }
   },
   "judges": {
+    "pageTitle": "Judges – {{name}}",
     "heading": "Judges",
     "noPanelTitle": "No judge panel selected",
     "noPanelBody": "Choose a judge panel on the competition's edit page before assigning judges.",
@@ -88,6 +90,7 @@
     }
   },
   "sportsmen": {
+    "pageTitle": "Athletes – {{name}}",
     "heading": "Athletes",
     "importExcel": "Import Excel",
     "exportExcel": "Export Excel",

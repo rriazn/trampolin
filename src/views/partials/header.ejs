@@ -13,6 +13,17 @@
   <link href="/style.css" rel="stylesheet">
 </head>
 <body>
+<div class="lang-switcher">
+  <form method="POST" action="/language/en" class="d-inline">
+    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
+    <button class="lang-switcher-btn <%= (typeof language === 'undefined' || language === 'en') ? 'active' : '' %>">EN</button>
+  </form>
+  <span class="lang-switcher-sep">/</span>
+  <form method="POST" action="/language/de" class="d-inline">
+    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
+    <button class="lang-switcher-btn <%= (typeof language !== 'undefined' && language === 'de') ? 'active' : '' %>">DE</button>
+  </form>
+</div>
 <% if (typeof hideNav === 'undefined' || !hideNav) { %>
 <nav class="navbar navbar-main navbar-expand-lg">
   <div class="container">
@@ -21,16 +32,16 @@
     <div class="d-flex align-items-center gap-3">
       <span class="nav-user-chip"><i class="bi bi-person-fill me-1"></i><%= currentUser.name %></span>
       <% if (currentUser.role === 'admin') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-gear-fill me-1"></i>Admin</a>
+      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-gear-fill me-1"></i><%= t('common:nav.admin') %></a>
       <% } %>
       <% if (currentUser.role === 'head_judge' || currentUser.role === 'referee') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>" href="/referee"><i class="bi bi-pencil-square me-1"></i>Scoring</a>
+      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>" href="/referee"><i class="bi bi-pencil-square me-1"></i><%= t('common:nav.scoring') %></a>
       <% } %>
       <% if (currentUser.role === 'head_judge') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><i class="bi bi-flag-fill me-1"></i>Head Judge</a>
+      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><i class="bi bi-flag-fill me-1"></i><%= t('common:nav.headJudge') %></a>
       <% } %>
       <form method="POST" action="/logout" class="m-0">
-        <button class="btn btn-sm btn-outline-light rounded-pill px-3">Logout</button>
+        <button class="btn btn-sm btn-outline-light rounded-pill px-3"><%= t('common:nav.logout') %></button>
       </form>
     </div>
     <% } %>

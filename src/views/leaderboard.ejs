@@ -1,11 +1,11 @@
-<%- include('partials/header', { title: 'Leaderboard – ' + round.name, autoRefresh: true }) %>
+<%- include('partials/header', { title: t('leaderboard:pageTitle', { roundName: round.name }), autoRefresh: true }) %>
 
 <div class="lb-hero">
   <div class="container">
     <p class="text-white-50 small mb-1"><i class="bi bi-trophy me-1"></i><%= round.competition_name %></p>
     <h1 class="fw-900 mb-1" style="font-size:2.2rem"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
     <p class="text-white-50 small mb-0">
-      <i class="bi bi-arrow-repeat me-1"></i>Live · refreshes every 10s
+      <i class="bi bi-arrow-repeat me-1"></i><%= t('leaderboard:live') %>
       &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
     </p>
   </div>
@@ -15,30 +15,30 @@
 <% if (!panelConfigured) { %>
 <div class="card p-5 text-center text-muted mt-4">
   <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>Panel not configured</h5>
-  <p class="mb-0 small">This competition doesn't have a judge panel selected yet.</p>
+  <h5><%= t('leaderboard:panelNotConfiguredTitle') %></h5>
+  <p class="mb-0 small"><%= t('leaderboard:panelNotConfiguredBody') %></p>
 </div>
 <% } else if (leaderboard.length === 0) { %>
 <div class="card p-5 text-center text-muted mt-4">
   <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>No athletes scored yet</h5>
+  <h5><%= t('leaderboard:noAthletesScored') %></h5>
 </div>
 <% } else { %>
 <div class="lb-table-wrap mt-0">
   <table class="table table-hover mb-0" style="background:#fff">
     <caption class="text-muted small px-2" style="caption-side:bottom">
-      <sup>*</sup> not every judge has submitted yet · hover a score for its per-role breakdown
+      <sup>*</sup> <%= t('leaderboard:footnote') %>
     </caption>
     <thead>
       <tr>
-        <th style="width:70px;background:var(--brand)" class="text-white text-center">Rank</th>
-        <th style="background:var(--brand)" class="text-white">Athlete</th>
-        <th style="background:var(--brand)" class="text-white">Club</th>
-        <th style="background:var(--brand)" class="text-white">Group</th>
+        <th style="width:70px;background:var(--brand)" class="text-white text-center"><%= t('leaderboard:table.rank') %></th>
+        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.athlete') %></th>
+        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.club') %></th>
+        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.group') %></th>
         <% for (let n = 1; n <= maxAttempts; n++) { %>
-        <th style="background:var(--brand)" class="text-white text-center">Attempt <%= n %></th>
+        <th style="background:var(--brand)" class="text-white text-center"><%= t('leaderboard:table.attempt', { number: n }) %></th>
         <% } %>
-        <th style="background:var(--brand);width:130px" class="text-white text-end"><%= round.scoring_mode === 'sum' ? 'Total Score' : 'Best Score' %></th>
+        <th style="background:var(--brand);width:130px" class="text-white text-end"><%= round.scoring_mode === 'sum' ? t('leaderboard:table.totalScore') : t('leaderboard:table.bestScore') %></th>
       </tr>
     </thead>
     <tbody>
@@ -103,7 +103,7 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><%= row.name %> — Attempt <%= a.number %></h5>
+        <h5 class="modal-title"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -113,9 +113,9 @@
           <table class="table table-sm table-bordered">
             <thead>
               <tr>
-                <th>Judge</th>
+                <th><%= t('leaderboard:modal.judge') %></th>
                 <% detail.elementNumbers.forEach(n => { %>
-                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? 'Landing' : 'Bonus') : n %></th>
+                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? t('leaderboard:modal.landing') : t('leaderboard:modal.bonus')) : n %></th>
                 <% }) %>
               </tr>
             </thead>

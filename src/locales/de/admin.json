@@ -33,7 +33,8 @@
     "optional": "(optional)",
     "judgePanel": "Kampfgericht",
     "noneSelected": "— Nichts ausgewählt —",
-    "panelHelp": "Wird für jede Gruppe und Runde in diesem Wettkampf genutzt. Kampfrichter können später in der Wettkampfübersicht zugewiesen werden."
+    "panelHelp": "Wird für jede Gruppe und Runde in diesem Wettkampf genutzt. Kampfrichter können später in der Wettkampfübersicht zugewiesen werden.",
+    "errors": { "nameRequired": "Wettkampfname ist Pflichtfeld." }
   },
   "users": {
     "pageTitle": "Nutzer",
@@ -68,6 +69,7 @@
     }
   },
   "judges": {
+    "pageTitle": "Kampfrichter – {{name}}",
     "heading": "Kampfrichter",
     "noPanelTitle": "Kein Kampfgericht ausgewählt",
     "noPanelBody": "Wählen Sie ein Kampfgericht auf der Bearbeitungsseite des Wettkampfes, dann können Kampfrichter zugewiesen werden.",
@@ -88,6 +90,7 @@
     }
   },
   "sportsmen": {
+    "pageTitle": "Athleten – {{name}}",
     "heading": "Athleten",
     "importExcel": "Excel importieren",
     "exportExcel": "Excel exportieren",

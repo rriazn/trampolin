@@ -1,5 +1,7 @@
 const express = require('express');
 const session = require('express-session');
+const i18next = require('i18next');
+const i18nextMiddleware = require('i18next-http-middleware');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const { getAppVersion } = require('./services/version');
@@ -22,10 +24,33 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' }
 }));
 
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'errors'];
+const loadNamespaces = (lng) => Object.fromEntries(
+  NAMESPACES.map(ns => [ns, require(`./locales/${lng}/${ns}.json`)])
+);
+
+i18next.use(i18nextMiddleware.LanguageDetector).init({
+  fallbackLng: 'en',
+  preload: ['en', 'de'],
+  ns: NAMESPACES,
+  defaultNS: 'common',
+  resources: {
+    en: loadNamespaces('en'),
+    de: loadNamespaces('de'),
+  },
+  detection: {
+    order: ['session'],
+    lookupSession: 'lng',
+    caches: ['session'],
+  },
+});
+app.use(i18nextMiddleware.handle(i18next));
+
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.flash = req.session.flash || {};
   res.locals.appVersion = appVersion;
+  res.locals.currentUrl = req.originalUrl;
   delete req.session.flash;
   next();
 });
@@ -39,6 +64,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', require('./routes/auth'));
+app.use('/', require('./routes/language'));
 if (process.env.ENABLE_TEST_SEED === 'true') {
   app.use('/', require('./routes/test-seed'));
 }

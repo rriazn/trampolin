@@ -21,13 +21,13 @@ exports.getRound = (req, res) => {
     const userId = req.session.user.id;
 
     const competition = getCompetitionById(cid);
-    if (!competition) return renderNotFound(res, 'Competition not found');
+    if (!competition) return renderNotFound(res, req.t('errors:notFound.competition'));
 
     const group = getGroupById(gid);
-    if (!group) return renderNotFound(res, 'Group not found');
+    if (!group) return renderNotFound(res, req.t('errors:notFound.group'));
 
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return renderNotFound(res, 'Round not found');
+    if (!round) return renderNotFound(res, req.t('errors:notFound.round'));
 
     const assignments = getAssignmentsForUser(round.competition_id, userId);
 
@@ -50,27 +50,27 @@ exports.postScore = (req, res) => {
 
     const ctx = getAttemptContext(attemptId);
     if (!ctx)
-        return renderNotFound(res, 'Attempt not found');
+        return renderNotFound(res, req.t('errors:notFound.attempt'));
 
     const assignment = getAssignmentWithInfo(ctx.competitionId, userId, judgeRoleId);
     if (!assignment)
-        return res.status(403).send('Forbidden');
+        return res.status(403).send(req.t('referee:errors.forbidden'));
     if (assignment.granularity !== 'attempt')
-        return res.status(400).send('This role is scored per trick, not per attempt.');
+        return res.status(400).send(req.t('referee:errors.wrongGranularityAttempt'));
     if (ctx.elementCount === 0 && assignment.roleKey !== 'head_judge') {
-        return res.status(400).send('No skills were performed for this attempt — this role does not apply.');
+        return res.status(400).send(req.t('referee:errors.noSkillsPerformed'));
     }
 
     const parsed = parseFloat(score);
     if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
-        return res.status(400).send(rangeErrorMessage(assignment));
+        return res.status(400).send(rangeErrorMessage(assignment, req.t));
     }
 
     addAttemptScoreDB(attemptId, assignment.assignment_id, assignment.judge_role_id, parsed);
 
     recomputeAttemptCompletion(attemptId, ctx.panelTemplateId);
 
-    req.session.flash = { success: `Score ${parsed.toFixed(1)} saved.` };
+    req.session.flash = { success: req.t('referee:flash.scoreSaved', { score: parsed.toFixed(1) }) };
     res.redirect(`/referee/competitions/${ctx.competitionId}/groups/${ctx.groupId}/rounds/${ctx.roundId}`);
 };
 
@@ -80,17 +80,17 @@ exports.postElementScores = (req, res) => {
 
     const ctx = getAttemptContext(attemptId);
     if (!ctx)
-        return renderNotFound(res, 'Attempt not found');
+        return renderNotFound(res, req.t('errors:notFound.attempt'));
 
     const assignment = getAssignmentWithInfo(ctx.competitionId, userId, judgeRoleId);
     if (!assignment)
-        return res.status(403).send('Forbidden');
+        return res.status(403).send(req.t('referee:errors.forbidden'));
     if (assignment.granularity !== 'element')
-        return res.status(400).send('This role is scored per attempt, not per trick.');
+        return res.status(400).send(req.t('referee:errors.wrongGranularityElement'));
 
     let parsedValues;
     try {
-        parsedValues = parseAndValidateElementScores(assignment, ctx.elementCount, req.body);
+        parsedValues = parseAndValidateElementScores(assignment, ctx.elementCount, req.body, req.t);
     }
     catch (err) {
         return res.status(400).send(err.message);
@@ -98,8 +98,8 @@ exports.postElementScores = (req, res) => {
 
     // 11th line: landing or bonus
     try {
-        const val_11 = parseAndValidate11thScore(assignment, ctx.elementCount, req.body.element_11);
-        if (val_11 != null) 
+        const val_11 = parseAndValidate11thScore(assignment, ctx.elementCount, req.body.element_11, req.t);
+        if (val_11 != null)
             parsedValues.push(val_11);
     }
     catch (err) {
@@ -110,6 +110,6 @@ exports.postElementScores = (req, res) => {
 
     recomputeAttemptCompletion(attemptId, ctx.panelTemplateId);
 
-    req.session.flash = { success: 'Scores saved.' };
+    req.session.flash = { success: req.t('referee:flash.scoresSaved') };
     res.redirect(`/referee/competitions/${ctx.competitionId}/groups/${ctx.groupId}/rounds/${ctx.roundId}`);
 };

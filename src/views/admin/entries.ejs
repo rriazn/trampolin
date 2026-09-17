@@ -1,10 +1,10 @@
-<%- include('../partials/header', { title: 'Entries – ' + round.name, activePage: 'admin' }) %>
+<%- include('../partials/header', { title: t('admin:entries.pageTitle', { name: round.name }), activePage: 'admin' }) %>
 <% const baseUrl = '/admin/competitions/' + round.competition_id + '/groups/' + round.group_id + '/rounds/' + round.id %>
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
-        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50">Competitions</a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
         <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups" class="text-white-50"><%= round.competition_name %></a></li>
         <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds" class="text-white-50"><%= round.group_name %></a></li>
         <li class="breadcrumb-item active text-white"><%= round.name %></li>
@@ -12,22 +12,22 @@
     </nav>
     <div class="d-flex justify-content-between align-items-end">
       <div>
-        <h1><i class="bi bi-people me-2"></i>Entries</h1>
+        <h1><i class="bi bi-people me-2"></i><%= t('admin:entries.heading') %></h1>
       </div>
       <div class="d-flex gap-3">
         <form method="POST" action="<%= baseUrl %>/attempts/bulk" class="d-flex gap-2 align-items-center">
           <div style="width:90px">
-            <input type="number" name="attempt_count" class="form-control form-control-sm text-center" value="2" min="1" max="20" title="Attempts per athlete">
+            <input type="number" name="attempt_count" class="form-control form-control-sm text-center" value="2" min="1" max="20" title="<%= t('admin:entries.attemptsPerAthlete') %>">
           </div>
-          <button class="btn btn-accent rounded-pill" onclick="return confirm('Create attempts for all entries?')">
-            <i class="bi bi-lightning-fill me-1"></i>Create All Attempts
+          <button class="btn btn-accent rounded-pill" onclick="return confirm(<%= JSON.stringify(t('admin:entries.confirmCreateAll')) %>)">
+            <i class="bi bi-lightning-fill me-1"></i><%= t('admin:entries.createAllAttempts') %>
           </button>
         </form>
-        <form method="POST" action="<%= baseUrl %>/entries/randomize" onsubmit="return confirm('Randomize order of all athletes of this round?')">
-          <button type="submit" class="btn btn-accent rounded-pill"><i class="bi bi-shuffle me-1"></i>Randomize</button>
+        <form method="POST" action="<%= baseUrl %>/entries/randomize" onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmRandomize')) %>)">
+          <button type="submit" class="btn btn-accent rounded-pill"><i class="bi bi-shuffle me-1"></i><%= t('admin:entries.randomize') %></button>
         </form>
         <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-light rounded-pill">
-          <i class="bi bi-bar-chart me-1"></i>Leaderboard
+          <i class="bi bi-bar-chart me-1"></i><%= t('admin:entries.leaderboard') %>
         </a>
       </div>
     </div>
@@ -37,12 +37,12 @@
 <div class="container">
   <% if (entries.length === 0) { %>
   <div class="card p-4 text-center text-muted mb-4">
-    <i class="bi bi-person-x fs-1 mb-2 d-block"></i>No entries yet. Add athletes below.
+    <i class="bi bi-person-x fs-1 mb-2 d-block"></i><%= t('admin:entries.noEntries') %>
   </div>
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th style="width:100px">Start #</th><th>Athlete</th><th>Club</th><th>Routine</th><th>Attempts</th><th></th></tr></thead>
+      <thead><tr><th style="width:100px"><%= t('admin:entries.table.startOrder') %></th><th><%= t('admin:entries.table.athlete') %></th><th><%= t('admin:entries.table.club') %></th><th><%= t('admin:entries.table.routine') %></th><th><%= t('admin:entries.table.attempts') %></th><th></th></tr></thead>
       <tbody>
       <% entries.forEach(e => { %>
       <tr>
@@ -52,12 +52,12 @@
         <td class="text-muted"><%= e.routine || '–' %></td>
         <td>
           <span class="badge rounded-pill <%= e.attempt_count > 0 ? 'bg-success' : 'bg-light text-muted border' %>">
-            <i class="bi bi-lightning-fill me-1"></i><%= e.attempt_count %> attempt<%= e.attempt_count !== 1 ? 's' : '' %>
+            <i class="bi bi-lightning-fill me-1"></i><%= t('admin:entries.attemptsCount', { count: e.attempt_count }) %>
           </span>
         </td>
         <td class="text-end">
           <form method="POST" action="<%= baseUrl %>/entries/<%= e.id %>/delete" class="d-inline"
-                onsubmit="return confirm('Remove this entry and all its scores?')">
+                onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmRemove')) %>)">
             <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
           </form>
         </td>
@@ -69,17 +69,17 @@
   <% } %>
 
   <div class="card p-4">
-    <h5 class="fw-700 mb-3"><i class="bi bi-person-plus me-2"></i>Add Entry</h5>
+    <h5 class="fw-700 mb-3"><i class="bi bi-person-plus me-2"></i><%= t('admin:entries.addEntry') %></h5>
     <% if (locals.flash && locals.flash.error) { %>
     <div class="alert alert-danger mb-3"><%= locals.flash.error %></div>
     <% } %>
     <% if (available.length === 0) { %>
-    <p class="text-muted mb-0"><i class="bi bi-check-circle me-1"></i>All registered athletes are already in this round.</p>
+    <p class="text-muted mb-0"><i class="bi bi-check-circle me-1"></i><%= t('admin:entries.allRegistered') %></p>
     <% } else { %>
     <form method="POST" action="<%= baseUrl %>/entries" class="row g-3 align-items-end">
       <div class="col-md-5">
         <label class="form-label small fw-600 text-muted text-uppercase">
-          Athlete<% if (prevRound) { %> <span class="fw-400 text-uppercase">— ranked by <%= prevRound.name %></span><% } %>
+          <%= t('admin:entries.athlete') %><% if (prevRound) { %> <span class="fw-400 text-uppercase"><%= t('admin:entries.rankedBy', { roundName: prevRound.name }) %></span><% } %>
         </label>
         <select name="sportsman_id" class="form-select" required>
           <% available.forEach(s => { %>
@@ -88,16 +88,16 @@
         </select>
       </div>
       <div class="col-md-2">
-        <label class="form-label small fw-600 text-muted text-uppercase">Start #</label>
+        <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:entries.startOrder') %></label>
         <input type="number" name="start_order" class="form-control" value="<%= entries.length + 1 %>">
       </div>
       <div class="col-md-2">
-        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i>Add</button>
+        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i><%= t('common:actions.add') %></button>
       </div>
     </form>
     <div class="d-flex justify-content-end mt-3">
-      <form method="POST" action="<%= baseUrl %>/entries/add-all" onsubmit="return confirm('Add all athletes from this group to the round?')">
-        <button type="submit" class="btn btn-accent rounded-pill"><i class="bi bi-people-fill me-1"></i>Add All</button>
+      <form method="POST" action="<%= baseUrl %>/entries/add-all" onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmAddAll')) %>)">
+        <button type="submit" class="btn btn-accent rounded-pill"><i class="bi bi-people-fill me-1"></i><%= t('admin:entries.addAll') %></button>
       </form>
     </div>
     <% } %>

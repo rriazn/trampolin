@@ -27,6 +27,7 @@
     "create": "Create",
     "cancel": "Cancel",
     "back": "Back",
-    "add": "Add"
+    "add": "Add",
+    "edit": "Edit"
   }
 }

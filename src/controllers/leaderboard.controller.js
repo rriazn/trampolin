@@ -8,13 +8,13 @@ exports.getLeaderboard = (req, res) => {
     const { cid, gid, rid } = req.params;
 
     const competition = getCompetitionById(cid);
-    if (!competition) return renderNotFound(res, 'Competition not found');
+    if (!competition) return renderNotFound(res, req.t('errors:notFound.competition'));
 
     const group = getGroupById(gid);
-    if (!group) return renderNotFound(res, 'Group not found');
+    if (!group) return renderNotFound(res, req.t('errors:notFound.group'));
 
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return renderNotFound(res, 'Round not found');
+    if (!round) return renderNotFound(res, req.t('errors:notFound.round'));
 
     const { leaderboard, maxAttempts, panelSlots } = buildLeaderboard(competition, round);
 

@@ -10,7 +10,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = getUserByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-        return res.render('login', { error: 'Invalid email or password' });
+        return res.render('login', { error: req.t('login:invalidCredentials') });
     }
     req.session.regenerate((err) => {
         if (err) throw err;
