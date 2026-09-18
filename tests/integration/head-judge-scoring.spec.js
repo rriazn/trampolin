@@ -153,8 +153,8 @@ test('head judge skips an attempt and the round advances without the panel being
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
-  await logout(page);
 
+  // head judge stays logged in — the leaderboard now requires a logged-in user
   // Every attempt was skipped, not scored — the leaderboard shows both athletes with no score
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr')).toHaveCount(2);
@@ -231,11 +231,11 @@ test('per_judge execution aggregation on a Local Panel competition combines each
   await page.goto(hjUrl);
   await page.getByRole('button', { name: /Next/ }).click();
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
-  await logout(page);
 
   // Per-judge personal finals (elementCount 1 minus each judge's own deduction): 1.0, 0.9, 0.8,
   // 0.7. Local Panel drops 1 high (1.0) and 1 low (0.7), keeping [0.9, 0.8] → 1.7. Difficulty and
   // head judge both contributed 0.
+  // head judge stays logged in from above — the leaderboard requires a logged-in user
   await page.goto(`/leaderboard/competitions/${compId}/groups/${groupId}/rounds/${roundId}`);
   await expect(page.locator('tbody tr').first()).toContainText('1.700');
 });
@@ -280,8 +280,8 @@ test('head judge sets trick count to 0 and the round advances on an otherwise-un
   await page.getByRole('button', { name: /Next/ }).click();
   // Round-robin order (attempt_number then start_order) advances to Emma's attempt 1
   await expect(page.getByText('Emma Fischer')).toBeVisible();
-  await logout(page);
 
+  // head judge stays logged in — the leaderboard requires a logged-in user
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr').filter({ hasText: 'Leon Weber' })).toContainText('-2.000');
 });
