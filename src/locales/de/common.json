@@ -3,6 +3,7 @@
     "admin": "Admin",
     "scoring": "Wertung",
     "headJudge": "Wettkampfleiter",
+    "viewer": "Wertungslisten",
     "logout": "Logout"
   },
   "footer": {
@@ -20,7 +21,8 @@
   "roles": {
     "admin": "Admin",
     "referee": "Kampfrichter",
-    "head_judge": "Wettkampfleiter"
+    "head_judge": "Wettkampfleiter",
+    "viewer": "Zuschauer"
   },
   "judgeRoles": {
     "execution": "Ausführung",

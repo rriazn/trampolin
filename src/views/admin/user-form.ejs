@@ -36,6 +36,7 @@
       <option value="referee" <%= (!user || user.role==='referee') ? 'selected' : '' %>><%= t('common:roles.referee') %></option>
       <option value="admin" <%= (user && user.role==='admin') ? 'selected' : '' %>><%= t('common:roles.admin') %></option>
       <option value="head_judge" <%= (user && user.role==='head_judge') ? 'selected' : '' %>><%= t('common:roles.head_judge') %></option>
+      <option value="viewer" <%= (user && user.role==='viewer') ? 'selected' : '' %>><%= t('common:roles.viewer') %></option>
     </select>
   </div>
   <div class="d-flex gap-2">

@@ -20,3 +20,9 @@ exports.requireHeadJudge = (req, res, next) => {
     return res.status(403).send('Forbidden');
   next();
 };
+
+exports.requireViewer = (req, res, next) => {
+  if (!req.session.user || !['admin', 'referee', 'head_judge', 'viewer'].includes(req.session.user.role))
+    return res.status(403).send('Forbidden');
+  next();
+};

@@ -3,6 +3,7 @@
     "admin": "Admin",
     "scoring": "Scoring",
     "headJudge": "Head Judge",
+    "viewer": "Leaderboards",
     "logout": "Logout"
   },
   "footer": {
@@ -20,7 +21,8 @@
   "roles": {
     "admin": "Admin",
     "referee": "Referee",
-    "head_judge": "Head Judge"
+    "head_judge": "Head Judge",
+    "viewer": "Viewer"
   },
   "judgeRoles": {
     "execution": "Execution",
