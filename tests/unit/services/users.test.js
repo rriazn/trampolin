@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { db, require, nextSeq } from './testHelpers.js';
-const { createUser, updateUser, normalizeRole } = require('../../../src/services/users.js');
+const { createUser, updateUser, normalizeRole } = require('../../../src/services/users.service.js');
 
 describe('normalizeRole', () => {
   it('passes through admin and head_judge', () => {

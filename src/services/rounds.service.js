@@ -1,13 +1,13 @@
 const { getCompetitionById } = require("./db/competitions.crud");
 const { getGroupById } = require("./db/groups.crud");
-const { renderNotFound } = require("./errors");
+const { renderNotFound } = require("./errors.service");
 const {
   getRoundByIdWithCompGroupInfo, getOrderedRoundGroupCompInfoAdmin, getOrderedRoundGroupCompInfoUser,
 } = require("./db/rounds.crud");
 const { getAttemptForId } = require("./db/entries.crud");
-const { loadPanelSlots } = require("./panels");
-const { loadAttemptScoreMaps, loadJudgeSubmissionStatus } = require("./attempts");
-const { computeAttemptScore } = require("./scoring");
+const { loadPanelSlots } = require("./panels.service");
+const { loadAttemptScoreMaps, loadJudgeSubmissionStatus } = require("./attempts.service");
+const { computeAttemptScore } = require("./scoring.service");
 const {
   getHeadJudgeAssignment, getAssignmentsForUser,
 } = require("./db/panels.crud");

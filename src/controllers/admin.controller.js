@@ -1,17 +1,17 @@
-const { getAdminStats } = require("../services/admin-helpers");
+const { getAdminStats } = require("../services/helpers/admin.helpers");
 const { getCompetitionById, getTopCompetitions, getCompetitions, createCompetitionDB, updateCompetitionDB, updateCompetitionStatusDB, deleteCompetitionDB } = require("../services/db/competitions.crud");
 const { getGroupsByCompetition, getGroupsRoundCount, addGroupDB, deleteGroupDB, getGroupById } = require("../services/db/groups.crud");
 const { getPanels, getAssignedCount, addAssignment, getAssignmentById, checkAlreadyAssigned } = require("../services/db/panels.crud");
-const { getJudgesForCompetition, resolveAssignmentGroup, removeJudgeFromRole } = require("../services/panels");
+const { getJudgesForCompetition, resolveAssignmentGroup, removeJudgeFromRole } = require("../services/panels.service");
 const { getSportsmenByCompetition, addSportsmanDB, getSportsmenById, updateSportsmanDB, deleteSportsmanDB, getAvailableSportsmen } = require("../services/db/sportsmen.crud");
 const { deleteUserDB, getUsers, getUserById } = require("../services/db/users.crud");
-const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx } = require("../services/files");
-const { createUser, updateUser } = require("../services/users");
-const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries");
-const { createAttempts } = require("../services/attempts");
+const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx } = require("../services/files.service");
+const { createUser, updateUser } = require("../services/users.service");
+const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries.service");
+const { createAttempts } = require("../services/attempts.service");
 const { getRoundsByGroup, addRoundDB, deleteRoundDB, getRoundByIdWithCompGroupInfo, getPreviousRoundInfo, getRoundById } = require("../services/db/rounds.crud");
 const { getEntriesWithAttemptsInfo, addEntryDB, getEntryMaxOrder, addAllEntriesDB, deleteEntryDB } = require("../services/db/entries.crud");
-const { renderNotFound } = require("../services/errors");
+const { renderNotFound } = require("../services/errors.service");
 
 // Dashboard
 exports.getDashboard = async (req, res) => {

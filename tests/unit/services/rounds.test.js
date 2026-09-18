@@ -5,7 +5,7 @@ import {
 } from './testHelpers.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const { loadRound, getRoundSelectionOverview, getRoundOverview, getRefereeRoundInfo } = require('../../../src/services/rounds.js');
+const { loadRound, getRoundSelectionOverview, getRoundOverview, getRefereeRoundInfo } = require('../../../src/services/rounds.service.js');
 
 function mockRes() {
   const res = {};
