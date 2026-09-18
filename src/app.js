@@ -4,7 +4,7 @@ const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
-const { getAppVersion } = require('./services/version');
+const { getAppVersion } = require('./services/version.service');
 require('./db/database');
 
 const app = express();
@@ -57,7 +57,7 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   if (req.session.user) {
-    const landing = { admin: '/admin', head_judge: '/head-judge' }[req.session.user.role] || '/referee';
+    const landing = { admin: '/admin', head_judge: '/head-judge', referee: '/referee' }[req.session.user.role] || '/referee';
     return res.redirect(landing);
   }
   res.redirect('/login');

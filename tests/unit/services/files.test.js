@@ -3,7 +3,7 @@ import XLSX from 'xlsx';
 import { db, require, makeCompetition, makeGroup } from './testHelpers.js';
 const {
   isXlsxBuffer, createUsersXlsx, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx,
-} = require('../../../src/services/files.js');
+} = require('../../../src/services/files.service.js');
 
 function xlsxBufferFromRows(rows) {
   const ws = XLSX.utils.aoa_to_sheet(rows);

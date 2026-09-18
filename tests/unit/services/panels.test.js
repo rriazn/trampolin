@@ -3,7 +3,7 @@ import { makeCompetition, makeUser, getJudgeRoleIds, assignJudge, require } from
 const {
   loadPanelSlots, groupPanelSlots, rosterReadiness, resolveAssignmentGroup,
   getJudgesForCompetition, removeJudgeFromRole,
-} = require('../../../src/services/panels.js');
+} = require('../../../src/services/panels.service.js');
 
 describe('loadPanelSlots', () => {
   it('returns an empty array when there is no panel template', () => {

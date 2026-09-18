@@ -3,7 +3,7 @@ import {
   db, require, makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt,
   getJudgeRoleIds, makeUser, assignJudge, addScore,
 } from './testHelpers.js';
-const { orderAvailableByPreviousRound, randomizeEntryOrder } = require('../../../src/services/entries.js');
+const { orderAvailableByPreviousRound, randomizeEntryOrder } = require('../../../src/services/entries.service.js');
 
 function scoreSportsmanInRound(comp, round, roleIds, hjAssignment, sportsman, score) {
   const entry = makeEntry(round.id, sportsman.id, 1);

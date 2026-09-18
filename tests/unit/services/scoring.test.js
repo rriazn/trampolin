@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { combineScores, computeAttemptScore } from '../../src/services/scoring.js';
+import { combineScores, computeAttemptScore } from '../../../src/services/scoring.service.js';
 
 describe('combineScores', () => {
   it('returns null for empty scores', () => {

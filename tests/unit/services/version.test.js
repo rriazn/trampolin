@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { getAppVersion } from '../../../src/services/version.js';
+import { getAppVersion } from '../../../src/services/version.service.js';
 
 const scratchPath = path.join(os.tmpdir(), `trampolin-version-test-${process.pid}`);
 
