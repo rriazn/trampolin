@@ -38,7 +38,7 @@
 
 <% inputs.forEach(input => { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= input.name %></h5>
+  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= t('common:judgeRoles.' + input.key) %></h5>
 
   <% if (input.granularity === 'element') { %>
   <form method="POST" action="/referee/score/elements">
@@ -79,7 +79,7 @@
   </form>
   <% if (input.contribution) { %>
   <p class="text-muted small mt-2 mb-0">
-    <%= t('referee:round.currentValue', { name: input.name }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
     <% if (!input.contribution.isComplete) { %> <%= t('referee:round.partialNote') %><% } %>
   </p>
   <% } %>
@@ -101,7 +101,7 @@
   </form>
   <% if (input.contribution) { %>
   <p class="text-muted small mt-2 mb-0">
-    <%= t('referee:round.currentValue', { name: input.name }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
     <% if (!input.contribution.isComplete) { %> <%= t('referee:round.partialNote') %><% } %>
   </p>
   <% } %>

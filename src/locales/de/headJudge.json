@@ -23,7 +23,7 @@
     "attemptNumber": "Versuch #{{number}}",
     "partialNote": "unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben",
     "checklistHeading": "Bewertungscheckliste",
-    "submittedCount": "{{count}} von {{required}} haben ihre Wertung abgesendet",
+    "submittedCount": "{{count}} von {{required}} haben abgegeben",
     "penaltyHeading": "Strafabzug",
     "saved": "Gespeichert",
     "trickCountHeading": "Elementanzahl",

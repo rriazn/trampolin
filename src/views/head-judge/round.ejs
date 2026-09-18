@@ -21,7 +21,7 @@
     <% readiness.groups.forEach(g => { %>
     <li class="d-flex align-items-center gap-2 mb-2">
       <i class="bi <%= g.isReady ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle text-warning' %>"></i>
-      <span><%= g.name %></span>
+      <span><%= g.roleKeys.map(k => t('common:judgeRoles.' + k)).join(' & ') %></span>
       <span class="badge rounded-pill ms-auto <%= g.isReady ? 'bg-success' : 'bg-warning text-dark' %>"><%= t('headJudge:round.assignedCount', { assigned: g.assignedCount, required: g.required }) %></span>
     </li>
     <% }) %>
@@ -81,10 +81,10 @@
   <div class="<%= idx < checklist.length - 1 ? 'mb-3 pb-3' : 'mb-0' %>" style="<%= idx < checklist.length - 1 ? 'border-bottom:1px solid #eee' : '' %>">
     <div class="d-flex align-items-center gap-2 mb-2">
       <i class="bi <%= item.isComplete ? 'bi-check-circle-fill text-success' : 'bi-hourglass-split text-warning' %>"></i>
-      <span class="fw-600"><%= item.name %></span>
+      <span class="fw-600"><%= t('common:judgeRoles.' + item.judgeRoleKey) %></span>
       <span class="badge rounded-pill ms-auto <%= item.isComplete ? 'bg-success' : 'bg-warning text-dark' %>"><%= t('headJudge:round.submittedCount', { count: item.count, required: item.required }) %></span>
     </div>
-    <% var roleJudges = typeof judgeStatus !== 'undefined' ? judgeStatus.find(function(j) { return j.name === item.name; }) : null; %>
+    <% var roleJudges = typeof judgeStatus !== 'undefined' ? judgeStatus.find(function(j) { return j.key === item.judgeRoleKey; }) : null; %>
     <% if (roleJudges && roleJudges.judges.length > 0) { %>
     <div class="d-flex flex-wrap gap-2 ms-4">
       <% roleJudges.judges.forEach(j => { %>

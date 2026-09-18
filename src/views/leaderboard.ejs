@@ -72,7 +72,7 @@
       %>
       <td class="text-center align-middle">
         <% if (a && a.finalScore !== null) {
-             const breakdownTitle = a.breakdown.map(b => `${b.name}: ${b.value.toFixed(2)}`).join(' · ');
+             const breakdownTitle = a.breakdown.map(b => `${t('common:judgeRoles.' + b.judgeRoleKey)}: ${b.value.toFixed(2)}`).join(' · ');
         %>
           <span class="fw-600" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
             <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="text-muted">*</sup><% } %>
@@ -108,7 +108,7 @@
       </div>
       <div class="modal-body">
         <% a.perTrickDetail.forEach(detail => { %>
-        <h6 class="fw-700"><%= detail.roleName %></h6>
+        <h6 class="fw-700"><%= t('common:judgeRoles.' + detail.roleKey) %></h6>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered">
             <thead>

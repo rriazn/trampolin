@@ -202,7 +202,7 @@ exports.addJudge = async (req, res) => {
     }
     const fullyAssignedCount = getAssignedCount(competition.id, group.judgeRoleIds);
     if (fullyAssignedCount >= group.required) {
-        req.session.flash = { error: req.t('admin:judges.errors.roleFullyStaffed', { roleNames: group.names.join(' & ') }) };
+        req.session.flash = { error: req.t('admin:judges.errors.roleFullyStaffed', { roleNames: group.roleKeys.map(k => req.t('common:judgeRoles.' + k)).join(' & ') }) };
         return res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
     }
     try {

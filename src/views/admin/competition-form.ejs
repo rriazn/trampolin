@@ -31,7 +31,7 @@
     <select name="panel_template_id" class="form-select">
       <option value=""><%= t('admin:competitionForm.noneSelected') %></option>
       <% panelTemplates.forEach(pt => { %>
-      <option value="<%= pt.id %>" title="<%= pt.description %>" <%= (competition && competition.panel_template_id === pt.id) ? 'selected' : '' %>><%= pt.name %></option>
+      <option value="<%= pt.id %>" title="<%= t('common:panelTemplates.' + pt.key + '.description') %>" <%= (competition && competition.panel_template_id === pt.id) ? 'selected' : '' %>><%= t('common:panelTemplates.' + pt.key + '.name') %></option>
       <% }) %>
     </select>
     <div class="form-text"><%= t('admin:competitionForm.panelHelp') %></div>

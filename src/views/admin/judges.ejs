@@ -11,7 +11,7 @@
     <p>
       <%= competition.name %>
       <% if (panelTemplate) { %>
-        &nbsp;·&nbsp; <%= panelTemplate.name %>
+        &nbsp;·&nbsp; <%= t('common:panelTemplates.' + panelTemplate.key + '.name') %>
       <% } %>
     </p>
   </div>
@@ -33,10 +33,12 @@
     <%= t('admin:judges.infoText') %>
   </p>
 
-  <% roles.forEach(role => { %>
+  <% roles.forEach(role => {
+       const roleDisplayName = role.roleKeys.map(k => t('common:judgeRoles.' + k)).join(' & ');
+  %>
   <div class="card p-4 mb-4" id="role-<%= role.groupKey %>">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-700 mb-0"><i class="bi bi-person-video3 me-2"></i><%= role.name %></h5>
+      <h5 class="fw-700 mb-0"><i class="bi bi-person-video3 me-2"></i><%= roleDisplayName %></h5>
       <span class="badge rounded-pill <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
         <%= t('admin:judges.filled', { assigned: role.assigned.length, required: role.required }) %>
       </span>
@@ -55,7 +57,7 @@
           <td class="text-muted"><%= a.email %></td>
           <td class="text-end">
             <form method="POST" action="/admin/competitions/<%= competition.id %>/judges/<%= a.assignment_id %>/delete" class="d-inline"
-                  onsubmit="return confirm(<%= JSON.stringify(t('admin:judges.confirmRemove', { judgeName: a.name, roleName: role.name })) %>)">
+                  onsubmit="return confirm(<%= JSON.stringify(t('admin:judges.confirmRemove', { judgeName: a.name, roleName: roleDisplayName })) %>)">
               <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
             </form>
           </td>

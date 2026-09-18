@@ -22,6 +22,27 @@
     "referee": "Kampfrichter",
     "head_judge": "Wettkampfleiter"
   },
+  "judgeRoles": {
+    "execution": "Ausführung",
+    "difficulty": "Schwierigkeit",
+    "time_of_flight": "Time of Flight",
+    "horizontal_displacement": "Horizontal Displacement",
+    "head_judge": "Wettkampfleiter (Strafabzug)"
+  },
+  "panelTemplates": {
+    "fig": {
+      "name": "FIG-Panel",
+      "description": "Vollständiges FIG-Panel: 6 Ausführung, 1 Schwierigkeit, 1 Time of Flight, 1 Horizontal Displacement, 1 Wettkampfleiter (Strafabzug)."
+    },
+    "local": {
+      "name": "Lokales Panel",
+      "description": "Vereinfachtes Panel für lokale Wettkämpfe ohne elektronische Zeitmessung/HD-Messung: 4 Ausführung, 1 Schwierigkeit, 1 Wettkampfleiter (Strafabzug)."
+    },
+    "test": {
+      "name": "Test-Panel",
+      "description": "Test-Panel für Entwicklung und Tests."
+    }
+  },
   "actions": {
     "save": "Speichern",
     "create": "Erstellen",

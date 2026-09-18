@@ -43,7 +43,7 @@ exports.getRoundOverview = (round, userId, readiness) => {
     // computeAttemptScore tracks element-granularity roles per-trick, not per-judge
     breakdown.forEach(item => {
         if (item.perTrick) {
-        const roleStatus = judgeStatus.find(j => j.name === item.name);
+        const roleStatus = judgeStatus.find(j => j.key === item.judgeRoleKey);
         item.count = roleStatus ? roleStatus.judges.filter(j => j.isDone).length : 0;
         }
     });
