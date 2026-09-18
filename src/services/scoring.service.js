@@ -1,4 +1,4 @@
-const { isWithinRange, rangeErrorMessage } = require("./referee-helpers");
+const { isWithinRange, rangeErrorMessage } = require("./helpers/referee.helpers");
 
 // combine scores and drop high/low values
 exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', multiplier = 1 }) => {

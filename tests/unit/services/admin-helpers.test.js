@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { makeUser, makeCompetition, makeSportsman, db, require } from './testHelpers.js';
-const { getAdminStats } = require('../../../src/services/admin-helpers.js');
+const { getAdminStats } = require('../../../src/services/helpers/admin.helpers.js');
 
 describe('getAdminStats', () => {
   it('counts referees (not admins/head judges), sportsmen, and competitions', () => {

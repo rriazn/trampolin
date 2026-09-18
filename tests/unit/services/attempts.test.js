@@ -6,7 +6,7 @@ import {
 const {
   loadAttemptScoreMaps, loadJudgeSubmissionStatus, recomputeAttemptCompletion,
   createAttempts, getPreviousAttemptIndex,
-} = require('../../../src/services/attempts.js');
+} = require('../../../src/services/attempts.service.js');
 
 function setupAttempt(panelKey = 'test', elementCount = 1) {
   const comp = makeCompetition({ panelKey });

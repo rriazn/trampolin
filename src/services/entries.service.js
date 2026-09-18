@@ -1,5 +1,5 @@
-const { loadPanelSlots } = require("./panels");
-const { computeAttemptScore } = require("./scoring");
+const { loadPanelSlots } = require("./panels.service");
+const { computeAttemptScore } = require("./scoring.service");
 const { getEntryAttemptRows, getEntryIdsForRound, updateEntryStartOrderDB } = require("./db/entries.crud");
 const { getAttemptScoreRows, getElementScoreRows } = require("./db/scores.crud");
 

@@ -1,7 +1,7 @@
-const { getRoundOverview, getRoundSelectionOverview, loadRound } = require("../services/rounds");
-const { rosterReadiness } = require("../services/panels");
-const { getPreviousAttemptIndex, recomputeAttemptCompletion } = require("../services/attempts");
-const { parseAndValidateScore } = require("../services/scoring");
+const { getRoundOverview, getRoundSelectionOverview, loadRound } = require("../services/rounds.service");
+const { rosterReadiness } = require("../services/panels.service");
+const { getPreviousAttemptIndex, recomputeAttemptCompletion } = require("../services/attempts.service");
+const { parseAndValidateScore } = require("../services/scoring.service");
 const { getNextPendingAttemptId, updateAttemptSkippedDB } = require("../services/db/entries.crud");
 const { updateRoundStartedDB, updateRoundCurrentAttemptDB, updateRoundCompletedDB } = require("../services/db/rounds.crud");
 const { getHeadJudgeAssignment } = require("../services/db/panels.crud");

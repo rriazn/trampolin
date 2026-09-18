@@ -8,7 +8,7 @@ const i18nextMiddleware = require('i18next-http-middleware');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
-const { getAppVersion } = require('../../src/services/version');
+const { getAppVersion } = require('../../src/services/version.service');
 
 // A scratch path under tests/component/ so footer.spec.js can create/delete a VERSION file
 // without touching the real one at the project root

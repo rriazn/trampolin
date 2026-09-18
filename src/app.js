@@ -4,7 +4,7 @@ const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
-const { getAppVersion } = require('./services/version');
+const { getAppVersion } = require('./services/version.service');
 require('./db/database');
 
 const app = express();

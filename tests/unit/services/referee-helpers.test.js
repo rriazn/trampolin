@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { require } from './testHelpers.js';
-const { isWithinRange, rangeErrorMessage } = require('../../../src/services/referee-helpers.js');
+const { isWithinRange, rangeErrorMessage } = require('../../../src/services/helpers/referee.helpers.js');
 
 describe('isWithinRange', () => {
   it('accepts a value within min and max', () => {

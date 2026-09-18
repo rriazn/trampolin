@@ -3,7 +3,7 @@ import {
   makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt,
   getJudgeRoleIds, makeUser, assignJudge, addScore, require,
 } from './testHelpers.js';
-const { buildLeaderboard } = require('../../../src/services/leaderboard.services.js');
+const { buildLeaderboard } = require('../../../src/services/leaderboard.service.js');
 
 function setupRoundWithHeadJudge(panelKey = 'test', scoringMode = 'best_attempt') {
   const comp = makeCompetition({ panelKey });

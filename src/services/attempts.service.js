@@ -4,8 +4,8 @@ const {
   getElementScoresLandingBonus, getAttemptElementCount,
 } = require("./db/scores.crud");
 const { getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB } = require("./db/entries.crud");
-const { loadPanelSlots } = require("./panels");
-const { computeAttemptScore } = require("./scoring");
+const { loadPanelSlots } = require("./panels.service");
+const { computeAttemptScore } = require("./scoring.service");
 
 
 

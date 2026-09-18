@@ -4,11 +4,11 @@ const { getRoundByIdWithCompGroupInfo, getInProgressRoundsForUser } = require(".
 const { getAssignmentsForUser, getAssignmentWithInfo } = require("../services/db/panels.crud");
 const { getAttemptContext } = require("../services/db/entries.crud");
 const { addAttemptScoreDB, addAllElementScoresDB } = require("../services/db/scores.crud");
-const { getRefereeRoundInfo } = require("../services/rounds");
-const { renderNotFound } = require("../services/errors");
-const { recomputeAttemptCompletion } = require("../services/attempts");
-const { isWithinRange, rangeErrorMessage } = require("../services/referee-helpers");
-const { parseAndValidateElementScores, parseAndValidate11thScore } = require("../services/scoring");
+const { getRefereeRoundInfo } = require("../services/rounds.service");
+const { renderNotFound } = require("../services/errors.service");
+const { recomputeAttemptCompletion } = require("../services/attempts.service");
+const { isWithinRange, rangeErrorMessage } = require("../services/helpers/referee.helpers");
+const { parseAndValidateElementScores, parseAndValidate11thScore } = require("../services/scoring.service");
 
 exports.getRefereeDashboard = (req, res) => {
     const userId = req.session.user.id;

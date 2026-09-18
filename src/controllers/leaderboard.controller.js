@@ -1,8 +1,8 @@
 const { getCompetitionById } = require("../services/db/competitions.crud");
 const { getGroupById } = require("../services/db/groups.crud");
 const { getRoundByIdWithCompGroupInfo } = require("../services/db/rounds.crud");
-const { buildLeaderboard } = require("../services/leaderboard.services");
-const { renderNotFound } = require("../services/errors");
+const { buildLeaderboard } = require("../services/leaderboard.service");
+const { renderNotFound } = require("../services/errors.service");
 
 exports.getLeaderboard = (req, res) => {
     const { cid, gid, rid } = req.params;
