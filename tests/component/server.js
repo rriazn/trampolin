@@ -8,7 +8,7 @@ const i18nextMiddleware = require('i18next-http-middleware');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
-const { getAppVersion } = require('../../src/services/version');
+const { getAppVersion } = require('../../src/services/version.service');
 
 // A scratch path under tests/component/ so footer.spec.js can create/delete a VERSION file
 // without touching the real one at the project root
@@ -26,7 +26,7 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' },
 }));
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'errors'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`../../src/locales/${lng}/${ns}.json`)])
 );
@@ -59,7 +59,7 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   if (req.session.user) {
-    const landing = { admin: '/admin', head_judge: '/head-judge' }[req.session.user.role] || '/referee';
+    const landing = { admin: '/admin', head_judge: '/head-judge', viewer: '/viewer' }[req.session.user.role] || '/referee';
     return res.redirect(landing);
   }
   res.redirect('/login');
@@ -70,6 +70,7 @@ app.use('/', require('../../src/routes/language'));
 app.use('/leaderboard', require('../../src/routes/leaderboard'));
 app.use('/referee', require('../../src/routes/referee'));
 app.use('/head-judge', require('../../src/routes/head-judge'));
+app.use('/viewer', require('../../src/routes/viewer'));
 app.use('/admin', require('../../src/routes/admin'));
 
 // Test-only route for errors.spec.js to exercise the 500 error page
@@ -136,6 +137,8 @@ app.post('/test/seed', (req, res) => {
     .run('Judge Referee B', 'judgerefb@test.com', bcrypt.hashSync('ref123', 10), 'referee');
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
     .run('Judge Head Judge', 'judgehj@test.com', bcrypt.hashSync('hj123', 10), 'head_judge');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Viewer One', 'viewer1@test.com', bcrypt.hashSync('view123', 10), 'viewer');
   const judgeRefA = db.prepare("SELECT id FROM users WHERE email='judgerefa@test.com'").get();
   const judgeRefB = db.prepare("SELECT id FROM users WHERE email='judgerefb@test.com'").get();
   const judgeHeadJudge = db.prepare("SELECT id FROM users WHERE email='judgehj@test.com'").get();

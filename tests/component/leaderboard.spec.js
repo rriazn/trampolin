@@ -7,6 +7,14 @@ test.beforeAll(async ({ request }) => {
   seed = await res.json();
 });
 
+test.beforeEach(async ({ page }) => {
+  await page.goto('/login');
+  await page.locator('input[name=email]').fill('admin@test.com');
+  await page.locator('input[name=password]').fill('admin123');
+  await page.locator('button[type=submit]').click();
+  await page.waitForURL('/admin');
+});
+
 test.describe('hero and auto-refresh', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);

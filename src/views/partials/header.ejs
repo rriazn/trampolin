@@ -40,6 +40,9 @@
       <% if (currentUser.role === 'head_judge') { %>
       <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><i class="bi bi-flag-fill me-1"></i><%= t('common:nav.headJudge') %></a>
       <% } %>
+      <% if (currentUser.role === 'viewer') { %>
+      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='viewer' ? 'active' : '' %>" href="/viewer"><i class="bi bi-trophy-fill me-1"></i><%= t('common:nav.viewer') %></a>
+      <% } %>
       <form method="POST" action="/logout" class="m-0">
         <button class="btn btn-sm btn-outline-light rounded-pill px-3"><%= t('common:nav.logout') %></button>
       </form>

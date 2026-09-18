@@ -22,6 +22,7 @@ const REFEREES = [
 ];
 
 const HEAD_JUDGE = { name: 'Karl Weber', email: 'karl@example.com' };
+const VIEWER = { name: 'Public Viewer', email: 'viewer@example.com' };
 
 const COMPETITION_NAME = 'Spring Championship';
 const PANEL_TEMPLATE_KEY = 'fig';
@@ -69,6 +70,10 @@ async function seed() {
   const headJudgeInfo = createOrIgnoreUserDB(HEAD_JUDGE.name, HEAD_JUDGE.email, headJudgeHash, 'head_judge');
   if (headJudgeInfo.changes) console.log(`Created head judge: ${HEAD_JUDGE.email} / headjudge123`);
   const headJudgeId = getUserByEmail(HEAD_JUDGE.email).id;
+
+  const viewerHash = await bcrypt.hash('viewer123', 10);
+  const viewerInfo = createOrIgnoreUserDB(VIEWER.name, VIEWER.email, viewerHash, 'viewer');
+  if (viewerInfo.changes) console.log(`Created viewer: ${VIEWER.email} / viewer123`);
 
   const panelTemplate = getPanels().find(p => p.key === PANEL_TEMPLATE_KEY);
 

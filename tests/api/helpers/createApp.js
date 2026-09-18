@@ -9,7 +9,7 @@ const request = require('supertest');
 // Loaded via Node's native require, same cache as the routes
 const db = require('../../../src/db/database');
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'errors'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`../../../src/locales/${lng}/${ns}.json`)])
 );
@@ -57,7 +57,7 @@ function createApp() {
 
   app.get('/', (req, res) => {
     if (req.session.user) {
-      const landing = { admin: '/admin', head_judge: '/head-judge' }[req.session.user.role] || '/referee';
+      const landing = { admin: '/admin', head_judge: '/head-judge', viewer: '/viewer' }[req.session.user.role] || '/referee';
       return res.redirect(landing);
     }
     res.redirect('/login');
@@ -68,6 +68,7 @@ function createApp() {
   app.use('/leaderboard', require('../../../src/routes/leaderboard'));
   app.use('/referee', require('../../../src/routes/referee'));
   app.use('/head-judge', require('../../../src/routes/head-judge'));
+  app.use('/viewer', require('../../../src/routes/viewer'));
   app.use('/admin', require('../../../src/routes/admin'));
 
   return app;
@@ -100,6 +101,19 @@ async function loginReferee(app) {
   seedReferee();
   const agent = request.agent(app);
   await agent.post('/login').type('form').send({ email: 'ref@test.com', password: 'ref-secret' });
+  return agent;
+}
+
+function seedViewer() {
+  const hash = bcrypt.hashSync('view-secret', 10);
+  db.prepare('INSERT OR IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+    .run('Test Viewer', 'view@test.com', hash, 'viewer');
+}
+
+async function loginViewer(app) {
+  seedViewer();
+  const agent = request.agent(app);
+  await agent.post('/login').type('form').send({ email: 'view@test.com', password: 'view-secret' });
   return agent;
 }
 
@@ -221,6 +235,6 @@ function getEntryStartOrders(roundId) {
 
 module.exports = {
   createApp, seedTestUsers, seedLeaderboardData, seedReferee, loginReferee, seedCompetitionData,
-  seedAdmin, loginAdmin, seedJudgesData, seedRefereeScoringData, assignJudge, startRound,
+  seedAdmin, loginAdmin, seedViewer, loginViewer, seedJudgesData, seedRefereeScoringData, assignJudge, startRound,
   getUserIdByEmail, entryExists, getEntryStartOrders, db,
 };

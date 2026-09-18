@@ -24,7 +24,7 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' }
 }));
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'errors'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`./locales/${lng}/${ns}.json`)])
 );
@@ -57,7 +57,7 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   if (req.session.user) {
-    const landing = { admin: '/admin', head_judge: '/head-judge', referee: '/referee' }[req.session.user.role] || '/referee';
+    const landing = { admin: '/admin', head_judge: '/head-judge', referee: '/referee', viewer: '/viewer' }[req.session.user.role] || '/referee';
     return res.redirect(landing);
   }
   res.redirect('/login');
@@ -71,6 +71,7 @@ if (process.env.ENABLE_TEST_SEED === 'true') {
 app.use('/admin', require('./routes/admin'));
 app.use('/referee', require('./routes/referee'));
 app.use('/head-judge', require('./routes/head-judge'));
+app.use('/viewer', require('./routes/viewer'));
 app.use('/leaderboard', require('./routes/leaderboard'));
 
 app.use((req, res) => {
