@@ -1,0 +1,23 @@
+{
+  "pageTitle": "Leaderboard – {{roundName}}",
+  "live": "Live · refreshes every 10s",
+  "panelNotConfiguredTitle": "Panel not configured",
+  "panelNotConfiguredBody": "This competition doesn't have a judge panel selected yet.",
+  "noAthletesScored": "No athletes scored yet",
+  "footnote": "not every judge has submitted yet · hover a score for its per-role breakdown",
+  "table": {
+    "rank": "Rank",
+    "athlete": "Athlete",
+    "club": "Club",
+    "group": "Group",
+    "attempt": "Attempt {{number}}",
+    "totalScore": "Total Score",
+    "bestScore": "Best Score"
+  },
+  "modal": {
+    "attemptTitle": "{{name}} — Attempt {{number}}",
+    "judge": "Judge",
+    "landing": "Landing",
+    "bonus": "Bonus"
+  }
+}

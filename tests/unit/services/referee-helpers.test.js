@@ -25,12 +25,18 @@ describe('isWithinRange', () => {
   });
 });
 
+const templates = {
+  'referee:rangeError.max': 'Score must be between {{min}} and {{max}}.',
+  'referee:rangeError.min': 'Score must be at least {{min}}.',
+};
+const t = (key, vars = {}) => templates[key].replace(/{{(\w+)}}/g, (_, name) => vars[name]);
+
 describe('rangeErrorMessage', () => {
   it('mentions both bounds when score_max is set', () => {
-    expect(rangeErrorMessage({ score_min: 0, score_max: 10 })).toBe('Score must be between 0 and 10.');
+    expect(rangeErrorMessage({ score_min: 0, score_max: 10 }, t)).toBe('Score must be between 0 and 10.');
   });
 
   it('mentions only the minimum when score_max is null', () => {
-    expect(rangeErrorMessage({ score_min: 2, score_max: null })).toBe('Score must be at least 2.');
+    expect(rangeErrorMessage({ score_min: 2, score_max: null }, t)).toBe('Score must be at least 2.');
   });
 });

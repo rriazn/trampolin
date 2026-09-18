@@ -75,7 +75,7 @@ describe('rosterReadiness', () => {
     const readiness = rosterReadiness(comp.id, comp.panelTemplateId);
     expect(readiness.isReady).toBe(false);
     const execGroup = readiness.groups.find(g => g.name === 'Execution');
-    expect(execGroup).toEqual({ name: 'Execution', required: 4, assignedCount: 0, isReady: false });
+    expect(execGroup).toEqual({ name: 'Execution', roleKeys: ['execution'], required: 4, assignedCount: 0, isReady: false });
   });
 
   it('becomes ready once every role is fully staffed', () => {

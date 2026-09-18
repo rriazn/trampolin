@@ -5,7 +5,7 @@
       <h1><i class="bi bi-pencil-square me-2"></i><%= round.name %></h1>
       <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
     </div>
-    <a href="/referee" class="btn btn-outline-light rounded-pill"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    <a href="/referee" class="btn btn-outline-light rounded-pill"><i class="bi bi-arrow-left me-1"></i><%= t('common:actions.back') %></a>
   </div>
 </div>
 
@@ -13,14 +13,14 @@
 <% if (state === 'not_started') { %>
 <div class="card p-5 text-center text-muted">
   <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>Round not started yet</h5>
-  <p class="mb-0 small">The head judge hasn't started this round. Check back once scoring begins.</p>
+  <h5><%= t('referee:round.notStartedTitle') %></h5>
+  <p class="mb-0 small"><%= t('referee:round.notStartedBody') %></p>
 </div>
 <% } else if (state === 'no_assignment') { %>
 <div class="card p-5 text-center text-muted">
   <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>No judge role assigned</h5>
-  <p class="mb-0 small">You don't have a judge role assigned for this competition. Contact the admin.</p>
+  <h5><%= t('referee:round.noAssignmentTitle') %></h5>
+  <p class="mb-0 small"><%= t('referee:round.noAssignmentBody') %></p>
 </div>
 <% } else { %>
 <div class="card p-4 mb-4">
@@ -32,13 +32,13 @@
         <%= attempt.club || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
-    <span class="badge rounded-pill bg-primary ms-auto">Attempt #<%= attempt.attempt_number %></span>
+    <span class="badge rounded-pill bg-primary ms-auto"><%= t('referee:round.attemptNumber', { number: attempt.attempt_number }) %></span>
   </div>
 </div>
 
 <% inputs.forEach(input => { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= input.name %></h5>
+  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= t('common:judgeRoles.' + input.key) %></h5>
 
   <% if (input.granularity === 'element') { %>
   <form method="POST" action="/referee/score/elements">
@@ -48,9 +48,9 @@
     <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
         <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
       <span class="fw-600" style="width:90px">
-        <% if (el.kind === 'landing') { %>Landing
-        <% } else if (el.kind === 'bonus') { %>Bonus
-        <% } else { %>Trick <%= el.number %>
+        <% if (el.kind === 'landing') { %><%= t('referee:round.landing') %>
+        <% } else if (el.kind === 'bonus') { %><%= t('referee:round.bonus') %>
+        <% } else { %><%= t('referee:round.trick', { number: el.number }) %>
         <% } %>
       </span>
 
@@ -75,16 +75,16 @@
       <% } %>
     </div>
     <% }) %>
-    <button class="btn btn-sm btn-brand rounded-pill mt-2"><i class="bi bi-check-lg"></i> Save</button>
+    <button class="btn btn-sm btn-brand rounded-pill mt-2"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
   </form>
   <% if (input.contribution) { %>
   <p class="text-muted small mt-2 mb-0">
-    Current <%= input.name %> value: <strong><%= input.contribution.value.toFixed(2) %></strong>
-    <% if (!input.contribution.isComplete) { %> (partial — not every judge has submitted yet)<% } %>
+    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <% if (!input.contribution.isComplete) { %> <%= t('referee:round.partialNote') %><% } %>
   </p>
   <% } %>
   <% } else if (input.notApplicable) { %>
-  <p class="text-muted small mb-0"><i class="bi bi-dash-circle me-1"></i>No skills were performed for this attempt — this role does not apply.</p>
+  <p class="text-muted small mb-0"><i class="bi bi-dash-circle me-1"></i><%= t('referee:round.notApplicable') %></p>
   <% } else { %>
   <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
@@ -94,15 +94,15 @@
            min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
            step="0.1" class="form-control form-control-sm" style="width:100px"
            placeholder="<%= input.score_min %>–<%= input.score_max !== null ? input.score_max : '∞' %>" required>
-    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> Save</button>
+    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
     <% if (input.score !== null) { %>
-    <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> Saved</span>
+    <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> <%= t('referee:round.saved') %></span>
     <% } %>
   </form>
   <% if (input.contribution) { %>
   <p class="text-muted small mt-2 mb-0">
-    Current <%= input.name %> value: <strong><%= input.contribution.value.toFixed(2) %></strong>
-    <% if (!input.contribution.isComplete) { %> (partial — not every judge has submitted yet)<% } %>
+    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
+    <% if (!input.contribution.isComplete) { %> <%= t('referee:round.partialNote') %><% } %>
   </p>
   <% } %>
   <% } %>

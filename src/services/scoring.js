@@ -149,33 +149,33 @@ exports.parseAndValidateScore = (score, assignment) => {
     return { parsed, inRange };
 };
 
-exports.parseAndValidateElementScores = (assignment, elementCount, elements) => {
-    // Non-deduction element roles (difficulty) are entered x10 for easier typing 
+exports.parseAndValidateElementScores = (assignment, elementCount, elements, t) => {
+    // Non-deduction element roles (difficulty) are entered x10 for easier typing
     const scale = assignment.isDeduction ? 1 : 10;
     const parsedValues = [];
     for (let n = 1; n <= elementCount; n++) {
         const raw = parseFloat(elements[`element_${n}`]);
         const parsed = isNaN(raw) ? NaN : raw / scale;
         if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
-            throw new RangeError(`Trick ${n}: ${rangeErrorMessage(assignment)}`);
+            throw new RangeError(t('referee:errors.trickRange', { number: n, rangeError: rangeErrorMessage(assignment, t) }));
         }
         parsedValues.push([n, parsed]);
     }
     return parsedValues;
 };
 
-exports.parseAndValidate11thScore = (assignment, elementCount, element_11) => {
+exports.parseAndValidate11thScore = (assignment, elementCount, element_11, t) => {
     if (assignment.isDeduction && elementCount === 10) {
         const raw = parseFloat(element_11);
         if (isNaN(raw) || raw < 0 || raw > 1.0) {
-            throw new RangeError('Landing: score must be between 0 and 1.0.');
+            throw new RangeError(t('referee:errors.landingRange'));
         }
         return [11, raw];
     } else if (!assignment.isDeduction && elementCount > 0 && element_11 !== undefined && element_11 !== '') {
         const raw = parseFloat(element_11);
         const parsed = isNaN(raw) ? NaN : raw / 10;
         if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
-            throw new RangeError(`Bonus: ${rangeErrorMessage(assignment)}`);
+            throw new RangeError(t('referee:errors.bonusRange', { rangeError: rangeErrorMessage(assignment, t) }));
         }
         return [11, parsed];
     }

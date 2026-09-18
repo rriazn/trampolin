@@ -15,13 +15,13 @@ const {
   getScoreForAttemptByPanelId, getElementScoreForAttemptAndAssignment, getScoreForAttemptAndAssignment,
 } = require("./db/scores.crud");
 
-exports.loadRound = (cid, gid, rid) => {
+exports.loadRound = (cid, gid, rid, t) => {
     const competition = getCompetitionById(cid);
-    if (!competition) return { error: res => renderNotFound(res, 'Competition not found') };
+    if (!competition) return { error: res => renderNotFound(res, t('errors:notFound.competition')) };
     const group = getGroupById(gid);
-    if (!group) return { error: res => renderNotFound(res, 'Group not found') };
+    if (!group) return { error: res => renderNotFound(res, t('errors:notFound.group')) };
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return { error: res => renderNotFound(res, 'Round not found') };
+    if (!round) return { error: res => renderNotFound(res, t('errors:notFound.round')) };
     return { round };
 };
 
@@ -43,7 +43,7 @@ exports.getRoundOverview = (round, userId, readiness) => {
     // computeAttemptScore tracks element-granularity roles per-trick, not per-judge
     breakdown.forEach(item => {
         if (item.perTrick) {
-        const roleStatus = judgeStatus.find(j => j.name === item.name);
+        const roleStatus = judgeStatus.find(j => j.key === item.judgeRoleKey);
         item.count = roleStatus ? roleStatus.judges.filter(j => j.isDone).length : 0;
         }
     });

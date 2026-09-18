@@ -1,0 +1,41 @@
+{
+  "dashboard": {
+    "pageTitle": "Scoring",
+    "heading": "Scoring Dashboard",
+    "subtitle": "Select an active round to enter scores",
+    "noRoundsTitle": "No active rounds right now",
+    "noRoundsBody": "Check back when the head judge activates a round."
+  },
+  "round": {
+    "notStartedTitle": "Round not started yet",
+    "notStartedBody": "The head judge hasn't started this round. Check back once scoring begins.",
+    "noAssignmentTitle": "No judge role assigned",
+    "noAssignmentBody": "You don't have a judge role assigned for this competition. Contact the admin.",
+    "attemptNumber": "Attempt #{{number}}",
+    "landing": "Landing",
+    "bonus": "Bonus",
+    "trick": "Trick {{number}}",
+    "saved": "Saved",
+    "currentValue": "Current {{name}} value:",
+    "partialNote": "(partial — not every judge has submitted yet)",
+    "notApplicable": "No skills were performed for this attempt — this role does not apply."
+  },
+  "errors": {
+    "forbidden": "Forbidden",
+    "wrongGranularityAttempt": "This role is scored per trick, not per attempt.",
+    "wrongGranularityElement": "This role is scored per attempt, not per trick.",
+    "noSkillsPerformed": "No skills were performed for this attempt — this role does not apply.",
+    "unknownCombineMode": "Unknown combine mode: {{mode}}",
+    "trickRange": "Trick {{number}}: {{rangeError}}",
+    "landingRange": "Landing: score must be between 0 and 1.0.",
+    "bonusRange": "Bonus: {{rangeError}}"
+  },
+  "rangeError": {
+    "max": "Score must be between {{min}} and {{max}}.",
+    "min": "Score must be at least {{min}}."
+  },
+  "flash": {
+    "scoreSaved": "Score {{score}} saved.",
+    "scoresSaved": "Scores saved."
+  }
+}

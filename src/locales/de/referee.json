@@ -1,0 +1,41 @@
+{
+  "dashboard": {
+    "pageTitle": "Wertung",
+    "heading": "Wertungsdashboard",
+    "subtitle": "Wählen Sie eine aktive Runde, um das Werten zu starten",
+    "noRoundsTitle": "Noch keine aktiven Runden",
+    "noRoundsBody": "Kommen Sie zurück, wenn der Wettkampfleiter eine Runde aktiviert."
+  },
+  "round": {
+    "notStartedTitle": "Runde noch nicht gestartet",
+    "notStartedBody": "Der Wettkampfleiter hat diese Runde noch nicht gestartet. Kommen Sie wieder, wenn das Werten startet.",
+    "noAssignmentTitle": "Keine Kampfrichterrolle zugewiesen",
+    "noAssignmentBody": "Ihnen wurde keine Rolle für diesen Wettkampf zugewiesen. Kontaktieren Sie einen Admin.",
+    "attemptNumber": "Versuch #{{number}}",
+    "landing": "Landung",
+    "bonus": "Bonus",
+    "trick": "Element {{number}}",
+    "saved": "Gespeichert",
+    "currentValue": "Aktueller Wert für {{name}}:",
+    "partialNote": "(unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben)",
+    "notApplicable": "Keine Elemente wurden in diesem Versuch gezeigt."
+  },
+  "errors": {
+    "forbidden": "Zugriff verweigert",
+    "wrongGranularityAttempt": "Diese Rolle wertet pro Element, nicht pro Versuch.",
+    "wrongGranularityElement": "Diese Rolle wertet pro Versuch, nicht pro Element.",
+    "noSkillsPerformed": "Keine Elemente wurden in diesem Versuch gezeigt.",
+    "unknownCombineMode": "Unbekannter Wertungsmodus: {{mode}}",
+    "trickRange": "Element {{number}}: {{rangeError}}",
+    "landingRange": "Landung: Wertung muss zwischen 0 und 1.0 sein.",
+    "bonusRange": "Bonus: {{rangeError}}"
+  },
+  "rangeError": {
+    "max": "Wertung muss zwischen {{min}} und {{max}} sein.",
+    "min": "Wertung muss mindestens {{min}} sein."
+  },
+  "flash": {
+    "scoreSaved": "Wertung {{score}} gespeichert.",
+    "scoresSaved": "Wertungen gespeichert."
+  }
+}

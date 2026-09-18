@@ -1,0 +1,231 @@
+{
+  "dashboard": {
+    "pageTitle": "Dashboard",
+    "heading": "Admin Dashboard",
+    "subtitle": "Manage your tournament from here",
+    "referees": "Referees",
+    "competitions": "Competitions",
+    "manage": "Manage",
+    "recentCompetitions": "Recent Competitions",
+    "new": "New",
+    "noCompetitions": "No competitions yet.",
+    "createOne": "Create one",
+    "table": { "name": "Name", "date": "Date", "status": "Status", "groups": "Groups" }
+  },
+  "competitions": {
+    "heading": "Competitions",
+    "subtitle": "Create and manage tournament events",
+    "newCompetition": "New Competition",
+    "table": { "name": "Name", "date": "Date", "status": "Status" },
+    "groups": "Groups",
+    "judges": "Judges",
+    "activate": "Activate",
+    "close": "Close",
+    "confirmDelete": "Delete competition and ALL its data?"
+  },
+  "competitionForm": {
+    "editTitle": "Edit Competition",
+    "newTitle": "New Competition",
+    "breadcrumbCompetitions": "Competitions",
+    "name": "Competition Name",
+    "namePlaceholder": "e.g. Spring Cup 2026",
+    "date": "Date",
+    "optional": "(optional)",
+    "judgePanel": "Judge Panel",
+    "noneSelected": "— None selected —",
+    "panelHelp": "Applies to every group and round in this competition. Assign judges to it afterwards from the competition list.",
+    "errors": { "nameRequired": "Competition name is required." }
+  },
+  "users": {
+    "pageTitle": "Users",
+    "heading": "Referees & Admins",
+    "subtitle": "Manage user accounts and access",
+    "importExcel": "Import Excel",
+    "exportExcel": "Export Excel",
+    "addUser": "Add User",
+    "importHeading": "Import from Excel",
+    "importHelp": "Required: <strong>Name</strong>, <strong>Email</strong> &nbsp;·&nbsp; Optional: <strong>Password</strong> (default: <code>referee123</code>), <strong>Role</strong> (default: <code>referee</code>)",
+    "upload": "Upload",
+    "table": { "name": "Name", "email": "Email", "role": "Role", "created": "Created" },
+    "confirmDelete": "Delete user {{name}}?",
+    "errors": {
+      "noFile": "No file uploaded.",
+      "invalidFileType": "Invalid file type. Please upload an Excel file."
+    }
+  },
+  "userForm": {
+    "editTitle": "Edit User",
+    "newTitle": "New User",
+    "breadcrumbUsers": "Users",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "passwordKeepCurrent": "(leave blank to keep current)",
+    "role": "Role",
+    "errors": {
+      "required": "Name, email and password are required.",
+      "requiredNameEmail": "Name and email are required.",
+      "emailInUse": "Email already in use."
+    }
+  },
+  "judges": {
+    "pageTitle": "Judges – {{name}}",
+    "heading": "Judges",
+    "noPanelTitle": "No judge panel selected",
+    "noPanelBody": "Choose a judge panel on the competition's edit page before assigning judges.",
+    "editCompetition": "Edit Competition",
+    "infoText": "Judges are assigned once per competition and apply to every group and round within it.",
+    "filled": "{{assigned}} of {{required}} filled",
+    "noneAssigned": "No judges assigned yet.",
+    "table": { "name": "Name", "email": "Email" },
+    "confirmRemove": "Remove {{judgeName}} from {{roleName}}?",
+    "fullyStaffed": "This role is fully staffed.",
+    "noEligible": "No more eligible users to assign. Add users with the right role first.",
+    "assign": "Assign",
+    "errors": {
+      "unknownRole": "Unknown role for this competition's panel.",
+      "alreadyAssignedElsewhere": "This user is already assigned to another judge role in this competition.",
+      "roleFullyStaffed": "{{roleNames}} is already fully staffed.",
+      "alreadyAssignedToRole": "This judge is already assigned to that role."
+    }
+  },
+  "sportsmen": {
+    "pageTitle": "Athletes – {{name}}",
+    "heading": "Athletes",
+    "importExcel": "Import Excel",
+    "exportExcel": "Export Excel",
+    "addAthlete": "Add Athlete",
+    "importHeading": "Import from Excel",
+    "importHelp": "Required: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Club</strong>, <strong>Gender</strong>, <strong>Birthyear</strong>, <strong>Routine</strong>",
+    "upload": "Upload",
+    "noAthletes": "No athletes yet.",
+    "addOne": "Add one",
+    "table": { "athlete": "Athlete", "club": "Club", "group": "Group", "gender": "Gender", "birthYear": "Birth Year", "routine": "Routine" },
+    "confirmDelete": "Delete {{name}}?"
+  },
+  "sportsmanForm": {
+    "editTitle": "Edit Athlete",
+    "newTitle": "New Athlete",
+    "breadcrumbAthletes": "Athletes",
+    "fullName": "Full Name",
+    "club": "Club",
+    "gender": "Gender",
+    "genderNotSet": "– not set –",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "birthYear": "Birth Year",
+    "birthYearPlaceholder": "e.g. 2008",
+    "routine": "Routine",
+    "routinePlaceholder": "e.g. W11, P8",
+    "group": "Group",
+    "groupUnassigned": "– unassigned –",
+    "errors": { "nameRequired": "Name is required." }
+  },
+  "groups": {
+    "pageTitle": "Groups – {{name}}",
+    "heading": "Groups",
+    "athletes": "Athletes",
+    "noGroups": "No groups yet. Add one below.",
+    "table": { "groupName": "Group Name", "abbreviation": "Abbreviation", "rounds": "Rounds" },
+    "roundsCount_one": "{{count}} round",
+    "roundsCount_other": "{{count}} rounds",
+    "roundsButton": "Rounds",
+    "confirmDelete": "Delete group and all its rounds and scores?",
+    "addGroup": "Add Group",
+    "groupName": "Group Name",
+    "groupNamePlaceholder": "e.g. Junior Men",
+    "groupAbbreviation": "Group Abbreviation",
+    "groupAbbreviationPlaceholder": "e.g. JM1",
+    "errors": {
+      "nameRequired": "Group name is required.",
+      "abbreviationRequired": "Group abbreviation is required.",
+      "abbreviationInUse": "Abbreviation \"{{abbreviation}}\" is already used by another group in this competition."
+    }
+  },
+  "rounds": {
+    "pageTitle": "Rounds – {{name}}",
+    "heading": "Rounds",
+    "noRounds": "No rounds yet. Add one below.",
+    "table": { "order": "Order", "roundName": "Round Name", "scoringMode": "Scoring Mode" },
+    "entries": "Entries",
+    "leaderboard": "Leaderboard",
+    "confirmDelete": "Delete round and all entries/scores?",
+    "addRound": "Add Round",
+    "name": "Name",
+    "namePlaceholder": "e.g. Qualification",
+    "order": "Order",
+    "scoringMode": "Scoring Mode",
+    "errors": {
+      "nameRequired": "Round name is required.",
+      "orderInvalid": "Round order must be a non-negative number."
+    }
+  },
+  "entries": {
+    "pageTitle": "Entries – {{name}}",
+    "heading": "Entries",
+    "attemptsPerAthlete": "Attempts per athlete",
+    "createAllAttempts": "Create All Attempts",
+    "confirmCreateAll": "Create attempts for all entries?",
+    "randomize": "Randomize",
+    "confirmRandomize": "Randomize order of all athletes of this round?",
+    "leaderboard": "Leaderboard",
+    "noEntries": "No entries yet. Add athletes below.",
+    "table": { "startOrder": "Start #", "athlete": "Athlete", "club": "Club", "routine": "Routine", "attempts": "Attempts" },
+    "attemptsCount_one": "{{count}} attempt",
+    "attemptsCount_other": "{{count}} attempts",
+    "confirmRemove": "Remove this entry and all its scores?",
+    "addEntry": "Add Entry",
+    "allRegistered": "All registered athletes are already in this round.",
+    "athlete": "Athlete",
+    "rankedBy": "— ranked by {{roundName}}",
+    "startOrder": "Start #",
+    "addAll": "Add All",
+    "confirmAddAll": "Add all athletes from this group to the round?",
+    "errors": { "alreadyInRound": "Athlete already in this round." }
+  },
+  "errors": {
+    "badStatus": "Bad status"
+  },
+  "flash": {
+    "users": {
+      "created": "User \"{{name}}\" created.",
+      "updated": "User updated.",
+      "deleted": "User deleted.",
+      "importComplete": "Import complete: {{created}} added, {{skipped}} skipped (duplicate/invalid)."
+    },
+    "competitions": {
+      "created": "Competition \"{{name}}\" created.",
+      "updated": "Competition updated.",
+      "statusSet": "Status set to \"{{status}}\".",
+      "deleted": "Competition and all associated data deleted."
+    },
+    "judges": {
+      "assigned": "Judge assigned.",
+      "unassigned": "Judge unassigned."
+    },
+    "sportsmen": {
+      "added": "Athlete \"{{name}}\" added.",
+      "updated": "Athlete updated.",
+      "deleted": "Athlete deleted.",
+      "importAdded": "{{count}} added",
+      "importSkipped": "{{count}} skipped (missing name)",
+      "importUnknownGroup": "{{count}} without group (unknown abbreviation)",
+      "importComplete": "Import complete: {{parts}}."
+    },
+    "groups": {
+      "created": "Group \"{{name}}\" created.",
+      "deleted": "Group deleted."
+    },
+    "rounds": {
+      "added": "Round \"{{name}}\" added.",
+      "deleted": "Round deleted."
+    },
+    "entries": {
+      "added": "Athlete added to round.",
+      "addedAll": "{{count}} athlete(s) added to the round.",
+      "randomized": "Start order randomized.",
+      "removed": "Entry removed.",
+      "attemptsCreated": "{{count}} attempt(s) created for all entries."
+    }
+  }
+}

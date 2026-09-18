@@ -1,13 +1,13 @@
-<%- include('../partials/header', { title: user ? 'Edit User' : 'New User', activePage: 'admin' }) %>
+<%- include('../partials/header', { title: user ? t('admin:userForm.editTitle') : t('admin:userForm.newTitle'), activePage: 'admin' }) %>
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5)">
-        <li class="breadcrumb-item"><a href="/admin/users" class="text-white-50">Users</a></li>
-        <li class="breadcrumb-item active text-white"><%= user ? 'Edit' : 'New User' %></li>
+        <li class="breadcrumb-item"><a href="/admin/users" class="text-white-50"><%= t('admin:userForm.breadcrumbUsers') %></a></li>
+        <li class="breadcrumb-item active text-white"><%= user ? t('common:actions.edit') : t('admin:userForm.newTitle') %></li>
       </ol>
     </nav>
-    <h1><i class="bi bi-person-<%= user ? 'gear' : 'plus' %> me-2"></i><%= user ? 'Edit User' : 'New User' %></h1>
+    <h1><i class="bi bi-person-<%= user ? 'gear' : 'plus' %> me-2"></i><%= user ? t('admin:userForm.editTitle') : t('admin:userForm.newTitle') %></h1>
   </div>
 </div>
 <div class="container">
@@ -19,28 +19,28 @@
 <% } %>
 <form method="POST" action="<%= action %>">
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase">Full Name</label>
+    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.fullName') %></label>
     <input type="text" name="name" class="form-control" value="<%= user ? user.name : '' %>" required>
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase">Email</label>
+    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.email') %></label>
     <input type="email" name="email" class="form-control" value="<%= user ? user.email : '' %>" required>
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase">Password<% if (user) { %> <span class="text-muted fw-normal">(leave blank to keep current)</span><% } %></label>
+    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.password') %><% if (user) { %> <span class="text-muted fw-normal"><%= t('admin:userForm.passwordKeepCurrent') %></span><% } %></label>
     <input type="password" name="password" class="form-control" <%= user ? '' : 'required' %>>
   </div>
   <div class="mb-4">
-    <label class="form-label small fw-600 text-muted text-uppercase">Role</label>
+    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.role') %></label>
     <select name="role" class="form-select">
-      <option value="referee" <%= (!user || user.role==='referee') ? 'selected' : '' %>>Referee</option>
-      <option value="admin" <%= (user && user.role==='admin') ? 'selected' : '' %>>Admin</option>
-      <option value="head_judge" <%= (user && user.role==='head_judge') ? 'selected' : '' %>>Head Judge</option>
+      <option value="referee" <%= (!user || user.role==='referee') ? 'selected' : '' %>><%= t('common:roles.referee') %></option>
+      <option value="admin" <%= (user && user.role==='admin') ? 'selected' : '' %>><%= t('common:roles.admin') %></option>
+      <option value="head_judge" <%= (user && user.role==='head_judge') ? 'selected' : '' %>><%= t('common:roles.head_judge') %></option>
     </select>
   </div>
   <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= user ? 'Save' : 'Create' %></button>
-    <a href="/admin/users" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+    <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= user ? t('common:actions.save') : t('common:actions.create') %></button>
+    <a href="/admin/users" class="btn btn-outline-secondary rounded-pill px-4"><%= t('common:actions.cancel') %></a>
   </div>
 </form>
 </div>

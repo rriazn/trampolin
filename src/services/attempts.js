@@ -56,7 +56,7 @@ exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, 
 
   const byRole = new Map();
   for (const a of assignments) {
-    if (!byRole.has(a.role_key)) byRole.set(a.role_key, { name: a.role_name, granularity: a.granularity, judges: [] });
+    if (!byRole.has(a.role_key)) byRole.set(a.role_key, { key: a.role_key, name: a.role_name, granularity: a.granularity, judges: [] });
     const elements = elementsByAssignment.get(a.assignment_id) || [];
     const landingApplies = a.granularity === 'element' && a.isDeduction && elementCount === 10;
     const bonusApplies = a.granularity === 'element' && !a.isDeduction;

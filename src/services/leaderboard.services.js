@@ -59,7 +59,7 @@ function buildPerTrickDetail(panelSlots, roleDetail) {
                 name,
                 values: elementNumbers.map(n => values.has(n) ? values.get(n) : null),
             }));
-            return { roleName: slot.judgeRoleName, isDeduction: slot.isDeduction, elementNumbers, judges };
+            return { roleKey: slot.judgeRoleKey, roleName: slot.judgeRoleName, isDeduction: slot.isDeduction, elementNumbers, judges };
         })
         .filter(Boolean);
 }

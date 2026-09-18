@@ -41,7 +41,7 @@ exports.getNewUserForm = async (req, res) => {
 exports.getEditUserForm = async (req, res) => {
     const user = getUserById(req.params.id);
     if (!user) 
-        return renderNotFound(res, 'Not found');
+        return renderNotFound(res, req.t('errors:notFound.generic'));
     res.render('admin/user-form', { user, action: `/admin/users/${user.id}` });
 };
 
@@ -50,7 +50,7 @@ exports.addUser = async (req, res) => {
     if (!name || !email || !password) {
         return res.status(400).render('admin/user-form', {
         user: null, action: '/admin/users',
-        error: 'Name, email and password are required.',
+        error: req.t('admin:userForm.errors.required'),
         });
     }
     try {
@@ -58,10 +58,10 @@ exports.addUser = async (req, res) => {
     } catch {
         return res.status(422).render('admin/user-form', {
         user: null, action: '/admin/users',
-        error: 'Email already in use.',
+        error: req.t('admin:userForm.errors.emailInUse'),
         });
     }
-    req.session.flash = { success: `User "${name}" created.` };
+    req.session.flash = { success: req.t('admin:flash.users.created', { name }) };
     res.redirect('/admin/users');
 };
 
@@ -70,40 +70,40 @@ exports.updateUser = async (req, res) => {
     const action = `/admin/users/${req.params.id}`;
     const user = getUserById(req.params.id);
     if (!user) 
-        return renderNotFound(res, 'Not found');
+        return renderNotFound(res, req.t('errors:notFound.generic'));
     if (!name || !email) {
         return res.status(400).render('admin/user-form', {
-        user, action, error: 'Name and email are required.',
+        user, action, error: req.t('admin:userForm.errors.requiredNameEmail'),
         });
     }
     try {
         await updateUser(req.params.id, name, email, password, role);
     } catch {
         return res.status(422).render('admin/user-form', {
-        user, action, error: 'Email already in use.',
+        user, action, error: req.t('admin:userForm.errors.emailInUse'),
         });
     }
-    req.session.flash = { success: 'User updated.' };
+    req.session.flash = { success: req.t('admin:flash.users.updated') };
     res.redirect('/admin/users');
 };
 
 exports.uploadUsers = async (req, res) => {
     if (!req.file) {
-        req.session.flash = { error: 'No file uploaded.' };
+        req.session.flash = { error: req.t('admin:users.errors.noFile') };
         return res.redirect('/admin/users');
     }
     if (!(await isXlsxBuffer(req.file.buffer))) {
-        req.session.flash = { error: 'Invalid file type. Please upload an Excel file.' };
+        req.session.flash = { error: req.t('admin:users.errors.invalidFileType') };
         return res.redirect('/admin/users');
     }
     const { created, skipped } = await parseUsersXlsx(req.file.buffer);
-    req.session.flash = { success: `Import complete: ${created} added, ${skipped} skipped (duplicate/invalid).` };
+    req.session.flash = { success: req.t('admin:flash.users.importComplete', { created, skipped }) };
     res.redirect('/admin/users');
 };
 
 exports.deleteUser = async (req, res) => {
     deleteUserDB(req.params.id);
-    req.session.flash = { success: 'User deleted.' };
+    req.session.flash = { success: req.t('admin:flash.users.deleted') };
     res.redirect('/admin/users');
 };
 
@@ -124,18 +124,18 @@ exports.addCompetition = async (req, res) => {
         const panelTemplates = getPanels();
         return res.status(400).render('admin/competition-form', {
         competition: null, action: '/admin/competitions', panelTemplates,
-        error: 'Competition name is required.',
+        error: req.t('admin:competitionForm.errors.nameRequired'),
         });
     }
     createCompetitionDB(name, date, panel_template_id);
-    req.session.flash = { success: `Competition "${name}" created.` };
+    req.session.flash = { success: req.t('admin:flash.competitions.created', { name }) };
     res.redirect('/admin/competitions');
 };
 
 exports.getEditCompetitionForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Not found');
+        return renderNotFound(res, req.t('errors:notFound.generic'));
     const panelTemplates = getPanels();
     res.render('admin/competition-form', { competition, action: `/admin/competitions/${competition.id}`, panelTemplates });
 };
@@ -146,26 +146,26 @@ exports.updateCompetition = async (req, res) => {
         const panelTemplates = getPanels();
         return res.status(400).render('admin/competition-form', {
         competition: null, action: '/admin/competitions', panelTemplates,
-        error: 'Competition name is required.',
+        error: req.t('admin:competitionForm.errors.nameRequired'),
         });
     }
     updateCompetitionDB(req.params.id, name, date, panel_template_id);
-    req.session.flash = { success: 'Competition updated.' };
+    req.session.flash = { success: req.t('admin:flash.competitions.updated') };
     res.redirect('/admin/competitions');
 };
 
 exports.updateCompetitionStatus = async (req, res) => {
     const { status } = req.body;
-    if (!['planned', 'active', 'closed'].includes(status)) 
-        return res.status(400).send('Bad status');
+    if (!['planned', 'active', 'closed'].includes(status))
+        return res.status(400).send(req.t('admin:errors.badStatus'));
     updateCompetitionStatusDB(req.params.id, status);
-    req.session.flash = { success: `Status set to "${status}".` };
+    req.session.flash = { success: req.t('admin:flash.competitions.statusSet', { status: req.t(`common:status.${status}`) }) };
     res.redirect('/admin/competitions');
 };
 
 exports.deleteCompetition = async (req, res) => {
     deleteCompetitionDB(req.params.id);
-    req.session.flash = { success: 'Competition and all associated data deleted.' };
+    req.session.flash = { success: req.t('admin:flash.competitions.deleted') };
     res.redirect('/admin/competitions');
 };
 
@@ -174,7 +174,7 @@ exports.deleteCompetition = async (req, res) => {
 exports.getJudges = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
 
     if (!competition.panel_template_id)
         return res.render('admin/judges', { competition, panelTemplate: null, roles: [] });
@@ -187,46 +187,46 @@ exports.addJudge = async (req, res) => {
     const { judge_role_id, user_id } = req.body;
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
 
     const group = resolveAssignmentGroup(competition.panel_template_id, Number(judge_role_id));
-    if (!group) 
-        return res.status(400).send('Unknown role for this competition\'s panel.');
+    if (!group)
+        return res.status(400).send(req.t('admin:judges.errors.unknownRole'));
     const anchor = `#role-${group.groupKey}`;
 
     // A user may only hold one role per competition
     const alreadyAssignedElsewhere = checkAlreadyAssigned(competition.id, user_id, group.judgeRoleIds)
     if (alreadyAssignedElsewhere) {
-        req.session.flash = { error: 'This user is already assigned to another judge role in this competition.' };
+        req.session.flash = { error: req.t('admin:judges.errors.alreadyAssignedElsewhere') };
         return res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
     }
     const fullyAssignedCount = getAssignedCount(competition.id, group.judgeRoleIds);
     if (fullyAssignedCount >= group.required) {
-        req.session.flash = { error: `${group.names.join(' & ')} is already fully staffed.` };
+        req.session.flash = { error: req.t('admin:judges.errors.roleFullyStaffed', { roleNames: group.roleKeys.map(k => req.t('common:judgeRoles.' + k)).join(' & ') }) };
         return res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
     }
     try {
         addAssignment(competition.id, user_id, group.judgeRoleIds);
-        req.session.flash = { success: 'Judge assigned.' };
+        req.session.flash = { success: req.t('admin:flash.judges.assigned') };
     } catch {
-        req.session.flash = { error: 'This judge is already assigned to that role.' };
+        req.session.flash = { error: req.t('admin:judges.errors.alreadyAssignedToRole') };
     }
     res.redirect(`/admin/competitions/${competition.id}/judges${anchor}`);
 };
 
 exports.removeJudge = async (req, res) => {
     const competition = getCompetitionById(req.params.id)
-    if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
 
     const assignment = getAssignmentById(req.params.assignmentId, competition.id);
-    if (!assignment) 
-        return renderNotFound(res, 'Assignment not found');
+    if (!assignment)
+        return renderNotFound(res, req.t('errors:notFound.assignment'));
 
     const group = resolveAssignmentGroup(competition.panel_template_id, assignment.judge_role_id);
     const anchor = group ? `#role-${group.groupKey}` : '';
     removeJudgeFromRole(group, assignment.id, competition.id, assignment.user_id);
-    req.session.flash = { success: 'Judge unassigned.' };
+    req.session.flash = { success: req.t('admin:flash.judges.unassigned') };
     res.redirect(`/admin/competitions/${req.params.id}/judges${anchor}`);
 };
 
@@ -235,7 +235,7 @@ exports.removeJudge = async (req, res) => {
 exports.getSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const sportsmen = getSportsmenByCompetition(req.params.id);
     res.render('admin/sportsmen', { competition, sportsmen });
 };
@@ -243,7 +243,7 @@ exports.getSportsmen = async (req, res) => {
 exports.exportSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const clean_comp_name = competition.name
         .toLowerCase()
         .normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -260,7 +260,7 @@ exports.exportSportsmen = async (req, res) => {
 exports.getNewSportsmanForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const groups = getGroupsByCompetition(req.params.id);
     res.render('admin/sportsman-form', {
         sportsman: null,
@@ -278,21 +278,21 @@ exports.addSportsman = async (req, res) => {
         return res.status(400).render('admin/sportsman-form', {
             sportsman: null, competition, groups,
             action: `/admin/competitions/${req.params.id}/sportsmen`,
-            error: 'Name is required.',
+            error: req.t('admin:sportsmanForm.errors.nameRequired'),
         });
     }
     addSportsmanDB(name, club, gender, birth_year, routine, req.params.id, group_id);
-    req.session.flash = { success: `Athlete "${name}" added.` };
+    req.session.flash = { success: req.t('admin:flash.sportsmen.added', { name }) };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 
 exports.getEditSportsmanForm = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const sportsman = getSportsmenById(req.params.sid);
     if (!sportsman) 
-        return renderNotFound(res, 'Sportsman not found');
+        return renderNotFound(res, req.t('errors:notFound.sportsman'));
     const groups = getGroupsByCompetition(req.params.id);
     res.render('admin/sportsman-form', {
         sportsman,
@@ -311,34 +311,37 @@ exports.updateSportsman = async (req, res) => {
         return res.status(400).render('admin/sportsman-form', {
             sportsman, competition, groups,
             action: `/admin/competitions/${req.params.id}/sportsmen/${req.params.sid}`,
-            error: 'Name is required.',
+            error: req.t('admin:sportsmanForm.errors.nameRequired'),
         });
     }
     updateSportsmanDB(req.params.sid, name, club, gender, birth_year, routine, group_id);
-    req.session.flash = { success: 'Athlete updated.' };
+    req.session.flash = { success: req.t('admin:flash.sportsmen.updated') };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 
 exports.deleteSportsman = async (req, res) => {
     deleteSportsmanDB(req.params.sid);
-    req.session.flash = { success: 'Athlete deleted.' };
+    req.session.flash = { success: req.t('admin:flash.sportsmen.deleted') };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 
 exports.uploadSportsmen = async (req, res) => {
     if (!req.file) {
-        req.session.flash = { error: 'No file uploaded.' };
+        req.session.flash = { error: req.t('admin:users.errors.noFile') };
         return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
     }
     if (!(await isXlsxBuffer(req.file.buffer))) {
-        req.session.flash = { error: 'Invalid file type. Please upload an Excel file.' };
+        req.session.flash = { error: req.t('admin:users.errors.invalidFileType') };
         return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
     }
-    
+
     const { created, skipped, unknownGroup } = parseSportsmenXlsx(req.params.id, req.file.buffer);
-    const parts = [`${created} added`, `${skipped} skipped (missing name)`];
-    if (unknownGroup > 0) parts.push(`${unknownGroup} without group (unknown abbreviation)`);
-    req.session.flash = { success: `Import complete: ${parts.join(', ')}.` };
+    const parts = [
+        req.t('admin:flash.sportsmen.importAdded', { count: created }),
+        req.t('admin:flash.sportsmen.importSkipped', { count: skipped }),
+    ];
+    if (unknownGroup > 0) parts.push(req.t('admin:flash.sportsmen.importUnknownGroup', { count: unknownGroup }));
+    req.session.flash = { success: req.t('admin:flash.sportsmen.importComplete', { parts: parts.join(', ') }) };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 
@@ -347,7 +350,7 @@ exports.uploadSportsmen = async (req, res) => {
 exports.getGroups = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const groups = getGroupsRoundCount(req.params.id);
     res.render('admin/groups', { competition, groups });
 };
@@ -357,25 +360,25 @@ exports.addGroup = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     const groups = getGroupsRoundCount(req.params.id);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     if (!name || !name.trim()) {
-        return res.status(400).render('admin/groups', { competition, groups, error: 'Group name is required.' });
+        return res.status(400).render('admin/groups', { competition, groups, error: req.t('admin:groups.errors.nameRequired') });
     }
     if (!abbreviation || !abbreviation.trim()) {
-        return res.status(400).render('admin/groups', { competition, groups, error: 'Group abbreviation is required.' });
+        return res.status(400).render('admin/groups', { competition, groups, error: req.t('admin:groups.errors.abbreviationRequired') });
     }
     try {
         addGroupDB(name, abbreviation, req.params.id);
     } catch {
-        return res.status(422).render('admin/groups', { competition, groups, error: `Abbreviation "${abbreviation.trim()}" is already used by another group in this competition.` });
+        return res.status(422).render('admin/groups', { competition, groups, error: req.t('admin:groups.errors.abbreviationInUse', { abbreviation: abbreviation.trim() }) });
     }
-    req.session.flash = { success: `Group "${name}" created.` };
+    req.session.flash = { success: req.t('admin:flash.groups.created', { name }) };
     res.redirect(`/admin/competitions/${req.params.id}/groups`);
 };
 
 exports.deleteGroup = async (req, res) => {
     deleteGroupDB(req.params.gid, req.params.id);
-    req.session.flash = { success: 'Group deleted.' };
+    req.session.flash = { success: req.t('admin:flash.groups.deleted') };
     res.redirect(`/admin/competitions/${req.params.id}/groups`);
 };
 
@@ -384,10 +387,10 @@ exports.deleteGroup = async (req, res) => {
 exports.getRounds = async (req, res) => {
     const competition = getCompetitionById(req.params.cid);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const group = getGroupById(req.params.gid);
     if (!group) 
-        return renderNotFound(res, 'Group not found');
+        return renderNotFound(res, req.t('errors:notFound.group'));
     const rounds = getRoundsByGroup(req.params.gid);
     res.render('admin/rounds', { competition, group, rounds });
 };
@@ -396,28 +399,28 @@ exports.addRound = async (req, res) => {
     const { name, round_order, scoring_mode } = req.body;
     const competition = getCompetitionById(req.params.cid);
     if (!competition) 
-        return renderNotFound(res, 'Not found');
+        return renderNotFound(res, req.t('errors:notFound.generic'));
     const group = getGroupById(req.params.gid);
     if (!group) 
-        return renderNotFound(res, 'Not found');
+        return renderNotFound(res, req.t('errors:notFound.generic'));
 
     const renderWithError = (error) => {
         const rounds = getRoundsByGroup(req.params.gid);
         return res.status(400).render('admin/rounds', { competition, group, rounds, error });
     };
-    if (!name || !name.trim()) 
-        return renderWithError('Round name is required.');
+    if (!name || !name.trim())
+        return renderWithError(req.t('admin:rounds.errors.nameRequired'));
     if (round_order !== undefined && round_order !== '' && (isNaN(round_order) || Number(round_order) < 0))
-        return renderWithError('Round order must be a non-negative number.');
+        return renderWithError(req.t('admin:rounds.errors.orderInvalid'));
     const validScoringMode = ['sum', 'best_attempt'].includes(scoring_mode) ? scoring_mode : 'sum';
     addRoundDB(req.params.gid, name, round_order, validScoringMode);
-    req.session.flash = { success: `Round "${name}" added.` };
+    req.session.flash = { success: req.t('admin:flash.rounds.added', { name }) };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
 };
 
 exports.deleteRound = async (req, res) => {
     deleteRoundDB(req.params.rid, req.params.gid);
-    req.session.flash = { success: 'Round deleted.' };
+    req.session.flash = { success: req.t('admin:flash.rounds.deleted') };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
 };
 
@@ -428,14 +431,14 @@ exports.getEntries = async (req, res) => {
 
     const competition = getCompetitionById(cid);
     if (!competition) 
-        return renderNotFound(res, 'Competition not found');
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     const group = getGroupById(gid);
     if (!group) 
-        return renderNotFound(res, 'Group not found');
+        return renderNotFound(res, req.t('errors:notFound.group'));
 
     const round = getRoundByIdWithCompGroupInfo(rid, gid);
     if (!round) 
-        return renderNotFound(res, 'Round not found');
+        return renderNotFound(res, req.t('errors:notFound.round'));
 
     const entries = getEntriesWithAttemptsInfo(rid);
 
@@ -456,9 +459,9 @@ exports.addEntry = async (req, res) => {
     const { sportsman_id, start_order } = req.body;
     try {
         addEntryDB(req.params.rid, sportsman_id, start_order);
-        req.session.flash = { success: 'Athlete added to round.' };
+        req.session.flash = { success: req.t('admin:flash.entries.added') };
     } catch {
-        req.session.flash = { error: 'Athlete already in this round.' };
+        req.session.flash = { error: req.t('admin:entries.errors.alreadyInRound') };
     }
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 };
@@ -466,38 +469,38 @@ exports.addEntry = async (req, res) => {
 exports.addAllEntries = async (req, res) => {
     const { cid, gid, rid } = req.params;
     const round = getRoundById(rid);
-    if (!round) 
-        return renderNotFound(res, 'Round not found');
+    if (!round)
+        return renderNotFound(res, req.t('errors:notFound.round'));
 
     const available = getAvailableSportsmen(round.competition_id, round.group_id, rid);
 
     const maxOrder = getEntryMaxOrder(rid);
 
     addAllEntriesDB(available, rid, maxOrder);
-    req.session.flash = { success: `${available.length} athlete(s) added to the round.` };
+    req.session.flash = { success: req.t('admin:flash.entries.addedAll', { count: available.length }) };
     res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
 };
 
 exports.randomizeEntries = async (req, res) => {
     const { cid, gid, rid } = req.params;
     const round = getRoundById(rid);
-    if (!round) 
-        return renderNotFound(res, 'Round not found');
+    if (!round)
+        return renderNotFound(res, req.t('errors:notFound.round'));
 
     randomizeEntryOrder(rid);
 
-    req.session.flash = { success: `Start order randomized.` };
+    req.session.flash = { success: req.t('admin:flash.entries.randomized') };
     res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
 };
 
 exports.removeEntry = async (req, res) => {
     deleteEntryDB(req.params.eid, req.params.rid);
-    req.session.flash = { success: 'Entry removed.' };
+    req.session.flash = { success: req.t('admin:flash.entries.removed') };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 };
 
 exports.addAttempts = async (req, res) => {
     const count = createAttempts(req.params.rid, req.body.attempt_count);
-    req.session.flash = { success: `${count} attempt(s) created for all entries.` };
+    req.session.flash = { success: req.t('admin:flash.entries.attemptsCreated', { count }) };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
 };

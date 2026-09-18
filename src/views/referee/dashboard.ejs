@@ -1,8 +1,8 @@
-<%- include('../partials/header', { title: 'Scoring', activePage: 'scoring' }) %>
+<%- include('../partials/header', { title: t('referee:dashboard.pageTitle'), activePage: 'scoring' }) %>
 <div class="page-hero">
   <div class="container">
-    <h1><i class="bi bi-pencil-square me-2"></i>Scoring Dashboard</h1>
-    <p>Select an active round to enter scores</p>
+    <h1><i class="bi bi-pencil-square me-2"></i><%= t('referee:dashboard.heading') %></h1>
+    <p><%= t('referee:dashboard.subtitle') %></p>
   </div>
 </div>
 
@@ -10,8 +10,8 @@
 <% if (rounds.length === 0) { %>
 <div class="card p-5 text-center text-muted">
   <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>No active rounds right now</h5>
-  <p class="mb-0 small">Check back when the head judge activates a round.</p>
+  <h5><%= t('referee:dashboard.noRoundsTitle') %></h5>
+  <p class="mb-0 small"><%= t('referee:dashboard.noRoundsBody') %></p>
 </div>
 <% } else { %>
 <div class="row g-3">

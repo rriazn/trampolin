@@ -1,0 +1,63 @@
+{
+  "dashboard": {
+    "pageTitle": "Wettkampfleiter",
+    "heading": "Wettkampfleiterdashboard",
+    "subtitle": "Wählen Sie eine Runde zum Werten",
+    "noRoundsTitle": "Noch keine aktiven Wettkämpfe",
+    "noRoundsBody": "Kommen Sie wieder, wenn der Admin einen Wettkampf aktiviert und Sie als Wettkampfleiter zuweist.",
+    "statusInProgress": "Aktiv",
+    "statusCompleted": "Beendet",
+    "statusReady": "Bereit zu starten",
+    "statusNotStaffed": "Nicht besetzt"
+  },
+  "round": {
+    "readinessHeading": "Kampfgerichtstatus",
+    "noPanelSelected": "Es wurde noch kein Kampfgericht für diesen Wettkampf gewählt. Wählen Sie es auf der Bearbeitungsseite des Wettkampfes.",
+    "assignedCount": "{{assigned}} von {{required}} zugewiesen",
+    "startRound": "Runde starten",
+    "notReadyNote": "Das Kampfgericht ist noch nicht voll besetzt — es ist nicht möglich, die Runde zu starten, bis es voll besetzt ist.",
+    "completedHeading": "Runde beendet",
+    "completedBody": "Jeder Versuch in dieser Runde wurde bewertet.",
+    "viewLeaderboard": "Wertungsliste anzeigen",
+    "backToLastAttempt": "Zurück zum letzten Versuch",
+    "attemptNumber": "Versuch #{{number}}",
+    "partialNote": "unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben",
+    "checklistHeading": "Bewertungscheckliste",
+    "submittedCount": "{{count}} von {{required}} haben abgegeben",
+    "penaltyHeading": "Strafabzug",
+    "saved": "Gespeichert",
+    "trickCountHeading": "Elementanzahl",
+    "trickCountHelp": "Verringern Sie diesen Wert im Falle eines Übungsabbruchs. Kampfrichter sehen die verringerte Elementzahl, wenn sie ihre Seite neu laden.",
+    "numberOfTricks": "Elementanzahl",
+    "next": "Weiter",
+    "skipAthlete": "Athleten überspringen",
+    "confirmSkip": "Versuch #{{number}} von {{name}} überspringen? Dies kann nicht rückgängig gemacht werden und keine Wertung wird eingetragen.",
+    "completeRound": "Runde beenden",
+    "confirmComplete": "Runde beenden? Alle nicht bewerteten Versuche bleiben so, wie sie sind."
+  },
+  "rangeError": {
+    "max": "Wertung muss zwischen {{min}} und {{max}} sein.",
+    "min": "Wertung muss mindestens {{min}} sein."
+  },
+  "flash": {
+    "alreadyStarted": "Diese Runde wurde bereits gestartet.",
+    "notFullyStaffed": "Das Kampfgericht ist noch unvollständig. Weisen Sie zuerst alle nötigen Rollen zu.",
+    "noAttempts": "Diese Runde hat noch keine Versuche, die bewertet werden können.",
+    "started": "Runde gestartet.",
+    "notStartedYet": "Diese Runde wurde noch nicht gestartet.",
+    "alreadyAtFirst": "Sie sind bereits beim ersten Versuch.",
+    "movedBack": "Zum vorherigen Versuch zurückgekehrt.",
+    "notInProgress": "Diese Runde ist nicht aktiv.",
+    "notAllSubmitted": "Es haben noch nicht alle Kampfrichter eine Wertung für diesen Versuch abgegeben.",
+    "advanced": "Zum nächsten Versuch fortgeschritten.",
+    "completed": "Runde beendet, alle Versuche wurden bewertet.",
+    "skippedAdvanced": "Versuch übersprungen; zum nächsten Versuch fortgeschritten.",
+    "skippedCompleted": "Versuch übersprungen; Runde beendet, keine Versuche zur Bewertung mehr übrig.",
+    "notCurrentAttempt": "Dieser Versuch ist nicht der aktive Versuch dieser Runde.",
+    "noPenaltyRole": "Sie benötigen die Wettkampfleiterrolle für diesen Wettkampf, um einen Strafabzug abzugeben.",
+    "penaltySaved": "Strafabzug {{score}} gespeichert.",
+    "markedCompleted": "Runde als beendet markiert.",
+    "trickCountInvalid": "Elementanzahl muss zwischen 0 und 10 liegen.",
+    "trickCountSet": "Elementanzahl auf {{count}} gesetzt."
+  }
+}

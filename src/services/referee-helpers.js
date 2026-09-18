@@ -5,8 +5,8 @@ exports.isWithinRange = (value, assignment) => {
   return true;
 };
 
-exports.rangeErrorMessage = (assignment) => {
+exports.rangeErrorMessage = (assignment, t) => {
   return assignment.score_max !== null
-    ? `Score must be between ${assignment.score_min} and ${assignment.score_max}.`
-    : `Score must be at least ${assignment.score_min}.`;
+    ? t('referee:rangeError.max', { min: assignment.score_min, max: assignment.score_max })
+    : t('referee:rangeError.min', { min: assignment.score_min });
 };

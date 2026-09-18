@@ -10,11 +10,13 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = getUserByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-        return res.render('login', { error: 'Invalid email or password' });
+        return res.render('login', { error: req.t('login:invalidCredentials') });
     }
+    const lng = req.session.lng;
     req.session.regenerate((err) => {
         if (err) throw err;
         req.session.user = { id: user.id, name: user.name, role: user.role };
+        if (lng) req.session.lng = lng;
         const landing = { admin: '/admin', head_judge: '/head-judge' }[user.role] || '/referee';
         res.redirect(landing);
     });

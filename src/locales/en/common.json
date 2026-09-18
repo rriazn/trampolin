@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "admin": "Admin",
+    "scoring": "Scoring",
+    "headJudge": "Head Judge",
+    "logout": "Logout"
+  },
+  "footer": {
+    "versionLatest": "latest"
+  },
+  "status": {
+    "planned": "Planned",
+    "active": "Active",
+    "closed": "Closed"
+  },
+  "scoringMode": {
+    "sum": "Sum",
+    "best_attempt": "Best Attempt"
+  },
+  "roles": {
+    "admin": "Admin",
+    "referee": "Referee",
+    "head_judge": "Head Judge"
+  },
+  "judgeRoles": {
+    "execution": "Execution",
+    "difficulty": "Difficulty",
+    "time_of_flight": "Time of Flight",
+    "horizontal_displacement": "Horizontal Displacement",
+    "head_judge": "Head Judge (Penalties)"
+  },
+  "panelTemplates": {
+    "fig": {
+      "name": "FIG Panel",
+      "description": "Full FIG-style panel: 6 execution, 1 difficulty, 1 time of flight, 1 horizontal displacement, 1 head judge (penalties)."
+    },
+    "local": {
+      "name": "Local Panel",
+      "description": "Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties)."
+    },
+    "test": {
+      "name": "Test Panel",
+      "description": "Test panel for development and testing purposes."
+    }
+  },
+  "actions": {
+    "save": "Save",
+    "create": "Create",
+    "cancel": "Cancel",
+    "back": "Back",
+    "add": "Add",
+    "edit": "Edit"
+  }
+}

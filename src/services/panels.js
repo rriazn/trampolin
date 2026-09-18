@@ -18,11 +18,12 @@ exports.groupPanelSlots = (panelTemplateId) => {
   for (const slot of slots) {
     const groupKey = slot.sharedGroup || `solo_${slot.judgeRoleId}`;
     if (!groups.has(groupKey)) {
-      groups.set(groupKey, { groupKey, judgeRoleIds: [], names: [], required: slot.judgeCount, roleKey: slot.roleKey });
+      groups.set(groupKey, { groupKey, judgeRoleIds: [], names: [], roleKeys: [], required: slot.judgeCount, roleKey: slot.roleKey });
     }
     const group = groups.get(groupKey);
     group.judgeRoleIds.push(slot.judgeRoleId);
     group.names.push(slot.roleName);
+    group.roleKeys.push(slot.roleKey);
   }
   return [...groups.values()];
 };
@@ -35,15 +36,16 @@ exports.rosterReadiness = (competitionId, panelTemplateId) => {
   const groupMap = new Map();
   for (const slot of slots) {
     const key = slot.sharedGroup || `solo_${slot.judgeRoleId}`;
-    if (!groupMap.has(key)) groupMap.set(key, { roleIds: [], names: [], required: slot.judgeCount });
+    if (!groupMap.has(key)) groupMap.set(key, { roleIds: [], names: [], roleKeys: [], required: slot.judgeCount });
     const group = groupMap.get(key);
     group.roleIds.push(slot.judgeRoleId);
     group.names.push(slot.roleName);
+    group.roleKeys.push(slot.roleKey);
   }
 
   const groups = [...groupMap.values()].map(group => {
     const assignedCount = getAssignedCount(competitionId, group.roleIds);
-    return { name: group.names.join(' & '), required: group.required, assignedCount, isReady: assignedCount >= group.required };
+    return { name: group.names.join(' & '), roleKeys: group.roleKeys, required: group.required, assignedCount, isReady: assignedCount >= group.required };
   });
 
   return { isReady: groups.every(g => g.isReady), groups };
@@ -80,6 +82,7 @@ exports.getJudgesForCompetition = (competition) => {
             groupKey: group.groupKey,
             judgeRoleId: group.judgeRoleIds[0], // representative id posted back on assign
             name: group.names.join(' & '),
+            roleKeys: group.roleKeys,
             required: group.required,
             assigned,
             candidates,

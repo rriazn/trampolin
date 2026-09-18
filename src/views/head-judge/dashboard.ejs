@@ -1,8 +1,8 @@
-<%- include('../partials/header', { title: 'Head Judge', activePage: 'head-judge' }) %>
+<%- include('../partials/header', { title: t('headJudge:dashboard.pageTitle'), activePage: 'head-judge' }) %>
 <div class="page-hero">
   <div class="container">
-    <h1><i class="bi bi-flag-fill me-2"></i>Head Judge Dashboard</h1>
-    <p>Select a round to control scoring flow</p>
+    <h1><i class="bi bi-flag-fill me-2"></i><%= t('headJudge:dashboard.heading') %></h1>
+    <p><%= t('headJudge:dashboard.subtitle') %></p>
   </div>
 </div>
 
@@ -10,8 +10,8 @@
 <% if (rounds.length === 0) { %>
 <div class="card p-5 text-center text-muted">
   <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
-  <h5>No active competitions right now</h5>
-  <p class="mb-0 small">Check back when the admin activates a competition and assigns you as head judge.</p>
+  <h5><%= t('headJudge:dashboard.noRoundsTitle') %></h5>
+  <p class="mb-0 small"><%= t('headJudge:dashboard.noRoundsBody') %></p>
 </div>
 <% } else { %>
 <div class="row g-3">
@@ -28,9 +28,9 @@
             <div class="text-muted small"><%= r.competition_name %></div>
           </div>
           <span class="badge rounded-pill ms-auto <%= r.status === 'in_progress' ? 'bg-success' : r.status === 'completed' ? 'bg-secondary' : (r.isReady ? 'bg-primary' : 'bg-warning text-dark') %>">
-            <% if (r.status === 'in_progress') { %>In progress
-            <% } else if (r.status === 'completed') { %>Completed
-            <% } else { %><%= r.isReady ? 'Ready to start' : 'Not staffed' %>
+            <% if (r.status === 'in_progress') { %><%= t('headJudge:dashboard.statusInProgress') %>
+            <% } else if (r.status === 'completed') { %><%= t('headJudge:dashboard.statusCompleted') %>
+            <% } else { %><%= r.isReady ? t('headJudge:dashboard.statusReady') : t('headJudge:dashboard.statusNotStaffed') %>
             <% } %>
           </span>
         </div>

@@ -1,11 +1,18 @@
 'use strict';
 const express = require('express');
 const session = require('express-session');
+const i18next = require('i18next');
+const i18nextMiddleware = require('i18next-http-middleware');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const request = require('supertest');
 // Loaded via Node's native require, same cache as the routes
 const db = require('../../../src/db/database');
+
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'errors'];
+const loadNamespaces = (lng) => Object.fromEntries(
+  NAMESPACES.map(ns => [ns, require(`../../../src/locales/${lng}/${ns}.json`)])
+);
 
 function createApp() {
   const app = express();
@@ -22,9 +29,28 @@ function createApp() {
     cookie: { httpOnly: true, sameSite: 'lax' },
   }));
 
+  const i18nextInstance = i18next.createInstance();
+  i18nextInstance.use(i18nextMiddleware.LanguageDetector).init({
+    fallbackLng: 'en',
+    preload: ['en', 'de'],
+    ns: NAMESPACES,
+    defaultNS: 'common',
+    resources: {
+      en: loadNamespaces('en'),
+      de: loadNamespaces('de'),
+    },
+    detection: {
+      order: ['session'],
+      lookupSession: 'lng',
+      caches: ['session'],
+    },
+  });
+  app.use(i18nextMiddleware.handle(i18nextInstance));
+
   app.use((req, res, next) => {
     res.locals.currentUser = req.session.user || null;
     res.locals.flash = req.session.flash || {};
+    res.locals.currentUrl = req.originalUrl;
     delete req.session.flash;
     next();
   });
@@ -38,6 +64,7 @@ function createApp() {
   });
 
   app.use('/', require('../../../src/routes/auth'));
+  app.use('/', require('../../../src/routes/language'));
   app.use('/leaderboard', require('../../../src/routes/leaderboard'));
   app.use('/referee', require('../../../src/routes/referee'));
   app.use('/head-judge', require('../../../src/routes/head-judge'));

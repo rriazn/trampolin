@@ -1,0 +1,23 @@
+{
+  "pageTitle": "Wertungsliste – {{roundName}}",
+  "live": "Live · aktualisiert alle 10s",
+  "panelNotConfiguredTitle": "Kampfgericht nicht konfiguriert",
+  "panelNotConfiguredBody": "Dieser Wettkampf hat noch kein Kampfgericht ausgewählt.",
+  "noAthletesScored": "Noch keine Athleten bewertet",
+  "footnote": "Noch nicht alle Kampfrichter haben ihre Wertung abgegeben · Hovern Sie über eine Wertung, um Details zu sehen",
+  "table": {
+    "rank": "Platzierung",
+    "athlete": "Athlet",
+    "club": "Verein",
+    "group": "Gruppe",
+    "attempt": "Versuch {{number}}",
+    "totalScore": "Gesamtwertung",
+    "bestScore": "Bester Wert"
+  },
+  "modal": {
+    "attemptTitle": "{{name}} — Versuch {{number}}",
+    "judge": "Kampfrichter",
+    "landing": "Landung",
+    "bonus": "Bonus"
+  }
+}

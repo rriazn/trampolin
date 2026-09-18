@@ -1,0 +1,18 @@
+{
+  "notFound": {
+    "generic": "Nicht gefunden",
+    "competition": "Wettkampf nicht gefunden",
+    "group": "Gruppe nicht gefunden",
+    "round": "Runde nicht gefunden",
+    "sportsman": "Athlet nicht gefunden",
+    "assignment": "Zuweisung nicht gefunden",
+    "attempt": "Versuch nicht gefunden"
+  },
+  "pageTitle404": "Seite nicht gefunden",
+  "heading404": "Seite nicht gefunden",
+  "message404": "Die gesuchte Seite existiert nicht oder wurde an einen anderen Ort verlegt.",
+  "pageTitle500": "Irgendetwas ist schiefgelaufen",
+  "heading500": "Irgendetwas ist schiefgelaufen",
+  "message500": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "backToHome": "Zurück zur Startseite"
+}
