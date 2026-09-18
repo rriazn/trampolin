@@ -1,4 +1,4 @@
-const { createUser } = require('./users');
+const { createUser } = require('./users.service');
 const { getUserByEmail, deleteAllUsersDB } = require('./db/users.crud');
 const { getPanels, getJudgeRoles, addAssignment, deleteAllPanelAssignmentsDB } = require('./db/panels.crud');
 const { createCompetitionDB, updateCompetitionStatusDB, deleteAllCompetitionsDB } = require('./db/competitions.crud');

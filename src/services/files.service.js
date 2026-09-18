@@ -5,7 +5,7 @@ const db = require("../db/database");
 const { addSportsmanDB, getSportsmenWithGroup } = require("./db/sportsmen.crud");
 const { createOrIgnoreUserDB } = require("./db/users.crud");
 const { getGroupByCompetitionAbbreviation } = require("./db/groups.crud");
-const { normalizeRole } = require("./users");
+const { normalizeRole } = require("./users.service");
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
