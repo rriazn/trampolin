@@ -1,0 +1,44 @@
+<%- include('../partials/header', { title: t('viewer:dashboard.pageTitle'), activePage: 'viewer' }) %>
+<div class="page-hero">
+  <div class="container">
+    <h1><i class="bi bi-trophy-fill me-2"></i><%= t('viewer:dashboard.heading') %></h1>
+    <p><%= t('viewer:dashboard.subtitle') %></p>
+  </div>
+</div>
+
+<div class="container">
+<% if (rounds.length === 0) { %>
+<div class="card p-5 text-center text-muted">
+  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
+  <h5><%= t('viewer:dashboard.noRoundsTitle') %></h5>
+  <p class="mb-0 small"><%= t('viewer:dashboard.noRoundsBody') %></p>
+</div>
+<% } else { %>
+<div class="row g-3">
+  <% rounds.forEach(r => { %>
+  <div class="col-md-6 col-lg-4">
+    <a href="/leaderboard/competitions/<%= r.competition_id %>/groups/<%= r.group_id %>/rounds/<%= r.id %>" class="text-decoration-none">
+      <div class="card p-4 h-100" style="transition:.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#3a4080);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi bi-trophy-fill text-white fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-700"><%= r.group_name %> · <%= r.name %></div>
+            <div class="text-muted small"><%= r.competition_name %></div>
+          </div>
+          <span class="badge rounded-pill ms-auto <%= r.status === 'in_progress' ? 'bg-success' : r.status === 'completed' ? 'bg-secondary' : 'bg-warning text-dark' %>">
+            <% if (r.status === 'in_progress') { %><%= t('viewer:dashboard.statusInProgress') %>
+            <% } else if (r.status === 'completed') { %><%= t('viewer:dashboard.statusCompleted') %>
+            <% } else { %><%= t('viewer:dashboard.statusNotStarted') %>
+            <% } %>
+          </span>
+        </div>
+      </div>
+    </a>
+  </div>
+  <% }) %>
+</div>
+<% } %>
+</div>
+<%- include('../partials/footer') %>

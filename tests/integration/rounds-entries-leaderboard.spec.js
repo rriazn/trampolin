@@ -49,6 +49,8 @@ const refereeRoundUrlPattern = /\/referee\/competitions\/\d+\/groups\/\d+\/round
 const adminEntriesUrlPattern = /\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/;
 
 test('athlete with attempts but no scores shows as unscored on the leaderboard', async ({ page }) => {
+  // The leaderboard requires a logged-in user (admin/referee/head_judge/viewer)
+  await loginAsReferee(page);
   // The seed creates entries and attempts but no scores — all athletes appear with dash scores
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr')).toHaveCount(2);
@@ -207,6 +209,8 @@ test('referee scores both attempts for all athletes and the leaderboard shows co
     await logout(page);
   }
 
+  // log back in — the leaderboard requires a logged-in user
+  await loginAsReferee(page);
   await page.goto(`/leaderboard/competitions/${compId}/groups/${groupId}/rounds/${round1Id}`);
   const rows = page.locator('tbody tr');
   await expect(rows.nth(0)).toContainText('Leon Weber');
@@ -443,6 +447,8 @@ test('a round set to "sum" scoring mode totals all attempts on the leaderboard, 
     await logout(page);
   }
 
+  // log back in — the leaderboard requires a logged-in user
+  await loginAsReferee(page);
   await page.goto(`/leaderboard/competitions/${compId}/groups/${groupId}/rounds/${roundId}`);
   await expect(page.getByRole('columnheader', { name: 'Total Score' })).toBeVisible();
   const row = page.locator('tbody tr').filter({ hasText: 'Sam Weiss' });

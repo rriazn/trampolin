@@ -17,7 +17,7 @@ exports.login = async (req, res) => {
         if (err) throw err;
         req.session.user = { id: user.id, name: user.name, role: user.role };
         if (lng) req.session.lng = lng;
-        const landing = { admin: '/admin', head_judge: '/head-judge' }[user.role] || '/referee';
+        const landing = { admin: '/admin', head_judge: '/head-judge', referee: '/referee', viewer: '/viewer' }[user.role] || '/referee';
         res.redirect(landing);
     });
 };

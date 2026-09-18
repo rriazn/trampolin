@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const { createUserDB, updateUserPasswordDB, updateUserDB } = require("./db/users.crud");
 
-const normalizeRole = (role) => ['admin', 'head_judge'].includes(role) ? role : 'referee';
+const normalizeRole = (role) => ['admin', 'head_judge', 'viewer'].includes(role) ? role : 'referee';
 exports.normalizeRole = normalizeRole;
 
 exports.createUser = async (name, email, password, role) => {

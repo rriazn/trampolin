@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "pageTitle": "Leaderboards",
+    "heading": "Leaderboards",
+    "subtitle": "Select a round to view its leaderboard",
+    "noRoundsTitle": "No active competitions right now",
+    "noRoundsBody": "Check back once a competition is activated.",
+    "statusNotStarted": "Not Started",
+    "statusInProgress": "In Progress",
+    "statusCompleted": "Completed"
+  }
+}

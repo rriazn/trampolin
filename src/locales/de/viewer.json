@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "pageTitle": "Wertungslisten",
+    "heading": "Wertungslisten",
+    "subtitle": "Wählen Sie eine Runde, um die Wertungsliste zu sehen",
+    "noRoundsTitle": "Noch keine aktiven Wettkämpfe",
+    "noRoundsBody": "Schauen Sie später wieder vorbei, sobald ein Wettkampf aktiviert wurde.",
+    "statusNotStarted": "Nicht gestartet",
+    "statusInProgress": "Läuft",
+    "statusCompleted": "Beendet"
+  }
+}
