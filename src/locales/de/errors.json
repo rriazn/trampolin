@@ -8,6 +8,9 @@
     "assignment": "Zuweisung nicht gefunden",
     "attempt": "Versuch nicht gefunden"
   },
+  "pageTitle403": "Zugriff verweigert",
+  "heading403": "Zugriff verweigert",
+  "message403": "Sie haben keine Berechtigung, diese Seite anzuzeigen.",
   "pageTitle404": "Seite nicht gefunden",
   "heading404": "Seite nicht gefunden",
   "message404": "Die gesuchte Seite existiert nicht oder wurde an einen anderen Ort verlegt.",

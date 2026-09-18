@@ -5,7 +5,7 @@ function mockRes() {
   const res = {};
   res.redirect = vi.fn().mockReturnValue(res);
   res.status = vi.fn().mockReturnValue(res);
-  res.send = vi.fn().mockReturnValue(res);
+  res.render = vi.fn().mockReturnValue(res);
   return res;
 }
 
@@ -36,7 +36,7 @@ describe('requireAdmin', () => {
     const next = vi.fn();
     requireAdmin(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.send).toHaveBeenCalledWith('Forbidden');
+    expect(res.render).toHaveBeenCalledWith('errors/403');
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -66,7 +66,7 @@ describe('requireReferee', () => {
     const next = vi.fn();
     requireReferee(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.send).toHaveBeenCalledWith('Forbidden');
+    expect(res.render).toHaveBeenCalledWith('errors/403');
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -105,7 +105,7 @@ describe('requireHeadJudge', () => {
     const next = vi.fn();
     requireHeadJudge(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.send).toHaveBeenCalledWith('Forbidden');
+    expect(res.render).toHaveBeenCalledWith('errors/403');
     expect(next).not.toHaveBeenCalled();
   });
 

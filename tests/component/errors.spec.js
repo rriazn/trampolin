@@ -8,6 +8,14 @@ test('unknown route shows the 404 page', async ({ page }) => {
   await expect(page.getByRole('link', { name: /back to home/i })).toBeVisible();
 });
 
+test('accessing a protected route while logged out shows the 403 page', async ({ page }) => {
+  const response = await page.goto('/admin');
+  expect(response.status()).toBe(403);
+  await expect(page.getByText('403')).toBeVisible();
+  await expect(page.getByText('Access Denied')).toBeVisible();
+  await expect(page.getByRole('link', { name: /back to home/i })).toBeVisible();
+});
+
 test('an unhandled server error shows the 500 page', async ({ page }) => {
   const response = await page.goto('/test/throw');
   expect(response.status()).toBe(500);
