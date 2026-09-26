@@ -114,4 +114,8 @@ async function seed() {
   console.log(`Created ${spCount} athlete(s)`);
 }
 
-seed().catch(console.error);
+module.exports = seed;
+
+if (require.main === module) {
+  seed().catch(console.error);
+}
