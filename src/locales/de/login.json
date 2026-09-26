@@ -6,5 +6,6 @@
   "password": "Passwort",
   "passwordPlaceholder": "••••••••",
   "signIn": "Einloggen",
-  "invalidCredentials": "Ungültige E-Mail/Passwort"
+  "invalidCredentials": "Ungültige E-Mail/Passwort",
+  "sessionExpired": "Ihre Sitzung ist abgelaufen, bitte melden Sie sich erneut an"
 }

@@ -41,8 +41,12 @@ exports.updateUserDB = (id, name, email, role) => {
 };
 
 exports.updateUserPasswordDB = (id, name, email, passwordHash, role) => {
-    db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=? WHERE id=?')
+    db.prepare('UPDATE users SET name=?,email=?,password_hash=?,role=?,token_version=token_version+1 WHERE id=?')
             .run(name, email, passwordHash, role, id);
+};
+
+exports.getUserTokenVersion = (id) => {
+    return db.prepare('SELECT token_version FROM users WHERE id=?').get(id)?.token_version;
 };
 
 exports.deleteUserDB = (id) => {

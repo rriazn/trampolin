@@ -4,7 +4,7 @@ const { getGroupsByCompetition, getGroupsRoundCount, addGroupDB, deleteGroupDB, 
 const { getPanels, getAssignedCount, addAssignment, getAssignmentById, checkAlreadyAssigned } = require("../services/db/panels.crud");
 const { getJudgesForCompetition, resolveAssignmentGroup, removeJudgeFromRole } = require("../services/panels.service");
 const { getSportsmenByCompetition, addSportsmanDB, getSportsmenById, updateSportsmanDB, deleteSportsmanDB, getAvailableSportsmen } = require("../services/db/sportsmen.crud");
-const { deleteUserDB, getUsers, getUserById } = require("../services/db/users.crud");
+const { deleteUserDB, getUsers, getUserById, getUserTokenVersion } = require("../services/db/users.crud");
 const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx } = require("../services/files.service");
 const { createUser, updateUser } = require("../services/users.service");
 const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries.service");
@@ -82,6 +82,10 @@ exports.updateUser = async (req, res) => {
         return res.status(422).render('admin/user-form', {
         user, action, error: req.t('admin:userForm.errors.emailInUse'),
         });
+    }
+    // password change bumps token_version and would otherwise log out the session making it
+    if (password && req.session.user && req.session.user.id === Number(req.params.id)) {
+        req.session.tokenVersion = getUserTokenVersion(req.params.id);
     }
     req.session.flash = { success: req.t('admin:flash.users.updated') };
     res.redirect('/admin/users');

@@ -20,6 +20,12 @@ describe('GET /login', () => {
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe('/');
   });
+
+  it('shows a session-expired message when redirected with reason=expired', async () => {
+    const res = await request(app).get('/login?reason=expired');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Your session has expired');
+  });
 });
 
 describe('POST /login', () => {

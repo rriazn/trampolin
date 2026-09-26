@@ -270,7 +270,8 @@ describe('POST /admin/users/:id/delete', () => {
             password: 'password123',
             role: 'referee'
         });
-        const res = await agent.post('/admin/users/1/delete');
+        const userId = db.prepare('SELECT id FROM users WHERE email=?').get('delete@example.com').id;
+        const res = await agent.post(`/admin/users/${userId}/delete`);
         expect(res.status).toBe(302);
         expect(res.headers.location).toBe('/admin/users');
     });

@@ -60,4 +60,27 @@ describe('updateUser', () => {
     expect(after.name).toBe('Kept Renamed');
     expect(after.password_hash).toBe(before.password_hash);
   });
+
+  it('bumps token_version when the password changes', async () => {
+    const email = `tokver${nextSeq()}@test.com`;
+    await createUser('Ver', email, 'first-pw', 'referee');
+    const before = db.prepare('SELECT * FROM users WHERE email=?').get(email);
+    expect(before.token_version).toBe(0);
+
+    await updateUser(before.id, 'Ver', email, 'second-pw', 'referee');
+
+    const after = db.prepare('SELECT token_version FROM users WHERE id=?').get(before.id);
+    expect(after.token_version).toBe(1);
+  });
+
+  it('does not bump token_version when the password is unchanged', async () => {
+    const email = `tokversame${nextSeq()}@test.com`;
+    await createUser('Ver2', email, 'first-pw', 'referee');
+    const before = db.prepare('SELECT * FROM users WHERE email=?').get(email);
+
+    await updateUser(before.id, 'Ver2 Renamed', email, '', 'referee');
+
+    const after = db.prepare('SELECT token_version FROM users WHERE id=?').get(before.id);
+    expect(after.token_version).toBe(0);
+  });
 });

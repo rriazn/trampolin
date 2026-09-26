@@ -6,5 +6,6 @@
   "password": "Password",
   "passwordPlaceholder": "••••••••",
   "signIn": "Sign In",
-  "invalidCredentials": "Invalid email or password"
+  "invalidCredentials": "Invalid email or password",
+  "sessionExpired": "Your session has expired, please sign in again"
 }

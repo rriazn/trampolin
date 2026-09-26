@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { createUser } = require('./services/users');
+const { createUser } = require('./services/users.service');
 const { getFirstAdminUser, getUserByEmail, createOrIgnoreUserDB } = require('./services/db/users.crud');
 const { getPanels, getJudgeRoles, addAssignmentIgnoreDB } = require('./services/db/panels.crud');
 const {

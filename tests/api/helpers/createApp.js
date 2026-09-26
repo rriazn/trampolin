@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const request = require('supertest');
 // Loaded via Node's native require, same cache as the routes
 const db = require('../../../src/db/database');
+const { checkSessionValidity } = require('../../../src/middleware/auth');
 
 const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
 const loadNamespaces = (lng) => Object.fromEntries(
@@ -26,8 +27,10 @@ function createApp() {
     secret: 'test-secret',
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: { httpOnly: true, sameSite: 'lax' },
   }));
+  app.use(checkSessionValidity);
 
   const i18nextInstance = i18next.createInstance();
   i18nextInstance.use(i18nextMiddleware.LanguageDetector).init({

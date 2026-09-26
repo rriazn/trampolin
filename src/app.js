@@ -5,6 +5,8 @@ const i18nextMiddleware = require('i18next-http-middleware');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
 const { getAppVersion } = require('./services/version.service');
+const { getSessionIdleTimeoutMs } = require('./services/session.service');
+const { checkSessionValidity } = require('./middleware/auth');
 require('./db/database');
 
 const app = express();
@@ -21,8 +23,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-change-in-prod',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax' }
+  rolling: true,
+  cookie: { httpOnly: true, sameSite: 'lax', maxAge: getSessionIdleTimeoutMs() }
 }));
+app.use(checkSessionValidity);
 
 const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
 const loadNamespaces = (lng) => Object.fromEntries(

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { requireAuth, requireAdmin, requireReferee, requireHeadJudge } from '../../../src/middleware/auth.js';
+import { requireAuth, requireAdmin, requireReferee, requireHeadJudge, checkSessionValidity, APP_EPOCH } from '../../../src/middleware/auth.js';
+import { makeUser, db } from '../services/testHelpers.js';
 
 function mockRes() {
   const res = {};
@@ -134,5 +135,50 @@ describe('requireHeadJudge', () => {
     requireHeadJudge(req, res, next);
     expect(next).toHaveBeenCalled();
     expect(res.status).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkSessionValidity', () => {
+  it('calls next when there is no session user', () => {
+    const req = { session: {} };
+    const res = mockRes();
+    const next = vi.fn();
+    checkSessionValidity(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('calls next when the epoch and token version both match', () => {
+    const user = makeUser();
+    const req = { session: { user: { id: user.id }, epoch: APP_EPOCH, tokenVersion: 0 } };
+    const res = mockRes();
+    const next = vi.fn();
+    checkSessionValidity(req, res, next);
+    expect(next).toHaveBeenCalled();
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
+  it('destroys the session and redirects to the expired login page when the epoch is stale', () => {
+    const user = makeUser();
+    const destroy = vi.fn((cb) => cb());
+    const req = { session: { user: { id: user.id }, epoch: 'stale-epoch', tokenVersion: 0, destroy } };
+    const res = mockRes();
+    const next = vi.fn();
+    checkSessionValidity(req, res, next);
+    expect(destroy).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith('/login?reason=expired');
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('destroys the session and redirects to the expired login page when the token version is stale', () => {
+    const user = makeUser();
+    db.prepare('UPDATE users SET token_version = 1 WHERE id = ?').run(user.id);
+    const destroy = vi.fn((cb) => cb());
+    const req = { session: { user: { id: user.id }, epoch: APP_EPOCH, tokenVersion: 0, destroy } };
+    const res = mockRes();
+    const next = vi.fn();
+    checkSessionValidity(req, res, next);
+    expect(destroy).toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith('/login?reason=expired');
+    expect(next).not.toHaveBeenCalled();
   });
 });
