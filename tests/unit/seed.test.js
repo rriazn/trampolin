@@ -14,13 +14,13 @@ describe('seed', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM sportsmen').get().n).toBe(10);
   });
 
-  // sportsmen aren't deduplicated on re-seed (separate pre-existing gap), so not asserted here
-  it('running it again does not throw, and does not duplicate users/competitions/groups', async () => {
+  it('is idempotent: running it again does not throw or duplicate fixtures', async () => {
     await seed();
     await seed();
 
     expect(db.prepare('SELECT COUNT(*) AS n FROM competitions WHERE name=?').get('Spring Championship').n).toBe(1);
     expect(db.prepare("SELECT COUNT(*) AS n FROM users WHERE role='referee'").get().n).toBe(8);
     expect(db.prepare('SELECT COUNT(*) AS n FROM groups').get().n).toBe(4);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM sportsmen').get().n).toBe(10);
   });
 });

@@ -6,7 +6,7 @@ const {
   getCompetitionByName, createCompetitionDB, updateCompetitionStatusDB, setPanelTemplateIfUnset,
 } = require('./services/db/competitions.crud');
 const { addGroupIgnoreDB } = require('./services/db/groups.crud');
-const { addSportsmanDB } = require('./services/db/sportsmen.crud');
+const { addSportsmanDB, getSportsmanByNameAndCompetition } = require('./services/db/sportsmen.crud');
 
 // 6 execution + 1 difficulty + 1 time_of_flight/horizontal_displacement (shared machine, one
 // person) = 8 distinct referees. A judge may only hold one role per competition.
@@ -108,8 +108,9 @@ async function seed() {
 
   let spCount = 0;
   for (const s of SPORTSMEN) {
-    const info = addSportsmanDB(s.name, s.club, s.gender, s.birth_year, null, comp.id, groupMap[s.group]);
-    if (info.changes) spCount++;
+    if (getSportsmanByNameAndCompetition(s.name, comp.id)) continue;
+    addSportsmanDB(s.name, s.club, s.gender, s.birth_year, null, comp.id, groupMap[s.group]);
+    spCount++;
   }
   console.log(`Created ${spCount} athlete(s)`);
 }

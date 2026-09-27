@@ -41,6 +41,10 @@ exports.getAvailableSportsmen = (competitionId, groupId, roundId) => {
     `).all(competitionId, groupId, roundId);
 }
 
+exports.getSportsmanByNameAndCompetition = (name, competitionId) => {
+    return db.prepare('SELECT id FROM sportsmen WHERE name=? AND competition_id=?').get(name, competitionId);
+};
+
 exports.addSportsmanDB = (name, club, gender, birth_year, routine, competitionId, groupId) => {
     return db.prepare('INSERT INTO sportsmen (name,club,gender,birth_year,routine,competition_id,group_id) VALUES (?,?,?,?,?,?,?)')
         .run(name.trim(), club || null, gender || null, birth_year ? parseInt(birth_year) : null, routine || null, competitionId, groupId || null);
