@@ -315,6 +315,41 @@ describe('computeAttemptScore', () => {
     });
   });
 
+  describe('perJudge (each assignment\'s personal, uncombined value)', () => {
+    it('computes each judge\'s personal value for a per_trick (default aggregation) element role', () => {
+      const elementScoresByAssignment = new Map([
+        [2, new Map([
+          [201, new Map([[1, 1.0], [2, 1.5]])], // difficulty judge: 1.0 + 1.5 = 2.5
+        ])],
+      ]);
+      const elementScoresByJudgeRoleId = new Map([[2, new Map([[1, [1.0]], [2, [1.5]]])]]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: 2.5, submittedCount: 2, isComplete: true }]);
+    });
+
+    it('subtracts the missing-skill deduction (element 12) from a judge\'s personal value', () => {
+      const elementScoresByAssignment = new Map([
+        [2, new Map([[201, new Map([[1, 1.0], [12, 2.0]])]])],
+      ]);
+      const elementScoresByJudgeRoleId = new Map([[2, new Map([[1, [1.0]]])]]);
+      const scoresByJudgeRoleId = new Map([[3, [0]], [4, [0]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: -1.0, submittedCount: 2, isComplete: true }]);
+    });
+
+    it('lists a null value and isComplete false for a judge who has not submitted anything', () => {
+      const elementScoresByAssignment = new Map([[2, new Map([[201, new Map()]])]]);
+      const result = computeAttemptScore(FIG_SLOTS, new Map(), new Map(), 2, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: null, submittedCount: 0, isComplete: false }]);
+    });
+  });
+
   describe('per_judge aggregation (local panel execution)', () => {
     const PER_JUDGE_SLOT = {
       judgeRoleId: 1, judgeRoleKey: 'execution', judgeRoleName: 'Execution', granularity: 'element',
@@ -342,6 +377,8 @@ describe('computeAttemptScore', () => {
       const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
       expect(executionBreakdown.value).toBeCloseTo(13.5);
       expect(executionBreakdown.isComplete).toBe(true);
+      expect(executionBreakdown.perJudge.map(pj => pj.value)).toEqual([6.9, 6.7, 6.8, 6.5]);
+      expect(executionBreakdown.perJudge.every(pj => pj.isComplete)).toBe(true);
     });
 
     it('is not complete until judgeCount judges have each submitted every element', () => {

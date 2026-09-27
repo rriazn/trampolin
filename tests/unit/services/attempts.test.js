@@ -7,6 +7,8 @@ const {
   loadAttemptScoreMaps, loadJudgeSubmissionStatus, recomputeAttemptCompletion,
   createAttempts, getPreviousAttemptIndex,
 } = require('../../../src/services/attempts.service.js');
+const { loadPanelSlots } = require('../../../src/services/panels.service.js');
+const { computeAttemptScore } = require('../../../src/services/scoring.service.js');
 
 function setupAttempt(panelKey = 'test', elementCount = 1) {
   const comp = makeCompetition({ panelKey });
@@ -17,6 +19,14 @@ function setupAttempt(panelKey = 'test', elementCount = 1) {
   const attempt = makeAttempt(entry.id, 1, elementCount);
   const roleIds = getJudgeRoleIds();
   return { comp, round, attempt, roleIds };
+}
+
+// loadJudgeSubmissionStatus takes an already-computed breakdown (as rounds.service.js already
+// has one in hand from computeAttemptScore) rather than re-querying element_scores itself
+function buildBreakdown(comp, attemptId, elementCount) {
+  const panelSlots = loadPanelSlots(comp.panelTemplateId);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attemptId);
+  return computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment).breakdown;
 }
 
 describe('loadAttemptScoreMaps', () => {
@@ -64,7 +74,8 @@ describe('loadJudgeSubmissionStatus', () => {
     addScore(attempt.id, hjAssignment, roleIds.head_judge, 0);
     // difficulty judge hasn't submitted anything
 
-    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, 1);
+    const breakdown = buildBreakdown(comp, attempt.id, 1);
+    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, breakdown);
     const execStatus = status.find(s => s.name === 'Execution');
     expect(execStatus.judges[0]).toMatchObject({ name: 'Exec Judge', isDone: true, submittedCount: 1 });
 
@@ -81,7 +92,8 @@ describe('loadJudgeSubmissionStatus', () => {
     addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 1, 0); // trick 1: worth 0
     addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 12, 2); // missing-skill penalty
 
-    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, 1);
+    const breakdown = buildBreakdown(comp, attempt.id, 1);
+    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, breakdown);
     const diffStatus = status.find(s => s.name === 'Difficulty');
     expect(diffStatus.judges[0].value).toBe(-2);
   });

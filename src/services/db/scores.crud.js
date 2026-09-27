@@ -30,18 +30,6 @@ exports.getScoreForAttemptAndAssignment = (attemptId, assignmentId) => {
         ).get(attemptId, assignmentId);
 }; 
 
-exports.getElementScoresForAttemptWithinElementCount = (attemptId, elementCount) => {
-    return db.prepare('SELECT panel_assignment_id, element_number, value FROM element_scores WHERE attempt_id=? AND element_number<=? ORDER BY element_number').all(attemptId, elementCount);
-};
-
-exports.getElementScoresLandingBonus = (attemptId) => {
-    return db.prepare('SELECT panel_assignment_id, value FROM element_scores WHERE attempt_id=? AND element_number=11').all(attemptId);
-};
-
-exports.getElementScoresMissingSkill = (attemptId) => {
-    return db.prepare('SELECT panel_assignment_id, value FROM element_scores WHERE attempt_id=? AND element_number=12').all(attemptId);
-};
-
 exports.getAttemptElementCount = (attemptId) => {
     return db.prepare('SELECT element_count FROM attempts WHERE id=?').get(attemptId);
 };

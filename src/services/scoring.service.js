@@ -85,22 +85,34 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         }
       }
 
+      // Each assignment's own personal, uncombined value — the same shape a solo judge's
+      // contribution would take, before any cross-judge drop/combine happens. Used both by
+      // per_judge aggregation below and exposed for consumers like the head judge's checklist.
+      const byAssignment = (elementScoresByAssignment.get(slot.judgeRoleId)) || new Map();
+      const requiredCount = elementCount + (slot.isDeduction && elementCount === 10 ? 1 : 0);
+      const perJudge = [...byAssignment.entries()].map(([assignmentId, elementsMap]) => {
+        let personalTricksTotal = 0;
+        let tricksSubmitted = 0;
+        for (let n = 1; n <= elementCount; n++) {
+          if (elementsMap.has(n)) { personalTricksTotal += elementsMap.get(n); tricksSubmitted++; }
+        }
+        const extraValue = (hasExtra && elementsMap.has(11)) ? elementsMap.get(11) : undefined;
+        const missingSkillValue = (!slot.isDeduction && elementsMap.has(12)) ? elementsMap.get(12) : undefined;
+        const submitted = tricksSubmitted + (extraValue !== undefined ? 1 : 0) + (missingSkillValue !== undefined ? 1 : 0);
+        let value = null;
+        if (tricksSubmitted > 0) {
+          const personalTotal = personalTricksTotal + (extraValue ?? 0) - (missingSkillValue ?? 0);
+          value = slot.isDeduction ? elementCount - personalTotal : personalTotal;
+        }
+        return { assignmentId, value, submittedCount: submitted, isComplete: submitted >= requiredCount };
+      });
+
       let roleValue, roleComplete;
       if (slot.aggregation === 'per_judge') {
-        // Each judge sums their own deductions across the routine first, then those per-judge
-        // final scores are dropped/combined the same way combineScores handles any other list
-        const byAssignment = (elementScoresByAssignment.get(slot.judgeRoleId)) || new Map();
-        const perJudgeScores = [];
-        let fullyDoneCount = 0;
-        const requiredElements = elementCount + (hasExtra ? 1 : 0);
-        for (const elementsMap of byAssignment.values()) {
-          if (elementsMap.size === 0) continue;
-          let personalTotal = 0;
-          for (let n = 1; n <= elementCount; n++) personalTotal += elementsMap.get(n) ?? 0;
-          if (hasExtra) personalTotal += elementsMap.get(11) ?? 0;
-          perJudgeScores.push(slot.isDeduction ? elementCount - personalTotal : personalTotal);
-          if (elementsMap.size >= requiredElements) fullyDoneCount++;
-        }
+        // Those per-judge personal totals are dropped/combined the same way combineScores
+        // handles any other list
+        const perJudgeScores = perJudge.filter(pj => pj.value !== null).map(pj => pj.value);
+        const fullyDoneCount = perJudge.filter(pj => pj.isComplete).length;
         roleValue = exports.combineScores({ scores: perJudgeScores, dropHigh, dropLow, combine, multiplier: 1 }) ?? 0;
         roleComplete = fullyDoneCount >= slot.judgeCount;
       } else {
@@ -119,6 +131,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         required: slot.judgeCount,
         isComplete: roleComplete,
         perTrick,
+        perJudge,
       });
     } else if (elementCount === 0 && slot.judgeRoleKey !== 'head_judge') {
       // No skills were performed
