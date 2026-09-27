@@ -240,6 +240,57 @@ test('per_judge execution aggregation on a Local Panel competition combines each
   await expect(page.locator('tbody tr').first()).toContainText('1.700');
 });
 
+// Cross-checks a single judge's own submission (not just the round/leaderboard total) against
+// what the head judge's round overview displays next to that judge's name — the exact spot a
+// past bug hid in: the checklist used to compute each judge's personal value from a separate,
+// duplicated calculation that didn't know about a newly-added score component.
+test('a referee\'s submitted score, including a missing-skill deduction, matches what the head judge sees for that judge', async ({ page }) => {
+  await loginAsAdmin(page);
+  // Starting a round requires the full Local Panel roster staffed (4 execution + difficulty +
+  // head judge), even though only the difficulty judge's value is under test here.
+  await createUser(page, 'Cross Exec1', 'crossexec1@example.com', 'referee');
+  await createUser(page, 'Cross Exec2', 'crossexec2@example.com', 'referee');
+  await createUser(page, 'Cross Exec3', 'crossexec3@example.com', 'referee');
+  await createUser(page, 'Cross Exec4', 'crossexec4@example.com', 'referee');
+
+  const { compId, groupId, roundId } = await seedSingleAttemptCompetition(page, {
+    competitionName: 'Cross-check Cup',
+    panelLabel: 'Local Panel',
+  });
+  await assignJudge(page, compId, 'Execution', 'Cross Exec1 · crossexec1@example.com');
+  await assignJudge(page, compId, 'Execution', 'Cross Exec2 · crossexec2@example.com');
+  await assignJudge(page, compId, 'Execution', 'Cross Exec3 · crossexec3@example.com');
+  await assignJudge(page, compId, 'Execution', 'Cross Exec4 · crossexec4@example.com');
+  await assignJudge(page, compId, 'Difficulty', 'Maria Schmidt · maria@example.com');
+  await assignJudge(page, compId, 'Head Judge (Penalties)', 'Petra Voss · petra@example.com');
+  await logout(page);
+
+  const hjUrl = `/head-judge/competitions/${compId}/groups/${groupId}/rounds/${roundId}`;
+  const refUrl = `/referee/competitions/${compId}/groups/${groupId}/rounds/${roundId}`;
+
+  await loginAsHeadJudge(page);
+  await page.goto(hjUrl);
+  await page.getByRole('button', { name: /Start Round/ }).click();
+  const trickCountCard = page.locator('.card').filter({ hasText: 'Trick count' });
+  await trickCountCard.locator('input[name=element_count]').fill('1');
+  await trickCountCard.getByRole('button', { name: /Save/ }).click();
+  await logout(page);
+
+  // Maria (difficulty) submits a trick worth 1.0 ("10" x10-scaled) plus the 2.0-point
+  // missing-compulsory-skill penalty -> her own personal value should be 1.0 - 2.0 = -1.0
+  await loginAsReferee(page);
+  await page.goto(refUrl);
+  await page.locator('input[name=element_1]').fill('10');
+  await page.locator('input[type=radio][name=element_12][value="2"]').check();
+  await page.getByRole('button', { name: /Save/ }).click();
+  await logout(page);
+
+  await loginAsHeadJudge(page);
+  await page.goto(hjUrl);
+  const diffJudgeCard = page.locator('.p-2.rounded').filter({ hasText: 'Maria Schmidt' });
+  await expect(diffJudgeCard).toContainText('-1.00');
+});
+
 // The head judge can lower the trick count mid-round (e.g. the routine was interrupted). At
 // element_count=0, attempt-granularity roles (time_of_flight, horizontal_displacement) show a
 // "does not apply" message and auto-complete with a 0 contribution — so the round can advance
