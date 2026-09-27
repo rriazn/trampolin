@@ -260,6 +260,28 @@ describe('POST .../next', () => {
   });
 });
 
+describe('GET .../rounds/:id (per-judge value display)', () => {
+  let data, staff, agent;
+
+  beforeAll(async () => {
+    data = seedLocalPanelRound();
+    staff = staffLocalPanel(data.competitionId, data.roleIds);
+    agent = await loginAs(staff.headJudge);
+    await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/start`).type('form').send({});
+  });
+
+  it('shows a difficulty judge\'s missing-skill deduction in their own displayed value, not just the attempt total', async () => {
+    db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,1,0)')
+      .run(data.attempt1Id, staff.diffAssignmentId, data.roleIds.difficulty);
+    db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,12,2)')
+      .run(data.attempt1Id, staff.diffAssignmentId, data.roleIds.difficulty);
+
+    const res = await agent.get(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('-2.00');
+  });
+});
+
 describe('POST .../back', () => {
   let data, staff, agent;
 

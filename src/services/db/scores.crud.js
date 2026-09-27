@@ -38,6 +38,10 @@ exports.getElementScoresLandingBonus = (attemptId) => {
     return db.prepare('SELECT panel_assignment_id, value FROM element_scores WHERE attempt_id=? AND element_number=11').all(attemptId);
 };
 
+exports.getElementScoresMissingSkill = (attemptId) => {
+    return db.prepare('SELECT panel_assignment_id, value FROM element_scores WHERE attempt_id=? AND element_number=12').all(attemptId);
+};
+
 exports.getAttemptElementCount = (attemptId) => {
     return db.prepare('SELECT element_count FROM attempts WHERE id=?').get(attemptId);
 };

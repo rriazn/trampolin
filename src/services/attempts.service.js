@@ -1,7 +1,7 @@
 const { getAssignmentForCompetition } = require("./db/panels.crud");
 const {
   getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getElementScoresForAttemptWithinElementCount,
-  getElementScoresLandingBonus, getAttemptElementCount,
+  getElementScoresLandingBonus, getElementScoresMissingSkill, getAttemptElementCount,
 } = require("./db/scores.crud");
 const { getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB } = require("./db/entries.crud");
 const { loadPanelSlots } = require("./panels.service");
@@ -53,6 +53,12 @@ exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, 
   for (const row of landingBonusElement) {
     extraByAssignment.set(row.panel_assignment_id, row.value);
   }
+  // 12th line: missing compulsory skill deduction (difficulty only)
+  const missingSkillElement = getElementScoresMissingSkill(attemptId);
+  const missingSkillByAssignment = new Map();
+  for (const row of missingSkillElement) {
+    missingSkillByAssignment.set(row.panel_assignment_id, row.value);
+  }
 
   const byRole = new Map();
   for (const a of assignments) {
@@ -61,15 +67,16 @@ exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, 
     const landingApplies = a.granularity === 'element' && a.isDeduction && elementCount === 10;
     const bonusApplies = a.granularity === 'element' && !a.isDeduction;
     const extraValue = (landingApplies || bonusApplies) ? extraByAssignment.get(a.assignment_id) : undefined;
+    const missingSkillValue = bonusApplies ? missingSkillByAssignment.get(a.assignment_id) : undefined;
     const score = scoresByAssignment.has(a.assignment_id) ? scoresByAssignment.get(a.assignment_id) : null;
     const submittedCount = a.granularity === 'element'
-      ? elements.length + (extraValue !== undefined ? 1 : 0)
+      ? elements.length + (extraValue !== undefined ? 1 : 0) + (missingSkillValue !== undefined ? 1 : 0)
       : (score !== null ? 1 : 0);
     const requiredCount = a.granularity === 'element' ? elementCount + (landingApplies ? 1 : 0) : 1;
     const isDone = a.granularity === 'element' ? submittedCount >= requiredCount : submittedCount >= 1;
     let value = score;
     if (a.granularity === 'element' && elements.length > 0) {
-      const sum = elements.reduce((acc, el) => acc + el.value, 0) + (extraValue !== undefined ? extraValue : 0);
+      const sum = elements.reduce((acc, el) => acc + el.value, 0) + (extraValue !== undefined ? extraValue : 0) - (missingSkillValue !== undefined ? missingSkillValue : 0);
       value = a.isDeduction ? elementCount - sum : sum;
     }
     byRole.get(a.role_key).judges.push({ name: a.judge_name, submittedCount, isDone, value });

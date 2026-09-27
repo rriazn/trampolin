@@ -74,6 +74,17 @@ describe('loadJudgeSubmissionStatus', () => {
     const hjStatus = status.find(s => s.name.includes('Head Judge'));
     expect(hjStatus.judges[0]).toMatchObject({ name: 'HJ', isDone: true, submittedCount: 1, value: 0 });
   });
+
+  it('includes the missing-skill deduction (element 12) in a difficulty judge\'s displayed value', () => {
+    const { comp, attempt, roleIds } = setupAttempt('test', 1);
+    const diffAssignment = assignJudge(comp.id, roleIds.difficulty, makeUser('referee', 'Diff Judge').id);
+    addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 1, 0); // trick 1: worth 0
+    addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 12, 2); // missing-skill penalty
+
+    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, 1);
+    const diffStatus = status.find(s => s.name === 'Difficulty');
+    expect(diffStatus.judges[0].value).toBe(-2);
+  });
 });
 
 describe('recomputeAttemptCompletion', () => {
