@@ -23,8 +23,7 @@ describe('orderAvailableByPreviousRound', () => {
 
     const leon = makeSportsman(comp.id, group.id, 'Leon');
     const emma = makeSportsman(comp.id, group.id, 'Emma');
-    // head_judge is a penalty (multiplier -1): a raw score of 3 contributes -3 to the total, a
-    // raw score of 1 contributes -1 — so Emma's smaller penalty gives her the higher total
+    // head_judge is a penalty (multiplier -1), so Emma's smaller raw score gives her the higher total
     scoreSportsmanInRound(comp, prevRound, roleIds, hjAssignment, leon, 3);
     scoreSportsmanInRound(comp, prevRound, roleIds, hjAssignment, emma, 1);
 
@@ -92,8 +91,7 @@ describe('orderAvailableByPreviousRound', () => {
 
       const consistent = makeSportsman(comp.id, group.id, 'Consistent');
       const spiky = makeSportsman(comp.id, group.id, 'Spiky');
-      // head_judge is a penalty: contribution -2,-2 (sum -4) for Consistent vs -1,-5 (sum -6) for Spiky,
-      // even though Spiky's best single attempt (-1) beats Consistent's best (-2)
+      // head_judge is a penalty, so Spiky's better best attempt (-1 vs -2) still loses on sum (-6 vs -4)
       const consistentEntry = makeEntry(prevRound.id, consistent.id, 1);
       [2, 2].forEach((score, i) => {
         const attempt = makeAttempt(consistentEntry.id, i + 1, 1);
@@ -113,8 +111,7 @@ describe('orderAvailableByPreviousRound', () => {
       expect(ranked[1].prevRank).toBe(2);
     });
 
-    // Regression: Array.prototype.reduce(fn, 0) on an empty attempts array used to return 0
-    // instead of null, so an athlete unscored in the previous round ranked as if they'd scored 0.
+    // regression: reduce(fn, 0) on an empty attempts array returned 0 instead of null, ranking an unscored athlete as if they'd scored 0
     it('gives an athlete unscored in the previous round a null rank, not a 0 total', () => {
       const comp = makeCompetition({ panelKey: 'test' });
       const group = makeGroup(comp.id);

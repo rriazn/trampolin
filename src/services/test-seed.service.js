@@ -8,10 +8,7 @@ const { addSportsmanDB, deleteAllSportsmenDB } = require('./db/sportsmen.crud');
 const { addEntryDB, addAttemptDB, deleteAllEntriesDB, deleteAllAttemptsDB } = require('./db/entries.crud');
 const { deleteAllScoresDB, deleteAllElementScoresDB } = require('./db/scores.crud');
 
-// Resets all tables and creates a fixed, small fixture for integration tests: one fig-panel
-// competition, one group, one round (started, on the first attempt), two athletes with two
-// attempts each, and just enough of the judge panel staffed to reach the turn-based scoring UI
-// without needing head-judge.js to fully staff/start the round.
+// resets all tables and creates a fixed, small fixture for integration tests, staffed just enough to reach the turn-based scoring UI without going through head-judge.js
 exports.seedTestData = async () => {
   // wipe children before parents, matching the FK dependency order
   deleteAllElementScoresDB();
@@ -30,8 +27,7 @@ exports.seedTestData = async () => {
   await createUser('Maria Schmidt', 'maria@example.com', 'referee123', 'referee');
   const maria = getUserByEmail('maria@example.com');
 
-  // Petra holds the head_judge panel role too (same identity, two capabilities per the plan), so
-  // head-judge.js's own integration tests can exercise Start/Next/Complete without a full roster.
+  // Petra also holds the head_judge panel role so head-judge.js's tests can exercise Start/Next/Complete without a full roster
   await createUser('Petra Voss', 'petra@example.com', 'headjudge123', 'head_judge');
   const petra = getUserByEmail('petra@example.com');
 
@@ -53,17 +49,14 @@ exports.seedTestData = async () => {
   const attempt3Id = addAttemptDB(e2Id, 1).lastInsertRowid;
   const attempt4Id = addAttemptDB(e2Id, 2).lastInsertRowid;
 
-  // Maria judges time_of_flight (a simple single attempt-level mark, no per-trick inputs) so the
-  // turn-based scoring UI is directly reachable in integration tests without needing head-judge.js
-  // to staff/start rounds through its own UI.
+  // Maria judges time_of_flight so the turn-based scoring UI is reachable without staffing/starting the round through head-judge.js
   const judgeRoles = getJudgeRoles();
   const timeOfFlightRoleId = judgeRoles.find(r => r.key === 'time_of_flight').id;
   const headJudgeRoleId = judgeRoles.find(r => r.key === 'head_judge').id;
   addAssignment(competitionId, maria.id, [timeOfFlightRoleId]);
   addAssignment(competitionId, petra.id, [headJudgeRoleId]);
 
-  // Round starts on Leon's first attempt, matching the old fixture's implicit "ready to score"
-  // state. Advancing turns (Next) is head-judge.js's job and isn't exercised by this fixture.
+  // round starts on Leon's first attempt, advancing turns is head-judge.js's job and isn't exercised here
   updateRoundStartedDB(roundId, attempt1Id);
 
   return {

@@ -77,8 +77,7 @@ function createApp() {
   return app;
 }
 
-// Uses the same db instance (Node's require cache) as the routes, so seeded
-// data is visible to request handlers during tests.
+// uses the same db instance as the routes, so seeded data is visible to request handlers
 function seedTestUsers(password = 'secret123') {
   const hash = bcrypt.hashSync(password, 10);
   db.prepare('INSERT OR IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Test Admin', 'admin@test.com', hash, 'admin');
@@ -152,9 +151,7 @@ async function loginAdmin(app) {
   return agent;
 }
 
-// Competition assigned to the 'fig' panel template, plus a small pool of referee/head_judge
-// users to assign to its judge roles. Only 2 referees are seeded (not the full 6 execution
-// needs) since assignment-flow tests don't need every slot staffed.
+// competition on the 'fig' panel with a small referee/head_judge pool, not every slot staffed since assignment-flow tests don't need it
 function seedJudgesData() {
   const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
   const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
@@ -180,9 +177,7 @@ function seedJudgesData() {
   };
 }
 
-// Competition on the 'fig' panel with one group/round/sportsman/entry/attempt (3 tricks), for
-// referee/leaderboard scoring-flow tests. The round starts 'not_started' with no current
-// attempt — callers use startRound() to advance it once assignments are in place.
+// competition on the 'fig' panel with one group/round/sportsman/entry/attempt (3 tricks), round starts 'not_started', callers use startRound() once assignments are in place
 function seedRefereeScoringData() {
   const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
   const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
@@ -211,7 +206,7 @@ function seedRefereeScoringData() {
   };
 }
 
-// Assigns a user to a judge role for a competition and returns the panel_assignments.id.
+// assigns a user to a judge role for a competition and returns the panel_assignments.id
 function assignJudge(competitionId, judgeRoleId, userId) {
   db.prepare('INSERT OR IGNORE INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)')
     .run(competitionId, judgeRoleId, userId);
@@ -219,7 +214,7 @@ function assignJudge(competitionId, judgeRoleId, userId) {
     .get(competitionId, judgeRoleId, userId).id;
 }
 
-// Puts a round 'in_progress' with the given attempt as its current turn.
+// puts a round 'in_progress' with the given attempt as its current turn
 function startRound(roundId, attemptId) {
   db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?").run(attemptId, roundId);
 }

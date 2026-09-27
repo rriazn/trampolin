@@ -139,8 +139,7 @@ describe('getRefereeRoundInfo', () => {
   });
 
   it('marks an attempt-granularity role as not applicable when no skills were performed', () => {
-    // notApplicable only ever applies to attempt-granularity roles (e.g. time_of_flight) — an
-    // element-granularity role like execution always builds a (possibly empty) per-trick list instead
+    // notApplicable only applies to attempt-granularity roles, execution instead builds a possibly-empty per-trick list
     const { comp, round, roleIds } = setupInProgressAttempt('fig', 0);
     const tofJudge = makeUser('referee');
     assignJudge(comp.id, roleIds.time_of_flight, tofJudge.id);

@@ -8,8 +8,7 @@ const {
 const { addGroupIgnoreDB } = require('./services/db/groups.crud');
 const { addSportsmanDB, getSportsmanByNameAndCompetition } = require('./services/db/sportsmen.crud');
 
-// 6 execution + 1 difficulty + 1 time_of_flight/horizontal_displacement (shared machine, one
-// person) = 8 distinct referees. A judge may only hold one role per competition.
+// 8 distinct referees since a judge holds only one role per competition: 6 execution, 1 difficulty, 1 time_of_flight/horizontal_displacement sharing one machine
 const REFEREES = [
   { name: 'Maria Schmidt',   email: 'maria@example.com' },
   { name: 'Thomas Müller',   email: 'thomas@example.com' },
@@ -89,8 +88,7 @@ async function seed() {
   }
 
   const roleIdByKey = new Map(getJudgeRoles().map(r => [r.key, r.id]));
-  // referees[0..5] -> execution (6), referees[6] -> difficulty, referees[7] -> time_of_flight
-  // + horizontal_displacement (one person covers both, read off the same machine).
+  // referees[0..5] -> execution, referees[6] -> difficulty, referees[7] -> time_of_flight + horizontal_displacement
   for (const refereeId of refereeIds.slice(0, 6)) {
     addAssignmentIgnoreDB(comp.id, roleIdByKey.get('execution'), refereeId);
   }

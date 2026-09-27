@@ -21,8 +21,7 @@ function setupAttempt(panelKey = 'test', elementCount = 1) {
   return { comp, round, attempt, roleIds };
 }
 
-// loadJudgeSubmissionStatus takes an already-computed breakdown (as rounds.service.js already
-// has one in hand from computeAttemptScore) rather than re-querying element_scores itself
+// loadJudgeSubmissionStatus takes an already-computed breakdown rather than re-querying element_scores itself
 function buildBreakdown(comp, attemptId, elementCount) {
   const panelSlots = loadPanelSlots(comp.panelTemplateId);
   const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attemptId);
@@ -147,8 +146,7 @@ describe('createAttempts', () => {
     makeEntry(round.id, sp.id, 1);
 
     expect(createAttempts(round.id, '999')).toBe(20);
-    // '0' parses to the falsy number 0, which trips the `|| 2` default before the 1-20 clamp
-    // ever sees it — so "0" and an invalid string both fall back to the default of 2, not 1
+    // '0' parses to the falsy number 0, which trips the `|| 2` default before the 1-20 clamp ever sees it
     expect(createAttempts(round.id, '0')).toBe(2);
     expect(createAttempts(round.id, 'not-a-number')).toBe(2);
   });

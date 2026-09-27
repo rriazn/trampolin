@@ -26,8 +26,7 @@ const PANEL_TEMPLATES = [
     name: 'Local Panel',
     description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties).',
     slots: [
-      // per_judge: each judge sums their own deductions across the routine, then drop 1 high/1
-      // low of those per-judge final scores and sum what's left
+      // per_judge: each judge sums their own deductions first, then drop 1 high/1 low across those totals
       { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1, aggregation: 'per_judge' },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },

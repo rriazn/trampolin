@@ -24,7 +24,6 @@ test.beforeAll(async ({ request }) => {
 test('admin creates and fully sets up a competition with a judge panel and staffs it', async ({ page }) => {
   await loginAsAdmin(page);
 
-  // Create a new competition on the FIG judge panel
   await page.goto('/admin/competitions');
   await page.getByRole('link', { name: /New Competition/ }).click();
   await page.locator('input[name=name]').fill('Winter Cup');
@@ -32,24 +31,20 @@ test('admin creates and fully sets up a competition with a judge panel and staff
   await page.getByRole('button', { name: /Create/ }).click();
   await page.waitForURL('/admin/competitions');
 
-  // Activate it
   const compRow = page.getByRole('row').filter({ hasText: 'Winter Cup' });
   await compRow.getByRole('button', { name: /Activate/ }).click();
   await expect(compRow.getByRole('cell', { name: 'active' })).toBeVisible();
 
-  // Navigate to the groups page and capture the competition ID from the URL
   await compRow.getByRole('link', { name: /Groups/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
   const [, compId] = page.url().match(/\/competitions\/(\d+)/);
 
-  // Add a group first — entries are scoped to the round's group, so an athlete needs to be
-  // assigned to a group to later show up as available for one of its rounds
+  // entries are scoped to the round's group, so an athlete must be assigned to one to show up as available later
   await page.goto(`/admin/competitions/${compId}/groups`);
   await page.locator('input[name=name]').fill('Seniors');
   await page.locator('input[name=abbreviation]').fill('SEN');
   await page.locator('button[type=submit]').click();
 
-  // Add an athlete to this competition, assigned to the group just created
   await page.goto(`/admin/competitions/${compId}/sportsmen/new`);
   await page.locator('input[name=name]').fill('Jonas Krause');
   await page.locator('input[name=club]').fill('TSV München');
@@ -57,18 +52,15 @@ test('admin creates and fully sets up a competition with a judge panel and staff
   await page.getByRole('button', { name: 'Create' }).click();
   await page.waitForURL(`/admin/competitions/${compId}/sportsmen`);
 
-  // Navigate to rounds for the group
   await page.goto(`/admin/competitions/${compId}/groups`);
   const groupRow = page.getByRole('row').filter({ hasText: 'Seniors' });
   await groupRow.getByRole('link', { name: /Rounds/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds/);
 
-  // Add a round
   await page.locator('input[name=name]').fill('Finals');
   await page.locator('input[name=round_order]').fill('1');
   await page.locator('button[type=submit]').click();
 
-  // Navigate to entries for the Finals round
   const roundRow = page.getByRole('row').filter({ hasText: 'Finals' });
   await roundRow.getByRole('link', { name: /Entries/ }).click();
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/);
@@ -76,22 +68,19 @@ test('admin creates and fully sets up a competition with a judge panel and staff
   await page.locator('select[name=sportsman_id]').selectOption({ label: 'Jonas Krause · TSV München' });
   await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
 
-  // Create attempts for all entries
   page.once('dialog', dialog => dialog.accept());
   await Promise.all([
     page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/),
     page.getByRole('button', { name: /Create All Attempts/ }).click(),
   ]);
 
-  // Staff the panel: assign Maria (the seeded referee) to the difficulty role
   await page.goto(`/admin/competitions/${compId}/judges`);
   const difficultyCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Difficulty' }) });
   await difficultyCard.locator('select[name=user_id]').selectOption({ label: 'Maria Schmidt · maria@example.com' });
   await difficultyCard.getByRole('button', { name: /Assign/ }).click();
   await expect(difficultyCard.getByText('Maria Schmidt')).toBeVisible();
 
-  // The round hasn't been started yet (that's the head judge's job, not built here), so it
-  // correctly does not appear on the referee's scoring dashboard until then.
+  // the round hasn't been started yet, so it correctly does not appear on the scoring dashboard
   await page.getByRole('button', { name: /Logout/ }).click();
   await page.waitForURL('/login');
   await loginAsReferee(page);

@@ -33,7 +33,7 @@ describe('groupPanelSlots', () => {
   it('groups roles that share a shared_assignment_group into one entry', () => {
     const { panelTemplateId } = makeCompetition({ panelKey: 'fig' });
     const groups = groupPanelSlots(panelTemplateId);
-    // fig: execution, difficulty, tof+hd (shared), head_judge → 4 groups, not 5 slots
+    // fig: execution, difficulty, tof+hd (shared), head_judge = 4 groups, not 5 slots
     expect(groups).toHaveLength(4);
     const shared = groups.find(g => g.groupKey === 'tof_hd');
     expect(shared.judgeRoleIds).toHaveLength(2);
@@ -95,7 +95,7 @@ describe('rosterReadiness', () => {
     const roleIds = getJudgeRoleIds();
     const judge = makeUser('referee');
     assignJudge(comp.id, roleIds.time_of_flight, judge.id);
-    // not yet assigned horizontal_displacement — the shared group isn't satisfied
+    // not yet assigned horizontal_displacement, so the shared group isn't satisfied
 
     const readiness = rosterReadiness(comp.id, comp.panelTemplateId);
     const sharedGroup = readiness.groups.find(g => g.name.includes('Time of Flight'));

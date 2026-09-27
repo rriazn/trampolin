@@ -190,8 +190,7 @@ describe('POST /referee/score/elements (element-granularity roles)', () => {
   });
 
   it('saves all trick values and redirects to the round view', async () => {
-    // Difficulty is entered x10 for easier typing (e.g. "10" -> true tariff 1.0) and divided back
-    // down server-side.
+    // difficulty is entered x10 for easier typing (e.g. "10" -> true tariff 1.0) and divided back down server-side
     const res = await agent.post('/referee/score/elements').type('form')
       .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '10', element_2: '10', element_3: '15' });
     expect(res.status).toBe(302);

@@ -10,7 +10,7 @@ async function loginAsAdmin(page) {
   await page.waitForURL('/admin');
 }
 
-// Finds the role card (the `.card` element) that contains the given heading text.
+// finds the role card (the `.card` element) that contains the given heading text
 function roleCard(page, headingName) {
   return page.locator('.card').filter({ has: page.getByRole('heading', { name: headingName }) });
 }
@@ -107,13 +107,13 @@ test.describe('when logged in as admin', () => {
     });
 
     test('a referee already assigned to one role is no longer offered as a candidate for another', async ({ page }) => {
-      // Relies on the preceding test having already assigned Judge Referee A to Difficulty.
+      // relies on the preceding test having already assigned Judge Referee A to Difficulty
       const executionOptions = roleCard(page, 'Execution').locator('select[name=user_id] option');
       await expect(executionOptions.filter({ hasText: 'Judge Referee A' })).toHaveCount(0);
     });
 
     test('unassigning a judge removes them and reopens the assign form', async ({ page }) => {
-      // Relies on an earlier test having already assigned Judge Referee A to Difficulty.
+      // relies on an earlier test having already assigned Judge Referee A to Difficulty
       const card = roleCard(page, 'Difficulty');
       let capturedDialog;
       page.once('dialog', dialog => {
@@ -132,11 +132,8 @@ test.describe('when logged in as admin', () => {
     });
 
     test('shows "No more eligible users to assign." once every referee is used up elsewhere', async ({ page }) => {
-      // Relies on the preceding tests: Judge Referee B already fully staffs Time of Flight &
-      // Horizontal Displacement, and Judge Referee A was freed up again by the previous test.
-      // Referee One (from the base seed) and Judge Referee A are the only two referees left;
-      // assigning both to Execution leaves Difficulty with zero eligible candidates while still
-      // short of its own requirement.
+      // by this point only Referee One and Judge Referee A are left unassigned
+      // assigning both to Execution leaves Difficulty short with zero eligible candidates
       const executionCard = roleCard(page, 'Execution');
       await executionCard.locator('select[name=user_id]').selectOption({ label: 'Judge Referee A · judgerefa@test.com' });
       await executionCard.getByRole('button', { name: /Assign/ }).click();

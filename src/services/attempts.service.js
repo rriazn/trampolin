@@ -31,9 +31,7 @@ exports.loadAttemptScoreMaps = (attemptId) => {
   return { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment };
 };
 
-// breakdown is computeAttemptScore's result (the caller already has one computed from the same
-// loadAttemptScoreMaps() data) - its per-slot `perJudge` array is the single source of truth for
-// each assignment's personal value, so this never re-derives element-role scoring on its own.
+// breakdown is computeAttemptScore's result, already computed by the caller, so this never re-derives element-role scoring on its own
 exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, breakdown) => {
   if (!panelTemplateId) return [];
   const assignments = getAssignmentForCompetition(competitionId, panelTemplateId);

@@ -10,8 +10,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
 const { getAppVersion } = require('../../src/services/version.service');
 
-// A scratch path under tests/component/ so footer.spec.js can create/delete a VERSION file
-// without touching the real one at the project root
+// a scratch path so footer.spec.js can create/delete a VERSION file without touching the real one
 const TEST_VERSION_PATH = path.join(__dirname, 'VERSION');
 
 const app = express();
@@ -73,14 +72,12 @@ app.use('/head-judge', require('../../src/routes/head-judge'));
 app.use('/viewer', require('../../src/routes/viewer'));
 app.use('/admin', require('../../src/routes/admin'));
 
-// Test-only route for errors.spec.js to exercise the 500 error page
+// test-only route for errors.spec.js to exercise the 500 error page
 app.get('/test/throw', () => {
   throw new Error('boom');
 });
 
-// Deletes all test data while keeping the permanent admin account.
-// Called automatically at the start of every seed so each test file
-// gets a clean database regardless of what the previous file left behind.
+// deletes all test data except the permanent admin account, called at the start of every seed
 function cleanupDb() {
   db.prepare('DELETE FROM scores').run();
   db.prepare('DELETE FROM attempts').run();
@@ -96,9 +93,7 @@ function cleanupDb() {
 app.post('/test/seed', (req, res) => {
   cleanupDb();
 
-  // Explicit, unambiguous created_at values: relying on insertion-order timing to break ties in
-  // `ORDER BY created_at DESC` is not reliable (SQLite doesn't guarantee tie order), and
-  // admin-dashboard.spec.js depends on Spring Cup sorting first (most recent).
+  // explicit created_at values since SQLite doesn't guarantee insertion-order tie breaks, and admin-dashboard.spec.js depends on Spring Cup sorting first
   const figPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
   const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id, created_at) VALUES (?, ?, ?, ?)')
     .run('Spring Cup', 'active', figPanel.id, '2026-01-03T00:00:00.000Z');
@@ -106,7 +101,7 @@ app.post('/test/seed', (req, res) => {
     .run('Autumn Open', '2026-09-15', '2026-01-02T00:00:00.000Z');
   db.prepare('INSERT INTO competitions (name, date, status, created_at) VALUES (?, ?, ?, ?)')
     .run('Winter Cup', '2025-12-15', 'closed', '2026-01-01T00:00:00.000Z');
-  // Judge panel fixture competition, dated even older so it never contends for "most recent".
+  // judge panel fixture competition, dated even older so it never contends for "most recent"
   const panelComp = db.prepare('INSERT INTO competitions (name, status, panel_template_id, created_at) VALUES (?, ?, ?, ?)')
     .run('Panel Cup', 'active', figPanel.id, '2020-01-01T00:00:00.000Z');
   const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Group A', 'GA');
@@ -118,11 +113,7 @@ app.post('/test/seed', (req, res) => {
   const referee = db.prepare('SELECT id, email, created_at FROM users WHERE email=?').get('referee1@test.com');
   db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sp.lastInsertRowid, 1);
 
-  // Referee One is assigned (time_of_flight, a simple attempt-level role) and the round is
-  // 'in_progress' so it shows on her scoring dashboard. No attempts exist yet in this minimal
-  // seed (admin-entries.spec.js depends on the entry starting at "0 attempts"), so
-  // current_attempt_id stays null — the round page itself shows a "not started" state, which is
-  // fine since referee-dashboard.spec.js only exercises the dashboard list, not the round page.
+  // round is 'in_progress' with no attempts yet, since admin-entries.spec.js depends on the entry starting at "0 attempts"
   const timeOfFlightRoleId = db.prepare("SELECT id FROM judge_roles WHERE key='time_of_flight'").get().id;
   db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)')
     .run(comp.lastInsertRowid, timeOfFlightRoleId, referee.id);
@@ -130,7 +121,7 @@ app.post('/test/seed', (req, res) => {
 
   const admin = db.prepare("SELECT id, email, created_at FROM users WHERE email='admin@test.com'").get();
 
-  // Judge pool for judges-assignment component/integration tests.
+  // judge pool for judges-assignment component/integration tests
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
     .run('Judge Referee A', 'judgerefa@test.com', bcrypt.hashSync('ref123', 10), 'referee');
   db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
@@ -160,10 +151,7 @@ app.post('/test/seed', (req, res) => {
   });
 });
 
-// Assigns `user` to `judgeRoleKey` for `competitionId` and returns the panel_assignments.id.
-// Scoring fixtures below use a single attempt-granularity role (time_of_flight: judge_count 1,
-// no drop, multiplier +1) so a raw score value flows straight through to the attempt's total,
-// keeping these fixtures' expected numbers simple and independent of execution's per-trick math.
+// assigns `user` to `judgeRoleKey` for `competitionId`, using time_of_flight so a raw score flows straight through to the attempt total
 function assignJudgeForFixture(competitionId, judgeRoleKey, userId) {
   const roleId = db.prepare('SELECT id FROM judge_roles WHERE key=?').get(judgeRoleKey).id;
   const info = db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)')
@@ -200,8 +188,7 @@ app.post('/test/seed/scored', (req, res) => {
   addAthlete('Charlie', 2, [8.8, 8.6]);
   addAthlete('Alice', 3, [8.5]);
 
-  // Round is 'in_progress' on Bob's first attempt (already scored 9.2 above), so
-  // referee-round.spec.js can exercise the real turn-based scoring UI against known values.
+  // round is 'in_progress' on Bob's already-scored first attempt so referee-round.spec.js can exercise real scoring against known values
   db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?")
     .run(bob.attemptIds[0], round.lastInsertRowid);
 
@@ -248,8 +235,7 @@ app.post('/test/seed/scored-sum', (req, res) => {
   });
 });
 
-// Two groups, each with their own round and athlete — for admin-entries.spec.js's regression
-// test that only same-group athletes are offered as available entries for a round.
+// two groups, for admin-entries.spec.js's regression test that only same-group athletes are offered as available entries
 app.post('/test/seed/multi-group', (req, res) => {
   cleanupDb();
 
@@ -304,10 +290,7 @@ app.post('/test/seed/finals', (req, res) => {
   });
 });
 
-// Seed for head-judge component specs (dashboard + round control) and for referee execution/
-// difficulty rendering specs: a fully-staffed 'local' panel (4 execution, 1 difficulty, 1 head
-// judge), round not started, 2 athletes with a 1-trick attempt each (keeps trick-input rendering
-// small — no landing line, which only applies at the full 10-trick count).
+// seed for head-judge and referee rendering specs: a fully-staffed 'local' panel, round not started, 2 athletes with a 1-trick attempt each
 app.post('/test/seed/head-judge', (req, res) => {
   cleanupDb();
 

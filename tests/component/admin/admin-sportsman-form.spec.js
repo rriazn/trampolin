@@ -26,7 +26,7 @@ test.describe('when logged in as admin', () => {
     await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen/new`);
   });
 
-  //------------- Adding a new athlete/general --------------
+  // Adding a new athlete/general
   // Page structure
   test('shows the "New Athlete" heading', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'New Athlete' })).toBeVisible();
@@ -91,7 +91,7 @@ test.describe('when logged in as admin', () => {
     await page.waitForURL(`/admin/competitions/${seed.competitionId}/sportsmen`);
   });
 
-  //------------- Editing athletes --------------
+  // Editing athletes
 
   test.describe('edit athlete form', () => {
     test.beforeEach(async ({ page }) => {

@@ -24,8 +24,7 @@ exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', m
   return combined * multiplier;
 };
 
-// panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction,
-// maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
+// panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction, maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
 exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment = new Map()) => {
   let total = 0;
   let isComplete = true;
@@ -85,9 +84,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         }
       }
 
-      // Each assignment's own personal, uncombined value — the same shape a solo judge's
-      // contribution would take, before any cross-judge drop/combine happens. Used both by
-      // per_judge aggregation below and exposed for consumers like the head judge's checklist.
+      // each assignment's own personal, uncombined value, used by per_judge aggregation below and exposed for the head judge's checklist
       const byAssignment = (elementScoresByAssignment.get(slot.judgeRoleId)) || new Map();
       const requiredCount = elementCount + (slot.isDeduction && elementCount === 10 ? 1 : 0);
       const perJudge = [...byAssignment.entries()].map(([assignmentId, elementsMap]) => {
@@ -109,8 +106,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
 
       let roleValue, roleComplete;
       if (slot.aggregation === 'per_judge') {
-        // Those per-judge personal totals are dropped/combined the same way combineScores
-        // handles any other list
+        // those per-judge personal totals are dropped/combined the same way as any other list
         const perJudgeScores = perJudge.filter(pj => pj.value !== null).map(pj => pj.value);
         const fullyDoneCount = perJudge.filter(pj => pj.isComplete).length;
         roleValue = exports.combineScores({ scores: perJudgeScores, dropHigh, dropLow, combine, multiplier: 1 }) ?? 0;

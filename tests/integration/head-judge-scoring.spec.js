@@ -47,9 +47,7 @@ async function createUser(page, name, email, role, password = 'judge123') {
   await page.waitForURL('/admin/users');
 }
 
-// Creates and activates a competition on the given panel, with one group/round/sportsman and one
-// attempt already created. Returns the ids needed to navigate the head-judge/referee/leaderboard
-// pages. Panel staffing is left to the caller.
+// creates and activates a competition on the given panel with one group/round/sportsman/attempt, panel staffing is left to the caller
 async function seedSingleAttemptCompetition(page, { competitionName, panelLabel, sportsmanName = 'Nora Voigt', club = 'TSV Köln' }) {
   await page.goto('/admin/competitions/new');
   await page.locator('input[name=name]').fill(competitionName);
@@ -119,10 +117,7 @@ test.beforeAll(async ({ request }) => {
   expect(res.ok()).toBeTruthy();
 });
 
-// The seed's fig-panel round only staffs time_of_flight and head_judge, so it can never reach
-// isComplete — but Skip bypasses that check entirely (head-judge.js's /skip route only requires
-// the round to be in_progress). This exercises Skip through the real UI without needing to staff
-// the rest of the panel.
+// the seed's round can never reach isComplete, but Skip only requires in_progress and bypasses that check entirely
 test('head judge skips an attempt and the round advances without the panel being complete', async ({ page, request }) => {
   const seedRes = await request.post('/test/seed');
   const seed = await seedRes.json();
@@ -135,8 +130,7 @@ test('head judge skips an attempt and the round advances without the panel being
 
   page.once('dialog', dialog => dialog.accept());
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
-  // Round-robin order is attempt_number then start_order, so skipping Leon's attempt 1 advances
-  // to Emma's attempt 1 (not Leon's attempt 2)
+  // round-robin order is attempt_number then start_order, so this advances to Emma's attempt 1, not Leon's attempt 2
   await expect(page.getByText('Emma Fischer')).toBeVisible();
   await expect(page.getByText('Attempt #1')).toBeVisible();
 
@@ -154,23 +148,18 @@ test('head judge skips an attempt and the round advances without the panel being
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
 
-  // head judge stays logged in — the leaderboard now requires a logged-in user
-  // Every attempt was skipped, not scored — the leaderboard shows both athletes with no score
+  // head judge stays logged in since the leaderboard requires a logged-in user
+  // every attempt was skipped, not scored, so the leaderboard shows both athletes with no score
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr')).toHaveCount(2);
   await expect(page.locator('.lb-score')).toHaveCount(0);
 });
 
-// Local Panel's execution role defaults to per_judge aggregation: each judge sums their own
-// deductions into a personal final score first, then those 4 personal finals get drop-high/
-// drop-low/sum — as opposed to per_trick mode, which combines per element across judges first.
-// This drives 4 distinct execution judges through the real checkbox UI and confirms the leaderboard
-// reflects the per-judge combine, not a per-trick one.
+// Local Panel's execution role uses per_judge aggregation, combining each judge's own total rather than each trick across judges
 test('per_judge execution aggregation on a Local Panel competition combines each judge\'s own total', async ({ page }) => {
   test.setTimeout(90_000); // builds a competition, staffs 6 judges, and cycles through 6 logins
   await loginAsAdmin(page);
-  // Candidates for a non-head_judge role are queried by login role='referee', so all 4 execution
-  // slots (and difficulty) need referee-role users — Petra (login role head_judge) isn't eligible.
+  // non-head_judge candidates need login role='referee', so Petra (head_judge) isn't eligible for these slots
   await createUser(page, 'Judge Exec2', 'judgeexec2@example.com', 'referee');
   await createUser(page, 'Judge Exec3', 'judgeexec3@example.com', 'referee');
   await createUser(page, 'Judge Exec4', 'judgeexec4@example.com', 'referee');
@@ -195,9 +184,7 @@ test('per_judge execution aggregation on a Local Panel competition combines each
   await loginAsHeadJudge(page);
   await page.goto(hjUrl);
   await page.getByRole('button', { name: /Start Round/ }).click();
-  // With the default elementCount=10, a deduction role also requires a landing (element 11)
-  // submission and per_judge completeness needs each judge to cover every required element
-  // themselves — set trick count to 1 to keep this to a single deduction per judge.
+  // set trick count to 1 to keep this to a single deduction per judge, avoiding the landing requirement at elementCount=10
   const trickCountCard = page.locator('.card').filter({ hasText: 'Trick count' });
   await trickCountCard.locator('input[name=element_count]').fill('1');
   await trickCountCard.getByRole('button', { name: /Save/ }).click();
@@ -206,7 +193,7 @@ test('per_judge execution aggregation on a Local Panel competition combines each
   await penaltyCard.getByRole('button', { name: /Save/ }).click();
   await logout(page);
 
-  // 4 execution judges each check a different deduction for the attempt's single trick.
+  // 4 execution judges each check a different deduction for the attempt's single trick
   const executionJudges = [
     ['maria@example.com', 'referee123', '0'],
     ['judgeexec2@example.com', 'judge123', '0.1'],
@@ -232,22 +219,16 @@ test('per_judge execution aggregation on a Local Panel competition combines each
   await page.getByRole('button', { name: /Next/ }).click();
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
 
-  // Per-judge personal finals (elementCount 1 minus each judge's own deduction): 1.0, 0.9, 0.8,
-  // 0.7. Local Panel drops 1 high (1.0) and 1 low (0.7), keeping [0.9, 0.8] → 1.7. Difficulty and
-  // head judge both contributed 0.
-  // head judge stays logged in from above — the leaderboard requires a logged-in user
+  // per-judge finals 1.0, 0.9, 0.8, 0.7, drop high/low, keep [0.9, 0.8] = 1.7, difficulty and head judge both contributed 0
+  // head judge stays logged in from above since the leaderboard requires a logged-in user
   await page.goto(`/leaderboard/competitions/${compId}/groups/${groupId}/rounds/${roundId}`);
   await expect(page.locator('tbody tr').first()).toContainText('1.700');
 });
 
-// Cross-checks a single judge's own submission (not just the round/leaderboard total) against
-// what the head judge's round overview displays next to that judge's name — the exact spot a
-// past bug hid in: the checklist used to compute each judge's personal value from a separate,
-// duplicated calculation that didn't know about a newly-added score component.
+// cross-checks a judge's own submission against what the head judge's round overview shows next to their name, not just the leaderboard total
 test('a referee\'s submitted score, including a missing-skill deduction, matches what the head judge sees for that judge', async ({ page }) => {
   await loginAsAdmin(page);
-  // Starting a round requires the full Local Panel roster staffed (4 execution + difficulty +
-  // head judge), even though only the difficulty judge's value is under test here.
+  // starting a round requires the full Local Panel roster staffed, even though only difficulty is under test here
   await createUser(page, 'Cross Exec1', 'crossexec1@example.com', 'referee');
   await createUser(page, 'Cross Exec2', 'crossexec2@example.com', 'referee');
   await createUser(page, 'Cross Exec3', 'crossexec3@example.com', 'referee');
@@ -276,8 +257,7 @@ test('a referee\'s submitted score, including a missing-skill deduction, matches
   await trickCountCard.getByRole('button', { name: /Save/ }).click();
   await logout(page);
 
-  // Maria (difficulty) submits a trick worth 1.0 ("10" x10-scaled) plus the 2.0-point
-  // missing-compulsory-skill penalty -> her own personal value should be 1.0 - 2.0 = -1.0
+  // Maria submits a trick worth 1.0 plus the 2.0-point missing-skill penalty, so her value should be -1.0
   await loginAsReferee(page);
   await page.goto(refUrl);
   await page.locator('input[name=element_1]').fill('10');
@@ -291,14 +271,7 @@ test('a referee\'s submitted score, including a missing-skill deduction, matches
   await expect(diffJudgeCard).toContainText('-1.00');
 });
 
-// The head judge can lower the trick count mid-round (e.g. the routine was interrupted). At
-// element_count=0, attempt-granularity roles (time_of_flight, horizontal_displacement) show a
-// "does not apply" message and auto-complete with a 0 contribution — so the round can advance
-// even though execution/difficulty/horizontal_displacement have no judges assigned at all in the
-// seed, and the total can go negative from the head judge's own penalty alone. (Element-
-// granularity roles like execution/difficulty auto-complete the same way, but render an empty
-// scoring section rather than the "does not apply" text — see referee.js's per-role notApplicable
-// flag, which only applies to attempt-granularity roles.)
+// at element_count=0, attempt-granularity roles auto-complete and show "does not apply", so the round can advance unstaffed
 test('head judge sets trick count to 0 and the round advances on an otherwise-unstaffed panel', async ({ page, request }) => {
   const seedRes = await request.post('/test/seed');
   const seed = await seedRes.json();
@@ -317,22 +290,19 @@ test('head judge sets trick count to 0 and the round advances on an otherwise-un
   await penaltyCard.getByRole('button', { name: /Save/ }).click();
   await logout(page);
 
-  // Maria is assigned time_of_flight (attempt granularity) — she sees the "does not apply"
-  // message instead of a score input, and doesn't need to submit anything
+  // Maria's attempt-granularity role sees the "does not apply" message instead of a score input
   await loginAsReferee(page);
   await page.goto(refUrl);
   await expect(page.getByText(/does not apply/)).toBeVisible();
   await logout(page);
 
-  // Execution, difficulty and horizontal_displacement have no judges assigned in the seed at all,
-  // yet Next still succeeds — every non-head_judge role is exempted when elementCount is 0
+  // Next still succeeds with no judges assigned at all, since every non-head_judge role is exempted when elementCount is 0
   await loginAsHeadJudge(page);
   await page.goto(hjUrl);
   await page.getByRole('button', { name: /Next/ }).click();
-  // Round-robin order (attempt_number then start_order) advances to Emma's attempt 1
   await expect(page.getByText('Emma Fischer')).toBeVisible();
 
-  // head judge stays logged in — the leaderboard requires a logged-in user
+  // head judge stays logged in since the leaderboard requires a logged-in user
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr').filter({ hasText: 'Leon Weber' })).toContainText('-2.000');
 });

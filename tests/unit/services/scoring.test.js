@@ -28,7 +28,7 @@ describe('combineScores', () => {
   });
 
   it('falls back to combining everything when there are not enough scores to drop from', () => {
-    // Normal state during partial live judging: e.g. only 2 of 6 execution judges submitted yet.
+    // normal state during partial live judging, e.g. only 2 of 6 execution judges submitted yet
     expect(combineScores({ scores: [3, 5], dropHigh: 2, dropLow: 2, combine: 'sum' })).toBe(8);
     expect(combineScores({ scores: [3, 5], dropHigh: 2, dropLow: 2, combine: 'mean' })).toBe(4);
   });
@@ -48,7 +48,7 @@ describe('combineScores', () => {
 });
 
 describe('computeAttemptScore', () => {
-  // Mirrors the seeded 'fig' panel_template_slots (see src/db/seedDefaults.js).
+  // mirrors the seeded 'fig' panel_template_slots (see src/db/seedDefaults.js)
   const FIG_SLOTS = [
     { judgeRoleId: 1, judgeRoleKey: 'execution', judgeRoleName: 'Execution', granularity: 'element', isDeduction: true, maxValue: 10, judgeCount: 6, dropHigh: 2, dropLow: 2, combine: 'sum', multiplier: 1 },
     { judgeRoleId: 2, judgeRoleKey: 'difficulty', judgeRoleName: 'Difficulty', granularity: 'element', isDeduction: false, maxValue: null, judgeCount: 1, dropHigh: 0, dropLow: 0, combine: 'sum', multiplier: 1 },
@@ -78,8 +78,7 @@ describe('computeAttemptScore', () => {
 
     const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2);
 
-    // execution: elementCount(2) - (0.3 + 0.5) = 1.2 (max scales to skills actually performed,
-    // per Code of Points — not the role's fixed max_value)
+    // execution: elementCount(2) - (0.3 + 0.5) = 1.2, max scales to skills performed not the fixed max_value
     // difficulty: 2.5, time_of_flight: 8.0, horizontal_displacement: 9.4, head_judge: -0.2
     expect(result.total).toBeCloseTo(1.2 + 2.5 + 8.0 + 9.4 - 0.2);
     expect(result.isComplete).toBe(true);
@@ -98,7 +97,7 @@ describe('computeAttemptScore', () => {
   });
 
   it('scales a deduction role\'s max to the number of skills actually performed, not a fixed constant', () => {
-    // A routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10).
+    // a routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10)
     const elementScoresByJudgeRoleId = new Map([
       [1, new Map([
         // trick 1: all 6 judges give 0.1 -> drop 2 hi/2 lo -> keep two 0.1s -> sum 0.2; tricks 2-6: 0
@@ -301,7 +300,7 @@ describe('computeAttemptScore', () => {
       const scoresByJudgeRoleId = new Map([
         [3, [8.5]], // stale time_of_flight
         [4, [9.0]], // stale horizontal_displacement
-        [5, [0.2]], // head_judge — the only role that should count
+        [5, [0.2]], // head_judge, the only role that should count
       ]);
       const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 0);
       expect(result.total).toBeCloseTo(-0.2);

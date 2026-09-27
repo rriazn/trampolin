@@ -87,9 +87,7 @@ test.describe('turn states', () => {
     const res = await request.post('/test/seed');
     const basicSeed = await res.json();
 
-    // The basic seed assigns "Referee One" (referee1@test.com) to time_of_flight and marks the
-    // round 'in_progress', but no attempts exist yet so current_attempt_id stays null — the round
-    // page treats that the same as "not started", nothing to score right now.
+    // the basic seed has no attempts yet, so current_attempt_id stays null and the round page treats it as "not started"
     await page.goto('/login');
     await page.locator('input[name=email]').fill('referee1@test.com');
     await page.locator('input[name=password]').fill('ref123');
@@ -108,9 +106,7 @@ async function loginAs(page, email, password) {
   await page.locator('button[type=submit]').click();
 }
 
-// Seeds the local-panel fixture (4 execution, 1 difficulty, 1 head_judge, element_count=1) and
-// starts its round as the head judge, so execution/difficulty judges have a real current attempt
-// to score — mirrors how a round actually gets started (no direct DB shortcuts).
+// seeds the local-panel fixture and starts its round as the head judge, mirroring how a round actually gets started
 async function seedAndStartLocalPanelRound(page, request) {
   const res = await request.post('/test/seed/head-judge');
   const hjSeed = await res.json();
