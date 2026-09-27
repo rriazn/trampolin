@@ -8,10 +8,10 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 *
 
 router.use(requireAdmin);
 
-// ── Dashboard ────────────────────────────────────────────────────────────────────
+// Dashboard
 router.get('/', adminController.getDashboard);
 
-// ── Users ────────────────────────────────────────────────────────────────────
+// Users
 
 router.get('/users', adminController.getUsers);
 
@@ -30,7 +30,7 @@ router.post('/users/:id/delete', adminController.deleteUser);
 router.post('/users/:id', adminController.updateUser);
 
 
-// ── Competitions ─────────────────────────────────────────────────────────────
+// Competitions
 
 router.get('/competitions', adminController.getCompetitions);
 
@@ -47,7 +47,7 @@ router.post('/competitions/:id/status', adminController.updateCompetitionStatus)
 router.post('/competitions/:id/delete', adminController.deleteCompetition);
 
 
-// ── Judges ───────────────────────────────────────────────────────────────────
+// Judges
 
 router.get('/competitions/:id/judges', adminController.getJudges);
 
@@ -56,7 +56,7 @@ router.post('/competitions/:id/judges', adminController.addJudge);
 router.post('/competitions/:id/judges/:assignmentId/delete', adminController.removeJudge);
 
 
-// ── Sportsmen ────────────────────────────────────────────────────────────────
+// Sportsmen
 
 router.get('/competitions/:id/sportsmen', adminController.getSportsmen);
 
@@ -74,7 +74,7 @@ router.post('/competitions/:id/sportsmen/upload', upload.single('file'), adminCo
 
 router.post('/competitions/:id/sportsmen/:sid', adminController.updateSportsman);
 
-// ── Groups ───────────────────────────────────────────────────────────────────
+// Groups
 
 router.get('/competitions/:id/groups', adminController.getGroups);
 
@@ -82,7 +82,7 @@ router.post('/competitions/:id/groups', adminController.addGroup);
 
 router.post('/competitions/:id/groups/:gid/delete', adminController.deleteGroup);
 
-// ── Rounds ───────────────────────────────────────────────────────────────────
+// Rounds
 
 router.get('/competitions/:cid/groups/:gid/rounds', adminController.getRounds);
 
@@ -90,7 +90,7 @@ router.post('/competitions/:cid/groups/:gid/rounds', adminController.addRound);
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/delete', adminController.deleteRound);
 
-// ── Entries ──────────────────────────────────────────────────────────────────
+// Entries
 
 router.get('/competitions/:cid/groups/:gid/rounds/:rid/entries', adminController.getEntries);
 

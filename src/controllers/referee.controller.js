@@ -8,7 +8,7 @@ const { getRefereeRoundInfo } = require("../services/rounds.service");
 const { renderNotFound } = require("../services/errors.service");
 const { recomputeAttemptCompletion } = require("../services/attempts.service");
 const { isWithinRange, rangeErrorMessage } = require("../services/helpers/referee.helpers");
-const { parseAndValidateElementScores, parseAndValidate11thScore } = require("../services/scoring.service");
+const { parseAndValidateElementScores, parseAndValidate11thScore, parseMissingSkillDeduction } = require("../services/scoring.service");
 
 exports.getRefereeDashboard = (req, res) => {
     const userId = req.session.user.id;
@@ -101,6 +101,16 @@ exports.postElementScores = (req, res) => {
         const val_11 = parseAndValidate11thScore(assignment, ctx.elementCount, req.body.element_11, req.t);
         if (val_11 != null)
             parsedValues.push(val_11);
+    }
+    catch (err) {
+        return res.status(400).send(err.message);
+    }
+
+    // 12th line: missing compulsory skill deduction (difficulty only)
+    try {
+        const val_12 = parseMissingSkillDeduction(assignment, ctx.elementCount, req.body.element_12, req.t);
+        if (val_12 != null)
+            parsedValues.push(val_12);
     }
     catch (err) {
         return res.status(400).send(err.message);

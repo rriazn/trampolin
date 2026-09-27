@@ -1,6 +1,4 @@
-// Bridges into the app's CommonJS require graph so every helper here shares the SAME in-memory
-// db instance the services under test use — a plain `import` of src/db/database.js would create
-// a second, separate :memory: database instead of the one require()'d internally by src/.
+// bridges into the app's CommonJS require graph so every helper here shares the same in-memory db instance the services under test use
 import { createRequire } from 'module';
 import bcrypt from 'bcryptjs';
 const require = createRequire(import.meta.url);
@@ -29,8 +27,7 @@ export function getJudgeRoleIds() {
   return Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
 }
 
-// Returns the real competition row (snake_case columns, as getCompetitionById would) plus a
-// panelTemplateId convenience alias — services take the row itself, not just its id
+// returns the real competition row plus a panelTemplateId alias, since services take the row itself, not just its id
 export function makeCompetition({ panelKey = 'test', status = 'active', name } = {}) {
   const n = nextSeq();
   const panelTemplateId = panelKey ? getPanelTemplateId(panelKey) : null;
@@ -47,8 +44,7 @@ export function makeGroup(competitionId, name) {
   return { id: info.lastInsertRowid };
 }
 
-// Returns the real round row (so round.scoring_mode etc. are populated, not just {id}) — services
-// take the row itself, and a bare {id} silently reads as scoring_mode: undefined downstream
+// returns the real round row so scoring_mode etc are populated, a bare {id} reads as undefined downstream
 export function makeRound(groupId, { name, order = 1, status = 'not_started', currentAttemptId = null, scoringMode = 'best_attempt' } = {}) {
   const n = nextSeq();
   const info = db.prepare('INSERT INTO rounds (group_id, name, round_order, status, current_attempt_id, scoring_mode) VALUES (?, ?, ?, ?, ?, ?)')

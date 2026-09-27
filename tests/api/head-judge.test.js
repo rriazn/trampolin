@@ -20,9 +20,7 @@ async function loginAs(user) {
   return agent;
 }
 
-// Local panel: 4 execution (per_judge aggregation), 1 difficulty, 1 head_judge — lighter to fully
-// staff/score than fig's 9-judge panel. 2 athletes, 1 attempt each, 1 trick each (no landing/bonus
-// complexity needed for these flow-control tests).
+// Local panel (4 execution, 1 difficulty, 1 head_judge) is lighter to staff than fig's 9-judge panel for these flow-control tests
 function seedLocalPanelRound() {
   const localPanel = db.prepare("SELECT id FROM panel_templates WHERE key='local'").get();
   const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
@@ -42,7 +40,7 @@ function seedLocalPanelRound() {
   };
 }
 
-// Fully staffs the local panel for a competition and returns the resulting assignment ids.
+// fully staffs the local panel for a competition and returns the resulting assignment ids
 function staffLocalPanel(competitionId, roleIds) {
   const headJudge = makeUser('head_judge');
   const headJudgeAssignmentId = assignJudge(competitionId, roleIds.head_judge, headJudge.id);
@@ -53,8 +51,7 @@ function staffLocalPanel(competitionId, roleIds) {
   return { headJudge, headJudgeAssignmentId, execUsers, execAssignmentIds, diffUser, diffAssignmentId };
 }
 
-// Inserts element_scores/scores directly so an attempt reads as fully judged, without
-// re-exercising referee.js's own submission mechanics (covered separately in referee.test.js).
+// inserts element_scores/scores directly so an attempt reads as fully judged, without re-exercising referee.js's own submission mechanics
 function fullyScoreAttempt(attemptId, roleIds, staff) {
   const insertElement = db.prepare('INSERT OR REPLACE INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,1,?)');
   for (const aid of staff.execAssignmentIds) insertElement.run(attemptId, aid, roleIds.execution, 0.1);
@@ -257,6 +254,28 @@ describe('POST .../next', () => {
     const round = db.prepare('SELECT status, current_attempt_id FROM rounds WHERE id=?').get(data.roundId);
     expect(round.status).toBe('completed');
     expect(round.current_attempt_id).toBeNull();
+  });
+});
+
+describe('GET .../rounds/:id (per-judge value display)', () => {
+  let data, staff, agent;
+
+  beforeAll(async () => {
+    data = seedLocalPanelRound();
+    staff = staffLocalPanel(data.competitionId, data.roleIds);
+    agent = await loginAs(staff.headJudge);
+    await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/start`).type('form').send({});
+  });
+
+  it('shows a difficulty judge\'s missing-skill deduction in their own displayed value, not just the attempt total', async () => {
+    db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,1,0)')
+      .run(data.attempt1Id, staff.diffAssignmentId, data.roleIds.difficulty);
+    db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,12,2)')
+      .run(data.attempt1Id, staff.diffAssignmentId, data.roleIds.difficulty);
+
+    const res = await agent.get(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('-2.00');
   });
 });
 

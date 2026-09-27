@@ -26,7 +26,7 @@ test.describe('when logged in as admin', () => {
     await page.goto('/admin/users/new');
   });
 
-  //------------- Adding a new user/general --------------
+  // Adding a new user/general
   // Page structure
   test('shows the "New User" heading', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'New User' })).toBeVisible();
@@ -105,7 +105,7 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByText('Name, email and password are required.')).toBeVisible();
   });
 
-  //------------- Editing users --------------
+  // Editing users
 
   test.describe('edit user form', () => {
     test.beforeEach(async ({ page }) => {

@@ -1,8 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-// Confirms that translation also covers seeded reference data (judge_roles, panel_templates),
-// not just static UI copy — these are rendered from DB rows keyed off a stable `key` column,
-// a different code path from the plain t('namespace:key') calls used elsewhere.
+// confirms translation also covers seeded reference data, not just static UI copy, since these render from DB rows keyed off a stable `key` column
 let seed;
 
 test.beforeAll(async ({ request }) => {
@@ -26,10 +24,7 @@ test.describe('dynamic seeded content translates with the language switcher', ()
 
     await expect(page.getByRole('heading', { name: 'Ausführung' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Schwierigkeit' })).toBeVisible();
-    // Time of Flight / Horizontal Displacement are deliberately kept as English technical terms
-    // in the German translation (src/locales/de/common.json) — this still exercises the
-    // roleKeys.map(...).join(' & ') mechanism for a joined shared-assignment group, even though
-    // the two individual translated values happen to equal the English source text.
+    // Time of Flight / Horizontal Displacement stay English in the German locale, but still exercise the joined shared-assignment group mechanism
     await expect(page.getByRole('heading', { name: 'Time of Flight & Horizontal Displacement' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Wettkampfleiter (Strafabzug)' })).toBeVisible();
 

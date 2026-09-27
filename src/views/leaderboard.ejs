@@ -115,7 +115,7 @@
               <tr>
                 <th><%= t('leaderboard:modal.judge') %></th>
                 <% detail.elementNumbers.forEach(n => { %>
-                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? t('leaderboard:modal.landing') : t('leaderboard:modal.bonus')) : n %></th>
+                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? t('leaderboard:modal.landing') : t('leaderboard:modal.bonus')) : n === 12 && !detail.isDeduction ? t('leaderboard:modal.missingSkill') : n %></th>
                 <% }) %>
               </tr>
             </thead>

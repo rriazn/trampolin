@@ -7,6 +7,8 @@ const {
   loadAttemptScoreMaps, loadJudgeSubmissionStatus, recomputeAttemptCompletion,
   createAttempts, getPreviousAttemptIndex,
 } = require('../../../src/services/attempts.service.js');
+const { loadPanelSlots } = require('../../../src/services/panels.service.js');
+const { computeAttemptScore } = require('../../../src/services/scoring.service.js');
 
 function setupAttempt(panelKey = 'test', elementCount = 1) {
   const comp = makeCompetition({ panelKey });
@@ -17,6 +19,13 @@ function setupAttempt(panelKey = 'test', elementCount = 1) {
   const attempt = makeAttempt(entry.id, 1, elementCount);
   const roleIds = getJudgeRoleIds();
   return { comp, round, attempt, roleIds };
+}
+
+// loadJudgeSubmissionStatus takes an already-computed breakdown rather than re-querying element_scores itself
+function buildBreakdown(comp, attemptId, elementCount) {
+  const panelSlots = loadPanelSlots(comp.panelTemplateId);
+  const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attemptId);
+  return computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment).breakdown;
 }
 
 describe('loadAttemptScoreMaps', () => {
@@ -64,7 +73,8 @@ describe('loadJudgeSubmissionStatus', () => {
     addScore(attempt.id, hjAssignment, roleIds.head_judge, 0);
     // difficulty judge hasn't submitted anything
 
-    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, 1);
+    const breakdown = buildBreakdown(comp, attempt.id, 1);
+    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, breakdown);
     const execStatus = status.find(s => s.name === 'Execution');
     expect(execStatus.judges[0]).toMatchObject({ name: 'Exec Judge', isDone: true, submittedCount: 1 });
 
@@ -73,6 +83,18 @@ describe('loadJudgeSubmissionStatus', () => {
 
     const hjStatus = status.find(s => s.name.includes('Head Judge'));
     expect(hjStatus.judges[0]).toMatchObject({ name: 'HJ', isDone: true, submittedCount: 1, value: 0 });
+  });
+
+  it('includes the missing-skill deduction (element 12) in a difficulty judge\'s displayed value', () => {
+    const { comp, attempt, roleIds } = setupAttempt('test', 1);
+    const diffAssignment = assignJudge(comp.id, roleIds.difficulty, makeUser('referee', 'Diff Judge').id);
+    addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 1, 0); // trick 1: worth 0
+    addElementScore(attempt.id, diffAssignment, roleIds.difficulty, 12, 2); // missing-skill penalty
+
+    const breakdown = buildBreakdown(comp, attempt.id, 1);
+    const status = loadJudgeSubmissionStatus(comp.panelTemplateId, comp.id, attempt.id, breakdown);
+    const diffStatus = status.find(s => s.name === 'Difficulty');
+    expect(diffStatus.judges[0].value).toBe(-2);
   });
 });
 
@@ -124,8 +146,7 @@ describe('createAttempts', () => {
     makeEntry(round.id, sp.id, 1);
 
     expect(createAttempts(round.id, '999')).toBe(20);
-    // '0' parses to the falsy number 0, which trips the `|| 2` default before the 1-20 clamp
-    // ever sees it — so "0" and an invalid string both fall back to the default of 2, not 1
+    // '0' parses to the falsy number 0, which trips the `|| 2` default before the 1-20 clamp ever sees it
     expect(createAttempts(round.id, '0')).toBe(2);
     expect(createAttempts(round.id, 'not-a-number')).toBe(2);
   });

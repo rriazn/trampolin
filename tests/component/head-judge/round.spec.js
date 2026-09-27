@@ -42,9 +42,7 @@ test.describe('not started state', () => {
   });
 });
 
-// Each test here re-seeds and starts its own round, since "Start Round" only works once per
-// round — sharing one seeded/started round across tests via beforeAll would make every test
-// after the first find no Start button (the round would already be in_progress).
+// each test re-seeds and starts its own round, since "Start Round" only works once per round
 test.describe('starting the round', () => {
   test.beforeEach(async ({ page, request }) => {
     const res = await request.post('/test/seed/head-judge');

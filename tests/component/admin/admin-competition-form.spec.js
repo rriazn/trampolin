@@ -26,7 +26,7 @@ test.describe('when logged in as admin', () => {
     await page.goto('/admin/competitions/new');
   });
 
-  //------------- Adding a new competition/general --------------
+  // Adding a new competition/general
   // Page structure
   test('shows the "New Competition" heading', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'New Competition' })).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('when logged in as admin', () => {
     await expect(selected).toHaveText('FIG Panel');
   });
 
-  //------------- Editing competitions --------------
+  // Editing competitions
 
   test.describe('edit competitions form', () => {
     test.beforeEach(async ({ page }) => {

@@ -1,7 +1,6 @@
 const { getAssignmentForCompetition } = require("./db/panels.crud");
 const {
-  getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getElementScoresForAttemptWithinElementCount,
-  getElementScoresLandingBonus, getAttemptElementCount,
+  getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getAttemptElementCount,
 } = require("./db/scores.crud");
 const { getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB } = require("./db/entries.crud");
 const { loadPanelSlots } = require("./panels.service");
@@ -32,7 +31,8 @@ exports.loadAttemptScoreMaps = (attemptId) => {
   return { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment };
 };
 
-exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, elementCount) => {
+// breakdown is computeAttemptScore's result, already computed by the caller, so this never re-derives element-role scoring on its own
+exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, breakdown) => {
   if (!panelTemplateId) return [];
   const assignments = getAssignmentForCompetition(competitionId, panelTemplateId);
 
@@ -40,39 +40,24 @@ exports.loadJudgeSubmissionStatus = (panelTemplateId, competitionId, attemptId, 
   for (const row of getScoresForAssignment(attemptId)) {
     scoresByAssignment.set(row.panel_assignment_id, row.score);
   }
-  // Disregard elements over the elementCount
-  const elementsByAssignment = new Map();
-  const filteredElementScores = getElementScoresForAttemptWithinElementCount(attemptId, elementCount);
-  for (const row of filteredElementScores) {
-    if (!elementsByAssignment.has(row.panel_assignment_id)) elementsByAssignment.set(row.panel_assignment_id, []);
-    elementsByAssignment.get(row.panel_assignment_id).push({ number: row.element_number, value: row.value });
-  }
-  // 11th line: landing/bonus
-  const landingBonusElement = getElementScoresLandingBonus(attemptId);
-  const extraByAssignment = new Map();
-  for (const row of landingBonusElement) {
-    extraByAssignment.set(row.panel_assignment_id, row.value);
-  }
+  const breakdownByRoleKey = new Map((breakdown || []).map(b => [b.judgeRoleKey, b]));
 
   const byRole = new Map();
   for (const a of assignments) {
     if (!byRole.has(a.role_key)) byRole.set(a.role_key, { key: a.role_key, name: a.role_name, granularity: a.granularity, judges: [] });
-    const elements = elementsByAssignment.get(a.assignment_id) || [];
-    const landingApplies = a.granularity === 'element' && a.isDeduction && elementCount === 10;
-    const bonusApplies = a.granularity === 'element' && !a.isDeduction;
-    const extraValue = (landingApplies || bonusApplies) ? extraByAssignment.get(a.assignment_id) : undefined;
-    const score = scoresByAssignment.has(a.assignment_id) ? scoresByAssignment.get(a.assignment_id) : null;
-    const submittedCount = a.granularity === 'element'
-      ? elements.length + (extraValue !== undefined ? 1 : 0)
-      : (score !== null ? 1 : 0);
-    const requiredCount = a.granularity === 'element' ? elementCount + (landingApplies ? 1 : 0) : 1;
-    const isDone = a.granularity === 'element' ? submittedCount >= requiredCount : submittedCount >= 1;
-    let value = score;
-    if (a.granularity === 'element' && elements.length > 0) {
-      const sum = elements.reduce((acc, el) => acc + el.value, 0) + (extraValue !== undefined ? extraValue : 0);
-      value = a.isDeduction ? elementCount - sum : sum;
+    if (a.granularity === 'element') {
+      const roleBreakdown = breakdownByRoleKey.get(a.role_key);
+      const personal = roleBreakdown?.perJudge?.find(pj => pj.assignmentId === a.assignment_id);
+      byRole.get(a.role_key).judges.push({
+        name: a.judge_name,
+        submittedCount: personal?.submittedCount ?? 0,
+        isDone: personal?.isComplete ?? false,
+        value: personal?.value ?? null,
+      });
+    } else {
+      const score = scoresByAssignment.has(a.assignment_id) ? scoresByAssignment.get(a.assignment_id) : null;
+      byRole.get(a.role_key).judges.push({ name: a.judge_name, submittedCount: score !== null ? 1 : 0, isDone: score !== null, value: score });
     }
-    byRole.get(a.role_key).judges.push({ name: a.judge_name, submittedCount, isDone, value });
   }
   return [...byRole.values()];
 };

@@ -188,9 +188,7 @@ test.describe('when logged in as admin', () => {
   });
 });
 
-// Regression: getAvailableSportsmen used to select from every athlete in the competition
-// instead of scoping to the round's own group, so athletes from unrelated groups showed up
-// as assignable to a round they don't belong to.
+// regression: getAvailableSportsmen used to select from the whole competition instead of scoping to the round's group
 test.describe('available athletes are scoped to the round\'s group', () => {
   let multiGroupSeed;
 

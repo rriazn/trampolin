@@ -131,8 +131,7 @@ describe('GET /leaderboard with per_judge execution aggregation (local panel)', 
 
     const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
     const hash = bcrypt.hashSync('secret', 10);
-    // 4 execution judges each give their own single-trick deduction; personal final scores work
-    // out to 6.9, 6.7, 6.8, 6.5 — drop the high (6.9) and low (6.5), sum the rest -> 13.5
+    // 4 execution judges give personal finals 6.9, 6.7, 6.8, 6.5, drop high/low, sum the rest -> 13.5
     const deductions = [3.1, 3.3, 3.2, 3.5];
     deductions.forEach((ded, i) => {
       db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run(`Local Exec ${i}`, `localexec${i}@test.com`, hash, 'referee');

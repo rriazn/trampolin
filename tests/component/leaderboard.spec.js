@@ -117,8 +117,7 @@ test.describe('with scored athletes', () => {
 
   test('shows a per-role breakdown tooltip and a partial marker on each attempt score', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    // scored seed only submits the time_of_flight role, so every attempt is partial (marked *)
-    // and the other roles are absent from the breakdown title.
+    // scored seed only submits time_of_flight, so every attempt is partial (marked *)
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
     const scoreSpan = bobRow.locator('td').nth(4).locator('span');
     await expect(scoreSpan).toHaveAttribute('title', /Time of Flight: 9\.20/);
@@ -127,7 +126,7 @@ test.describe('with scored athletes', () => {
 
   test('renders one attempt column per attempt number in the round', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    // scored seed: Bob and Charlie have 2 attempts, Alice has 1 → maxAttempts = 2
+    // scored seed: Bob and Charlie have 2 attempts, Alice has 1, so maxAttempts = 2
     await expect(page.getByRole('columnheader', { name: 'Attempt 1' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Attempt 2' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /Attempt \d+/ })).toHaveCount(2);
@@ -181,8 +180,7 @@ test.describe('per-trick transparency table', () => {
   });
 
   test.beforeAll(async ({ browser }) => {
-    // Start the round and submit real execution/difficulty scores through the actual UI so the
-    // leaderboard has real element_scores rows to build the transparency table from.
+    // start the round and submit real scores through the actual UI so the leaderboard has real element_scores rows to build from
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -207,6 +205,7 @@ test.describe('per-trick transparency table', () => {
     await page.getByText('Group A · Finals').click();
     await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
     await page.locator('input[name=element_1]').fill('15');
+    await page.locator('input[type=radio][name=element_12][value="2"]').check();
     await page.getByRole('button', { name: /Save/ }).click();
 
     await context.close();
@@ -227,5 +226,12 @@ test.describe('per-trick transparency table', () => {
     await expect(modal.getByText('Diff Judge')).toBeVisible();
     await expect(modal).toContainText('0.3');
     await expect(modal).toContainText('1.5'); // difficulty's "15" entry, true value 1.5
+  });
+
+  test('labels the missing-skill deduction column instead of showing a bare element number', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${hjSeed.competitionId}/groups/${hjSeed.groupId}/rounds/${hjSeed.roundId}`);
+    await page.locator('button[data-bs-toggle="modal"]').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('columnheader', { name: 'Missing skill' })).toBeVisible();
   });
 });

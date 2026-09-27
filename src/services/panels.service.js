@@ -59,8 +59,7 @@ exports.getJudgesForCompetition = (competition) => {
     const panelTemplate = getPanelById(competition.panel_template_id);
     const groups = exports.groupPanelSlots(competition.panel_template_id);
     
-    // A user may only hold one role (one shared-assignment group) per competition, so anyone
-    // already assigned to ANY role here is ineligible for every other role's candidate list.
+    // a user may only hold one role (shared-assignment group) per competition, so anyone assigned to any role here is ineligible for the rest
     const assignedAnywhereIds = new Set(
         getUsersByCompetitionId(competition.id).map(u => u.user_id)
     );
@@ -73,7 +72,7 @@ exports.getJudgesForCompetition = (competition) => {
         if (!byUser.has(row.user_id)) byUser.set(row.user_id, { user_id: row.user_id, name: row.name, email: row.email, assignment_id: row.assignment_id, roleIds: new Set() });
         byUser.get(row.user_id).roleIds.add(row.judge_role_id);
         }
-        // Only users covering EVERY role in the group count as fully assigned to it.
+        // only users covering every role in the group count as fully assigned to it
         const assigned = [...byUser.values()].filter(u => u.roleIds.size === group.judgeRoleIds.length);
         const eligibleRole = group.roleKey === 'head_judge' ? 'head_judge' : 'referee';
         const candidates = getUsersByRole(eligibleRole).filter(u => !assignedAnywhereIds.has(u.id));

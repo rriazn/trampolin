@@ -28,7 +28,7 @@ describe('combineScores', () => {
   });
 
   it('falls back to combining everything when there are not enough scores to drop from', () => {
-    // Normal state during partial live judging: e.g. only 2 of 6 execution judges submitted yet.
+    // normal state during partial live judging, e.g. only 2 of 6 execution judges submitted yet
     expect(combineScores({ scores: [3, 5], dropHigh: 2, dropLow: 2, combine: 'sum' })).toBe(8);
     expect(combineScores({ scores: [3, 5], dropHigh: 2, dropLow: 2, combine: 'mean' })).toBe(4);
   });
@@ -48,7 +48,7 @@ describe('combineScores', () => {
 });
 
 describe('computeAttemptScore', () => {
-  // Mirrors the seeded 'fig' panel_template_slots (see src/db/seedDefaults.js).
+  // mirrors the seeded 'fig' panel_template_slots (see src/db/seedDefaults.js)
   const FIG_SLOTS = [
     { judgeRoleId: 1, judgeRoleKey: 'execution', judgeRoleName: 'Execution', granularity: 'element', isDeduction: true, maxValue: 10, judgeCount: 6, dropHigh: 2, dropLow: 2, combine: 'sum', multiplier: 1 },
     { judgeRoleId: 2, judgeRoleKey: 'difficulty', judgeRoleName: 'Difficulty', granularity: 'element', isDeduction: false, maxValue: null, judgeCount: 1, dropHigh: 0, dropLow: 0, combine: 'sum', multiplier: 1 },
@@ -78,8 +78,7 @@ describe('computeAttemptScore', () => {
 
     const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2);
 
-    // execution: elementCount(2) - (0.3 + 0.5) = 1.2 (max scales to skills actually performed,
-    // per Code of Points — not the role's fixed max_value)
+    // execution: elementCount(2) - (0.3 + 0.5) = 1.2, max scales to skills performed not the fixed max_value
     // difficulty: 2.5, time_of_flight: 8.0, horizontal_displacement: 9.4, head_judge: -0.2
     expect(result.total).toBeCloseTo(1.2 + 2.5 + 8.0 + 9.4 - 0.2);
     expect(result.isComplete).toBe(true);
@@ -98,7 +97,7 @@ describe('computeAttemptScore', () => {
   });
 
   it('scales a deduction role\'s max to the number of skills actually performed, not a fixed constant', () => {
-    // A routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10).
+    // a routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10)
     const elementScoresByJudgeRoleId = new Map([
       [1, new Map([
         // trick 1: all 6 judges give 0.1 -> drop 2 hi/2 lo -> keep two 0.1s -> sum 0.2; tricks 2-6: 0
@@ -229,6 +228,45 @@ describe('computeAttemptScore', () => {
     });
   });
 
+  describe('missing compulsory skill deduction (difficulty judges, element 12)', () => {
+    it('subtracts the 2.0-point penalty from the difficulty total when present', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]], [12, [2.0]]])], // difficulty: 1 trick worth 2.0, penalty applied
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(0);
+    });
+
+    it('can drive the difficulty value (and the attempt total) negative when the penalty exceeds tricks scored', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 1 - 0 = 1
+        [2, new Map([[1, [1.0]], [12, [2.0]]])], // difficulty: 1.0 minus 2.0 penalty -> -1.0
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [0]], [4, [0]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(-1.0);
+      expect(result.total).toBeCloseTo(1 - 1.0);
+    });
+
+    it('defaults to 0 (no penalty) when the deduction was not entered', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]]])],
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(2.0);
+    });
+  });
+
   describe('elementCount 0 (no skills performed at all)', () => {
     it('only requires and counts head_judge; every other role auto-completes with 0 contribution', () => {
       const result = computeAttemptScore(FIG_SLOTS, new Map([[5, [0.4]]]), new Map(), 0);
@@ -262,7 +300,7 @@ describe('computeAttemptScore', () => {
       const scoresByJudgeRoleId = new Map([
         [3, [8.5]], // stale time_of_flight
         [4, [9.0]], // stale horizontal_displacement
-        [5, [0.2]], // head_judge — the only role that should count
+        [5, [0.2]], // head_judge, the only role that should count
       ]);
       const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 0);
       expect(result.total).toBeCloseTo(-0.2);
@@ -273,6 +311,41 @@ describe('computeAttemptScore', () => {
       const result = computeAttemptScore(FIG_SLOTS, new Map([[5, [0]]]), elementScoresByJudgeRoleId, 0);
       const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
       expect(difficultyBreakdown.value).toBe(0);
+    });
+  });
+
+  describe('perJudge (each assignment\'s personal, uncombined value)', () => {
+    it('computes each judge\'s personal value for a per_trick (default aggregation) element role', () => {
+      const elementScoresByAssignment = new Map([
+        [2, new Map([
+          [201, new Map([[1, 1.0], [2, 1.5]])], // difficulty judge: 1.0 + 1.5 = 2.5
+        ])],
+      ]);
+      const elementScoresByJudgeRoleId = new Map([[2, new Map([[1, [1.0]], [2, [1.5]]])]]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: 2.5, submittedCount: 2, isComplete: true }]);
+    });
+
+    it('subtracts the missing-skill deduction (element 12) from a judge\'s personal value', () => {
+      const elementScoresByAssignment = new Map([
+        [2, new Map([[201, new Map([[1, 1.0], [12, 2.0]])]])],
+      ]);
+      const elementScoresByJudgeRoleId = new Map([[2, new Map([[1, [1.0]]])]]);
+      const scoresByJudgeRoleId = new Map([[3, [0]], [4, [0]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: -1.0, submittedCount: 2, isComplete: true }]);
+    });
+
+    it('lists a null value and isComplete false for a judge who has not submitted anything', () => {
+      const elementScoresByAssignment = new Map([[2, new Map([[201, new Map()]])]]);
+      const result = computeAttemptScore(FIG_SLOTS, new Map(), new Map(), 2, elementScoresByAssignment);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.perJudge).toEqual([{ assignmentId: 201, value: null, submittedCount: 0, isComplete: false }]);
     });
   });
 
@@ -303,6 +376,8 @@ describe('computeAttemptScore', () => {
       const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
       expect(executionBreakdown.value).toBeCloseTo(13.5);
       expect(executionBreakdown.isComplete).toBe(true);
+      expect(executionBreakdown.perJudge.map(pj => pj.value)).toEqual([6.9, 6.7, 6.8, 6.5]);
+      expect(executionBreakdown.perJudge.every(pj => pj.isComplete)).toBe(true);
     });
 
     it('is not complete until judgeCount judges have each submitted every element', () => {

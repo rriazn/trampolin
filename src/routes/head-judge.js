@@ -5,17 +5,17 @@ const headJudgeController = require('../controllers/head-judge.controller');
 
 router.use(requireHeadJudge);
 
-// ── Dashboard ────────────────────────────────────────────────────────────────────
+// Dashboard
 router.get('/', headJudgeController.getDashboard);
 
-// ── Rounds ───────────────────────────────────────────────────────────────────
+// Rounds
 router.get('/competitions/:cid/groups/:gid/rounds/:rid', headJudgeController.getRound);
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/start', headJudgeController.startRound);
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/complete', headJudgeController.completeRound);
 
-// ── Attempts ───────────────────────────────────────────────────────────────────
+// Attempts
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/back', headJudgeController.backAttempt);
 
@@ -23,7 +23,7 @@ router.post('/competitions/:cid/groups/:gid/rounds/:rid/next', headJudgeControll
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/skip', headJudgeController.skipAttempt);
 
-// ── Scoring ───────────────────────────────────────────────────────────────────
+// Scoring
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/score', headJudgeController.penaltyDeduction);
 

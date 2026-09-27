@@ -190,8 +190,7 @@ describe('POST /referee/score/elements (element-granularity roles)', () => {
   });
 
   it('saves all trick values and redirects to the round view', async () => {
-    // Difficulty is entered x10 for easier typing (e.g. "10" -> true tariff 1.0) and divided back
-    // down server-side.
+    // difficulty is entered x10 for easier typing (e.g. "10" -> true tariff 1.0) and divided back down server-side
     const res = await agent.post('/referee/score/elements').type('form')
       .send({ attemptId: data.attemptId, judgeRoleId: data.roleIds.difficulty, element_1: '10', element_2: '10', element_3: '15' });
     expect(res.status).toBe(302);
@@ -308,6 +307,62 @@ describe('POST /referee/score/elements (bonus, difficulty)', () => {
     const bonus = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=11')
       .get(bonusData.attemptId, bonusData.roleIds.difficulty);
     expect(bonus.value).toBe(0.3);
+  });
+});
+
+describe('POST /referee/score/elements (missing compulsory skill deduction, difficulty)', () => {
+  let missingSkillData, missingSkillAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Missing Skill Cup', 'active', panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'MS');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Test Athlete', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 2)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+    missingSkillData = { attemptId: attempt.lastInsertRowid, competitionId: comp.lastInsertRowid, groupId: group.lastInsertRowid, roundId: round.lastInsertRowid, roleIds };
+    missingSkillAgent = await loginReferee(app);
+    assignJudge(comp.lastInsertRowid, roleIds.difficulty, getUserIdByEmail('ref@test.com'));
+    startRound(round.lastInsertRowid, attempt.lastInsertRowid);
+  });
+
+  it('does not require element_12 (the deduction is optional)', async () => {
+    const res = await missingSkillAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: missingSkillData.attemptId, judgeRoleId: missingSkillData.roleIds.difficulty, element_1: '10', element_2: '10' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=12')
+      .get(missingSkillData.attemptId, missingSkillData.roleIds.difficulty);
+    expect(saved).toBeUndefined();
+  });
+
+  it('rejects a value other than 0 or 2', async () => {
+    const res = await missingSkillAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: missingSkillData.attemptId, judgeRoleId: missingSkillData.roleIds.difficulty, element_1: '10', element_2: '10', element_12: '1' });
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts 0 and persists it as element_number 12', async () => {
+    const res = await missingSkillAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: missingSkillData.attemptId, judgeRoleId: missingSkillData.roleIds.difficulty, element_1: '10', element_2: '10', element_12: '0' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=12')
+      .get(missingSkillData.attemptId, missingSkillData.roleIds.difficulty);
+    expect(saved.value).toBe(0);
+  });
+
+  it('accepts 2 and reduces the displayed difficulty value below zero when it exceeds the tricks scored', async () => {
+    const res = await missingSkillAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: missingSkillData.attemptId, judgeRoleId: missingSkillData.roleIds.difficulty, element_1: '5', element_2: '0', element_12: '2' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT value FROM element_scores WHERE attempt_id=? AND judge_role_id=? AND element_number=12')
+      .get(missingSkillData.attemptId, missingSkillData.roleIds.difficulty);
+    expect(saved.value).toBe(2);
+
+    const page = await missingSkillAgent.get(`/referee/competitions/${missingSkillData.competitionId}/groups/${missingSkillData.groupId}/rounds/${missingSkillData.roundId}`);
+    expect(page.text).toContain('-1.50');
   });
 });
 

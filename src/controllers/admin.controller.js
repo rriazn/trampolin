@@ -83,7 +83,7 @@ exports.updateUser = async (req, res) => {
         user, action, error: req.t('admin:userForm.errors.emailInUse'),
         });
     }
-    // password change bumps token_version and would otherwise log out the session making it
+    // keep the acting session alive since its own password change just bumped token_version
     if (password && req.session.user && req.session.user.id === Number(req.params.id)) {
         req.session.tokenVersion = getUserTokenVersion(req.params.id);
     }
@@ -446,10 +446,8 @@ exports.getEntries = async (req, res) => {
 
     const entries = getEntriesWithAttemptsInfo(rid);
 
-    // Get all sportsmen in this round's group that are not already in this round
     let available = getAvailableSportsmen(round.competition_id, round.group_id, rid);
 
-    // If a previous round exists in this group, rank available athletes by their placement there
     const prevRound = getPreviousRoundInfo(round.group_id, round.round_order);
 
     if (prevRound) {

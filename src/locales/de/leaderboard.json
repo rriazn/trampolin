@@ -18,6 +18,7 @@
     "attemptTitle": "{{name}} — Versuch {{number}}",
     "judge": "Kampfrichter",
     "landing": "Landung",
-    "bonus": "Bonus"
+    "bonus": "Bonus",
+    "missingSkill": "Fehlendes Element"
   }
 }

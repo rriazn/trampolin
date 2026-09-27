@@ -70,7 +70,7 @@ describe('buildLeaderboard', () => {
 
   it('picks the best of multiple attempts, and exposes the second-best for tie-breaking', () => {
     const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge();
-    scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Improving', [5, 1]); // contributions: -5, -1 → best -1
+    scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Improving', [5, 1]); // contributions -5, -1, best is -1
 
     const { leaderboard } = buildLeaderboard(comp, round);
     const row = leaderboard.find(r => r.name === 'Improving');
@@ -97,8 +97,7 @@ describe('buildLeaderboard', () => {
       expect(leaderboard[1].total).toBe(-6);
     });
 
-    // Regression: Array.prototype.reduce(fn, 0) on an empty attempts array used to return 0
-    // instead of null, so an unscored athlete in sum mode ranked as if they'd scored a perfect 0.
+    // regression: reduce(fn, 0) on an empty attempts array returned 0 instead of null, ranking an unscored athlete as a perfect 0 in sum mode
     it('does not give an unscored athlete a total of 0', () => {
       const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge('test', 'sum');
       scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Scored', [2]);

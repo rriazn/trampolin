@@ -47,9 +47,7 @@ describe('POST /admin/competitions/:cid/groups/:gid/rounds', () => {
         expect(res.status).toBe(403);
     });
 
-    // Regression: addRoundDB used to be called with whatever req.body.scoring_mode was, including
-    // undefined when the field was omitted — better-sqlite3 throws binding undefined, so this used
-    // to 500 instead of falling back to the schema's 'sum' default.
+    // regression: an omitted scoring_mode used to bind undefined and 500 instead of defaulting to 'sum'
     it('creates a new round without a scoring_mode and defaults it to "sum"', async () => {
         const res = await agent.post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds`).type('form').send({ name: 'Round B' });
         expect(res.status).toBe(302);

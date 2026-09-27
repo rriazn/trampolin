@@ -38,7 +38,7 @@ exports.getRoundOverview = (round, userId, readiness) => {
     const { scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementScoresByAssignment } = loadAttemptScoreMaps(attempt.attempt_id);
     const { total, breakdown, isComplete } = computeAttemptScore(panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, attempt.element_count, elementScoresByAssignment);
     const hasAnyScore = scoresByJudgeRoleId.size > 0 || elementScoresByJudgeRoleId.size > 0;
-    const judgeStatus = loadJudgeSubmissionStatus(round.panel_template_id, round.competition_id, attempt.attempt_id, attempt.element_count);
+    const judgeStatus = loadJudgeSubmissionStatus(round.panel_template_id, round.competition_id, attempt.attempt_id, breakdown);
 
     // computeAttemptScore tracks element-granularity roles per-trick, not per-judge
     breakdown.forEach(item => {
@@ -82,6 +82,7 @@ exports.getRefereeRoundInfo = (round, userId) => {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'landing' });
         } else if (!a.isDeduction && attempt.element_count > 0) {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'bonus' });
+            elements.push({ number: 12, value: valueByElement.has(12) ? valueByElement.get(12) : null, kind: 'missingSkill' });
         }
         const hasSubmitted = existing.length > 0;
         return { ...a, elements, contribution: hasSubmitted ? contribution : null };
