@@ -14,6 +14,7 @@
     "attemptNumber": "Versuch #{{number}}",
     "landing": "Landung",
     "bonus": "Bonus",
+    "missingSkill": "Fehlendes Pflichtelement",
     "trick": "Element {{number}}",
     "saved": "Gespeichert",
     "currentValue": "Aktueller Wert für {{name}}:",
@@ -28,7 +29,8 @@
     "unknownCombineMode": "Unbekannter Wertungsmodus: {{mode}}",
     "trickRange": "Element {{number}}: {{rangeError}}",
     "landingRange": "Landung: Wertung muss zwischen 0 und 1.0 sein.",
-    "bonusRange": "Bonus: {{rangeError}}"
+    "bonusRange": "Bonus: {{rangeError}}",
+    "missingSkillRange": "Fehlendes Pflichtelement: Wert muss 0 oder 2.0 sein."
   },
   "rangeError": {
     "max": "Wertung muss zwischen {{min}} und {{max}} sein.",

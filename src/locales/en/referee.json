@@ -14,6 +14,7 @@
     "attemptNumber": "Attempt #{{number}}",
     "landing": "Landing",
     "bonus": "Bonus",
+    "missingSkill": "Missing compulsory skill",
     "trick": "Trick {{number}}",
     "saved": "Saved",
     "currentValue": "Current {{name}} value:",
@@ -28,7 +29,8 @@
     "unknownCombineMode": "Unknown combine mode: {{mode}}",
     "trickRange": "Trick {{number}}: {{rangeError}}",
     "landingRange": "Landing: score must be between 0 and 1.0.",
-    "bonusRange": "Bonus: {{rangeError}}"
+    "bonusRange": "Bonus: {{rangeError}}",
+    "missingSkillRange": "Missing compulsory skill: value must be 0 or 2.0."
   },
   "rangeError": {
     "max": "Score must be between {{min}} and {{max}}.",

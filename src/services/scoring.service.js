@@ -75,6 +75,16 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         }
       }
 
+      // Missing compulsory skill deduction (FIG Code of Points 6.1.2): fixed 2.0-point penalty
+      if (!slot.isDeduction && elementCount > 0) {
+        const values = elementScores.get(12) || [];
+        if (values.length > 0) {
+          const missingSkillValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
+          combinedTotal -= missingSkillValue ?? 0;
+          perTrick.push({ elementNumber: 12, value: missingSkillValue, count: values.length, required: slot.judgeCount, isComplete: true, isMissingSkill: true });
+        }
+      }
+
       let roleValue, roleComplete;
       if (slot.aggregation === 'per_judge') {
         // Each judge sums their own deductions across the routine first, then those per-judge
@@ -162,6 +172,15 @@ exports.parseAndValidateElementScores = (assignment, elementCount, elements, t) 
         parsedValues.push([n, parsed]);
     }
     return parsedValues;
+};
+
+exports.parseMissingSkillDeduction = (assignment, elementCount, element_12, t) => {
+    if (assignment.isDeduction || elementCount === 0 || element_12 === undefined || element_12 === '') return null;
+    const raw = parseFloat(element_12);
+    if (raw !== 0 && raw !== 2) {
+        throw new RangeError(t('referee:errors.missingSkillRange'));
+    }
+    return [12, raw];
 };
 
 exports.parseAndValidate11thScore = (assignment, elementCount, element_11, t) => {

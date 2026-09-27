@@ -177,4 +177,18 @@ test.describe('difficulty judge: x10 numeral inputs and bonus', () => {
   test('the bonus input is optional (not required) and can be left blank', async ({ page }) => {
     await expect(page.locator('input[name=element_11]')).not.toHaveAttribute('required', '');
   });
+
+  test('shows a "Missing compulsory skill" line with two radio options (0 and 2)', async ({ page }) => {
+    await expect(page.getByText('Missing compulsory skill')).toBeVisible();
+    await expect(page.locator('input[type=radio][name=element_12]')).toHaveCount(2);
+  });
+
+  test('defaults to 0 selected and lets the judge check the 2.0 penalty', async ({ page }) => {
+    const zeroBox = page.locator('input[type=radio][name=element_12][value="0"]');
+    await expect(zeroBox).toBeChecked();
+    await page.locator('input[type=radio][name=element_12][value="2"]').check();
+    await page.getByRole('button', { name: /Save/ }).click();
+    await expect(page.locator('.alert-success')).toBeVisible();
+    await expect(page.locator('input[type=radio][name=element_12][value="2"]')).toBeChecked();
+  });
 });

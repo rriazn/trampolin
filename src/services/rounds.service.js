@@ -82,6 +82,7 @@ exports.getRefereeRoundInfo = (round, userId) => {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'landing' });
         } else if (!a.isDeduction && attempt.element_count > 0) {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'bonus' });
+            elements.push({ number: 12, value: valueByElement.has(12) ? valueByElement.get(12) : null, kind: 'missingSkill' });
         }
         const hasSubmitted = existing.length > 0;
         return { ...a, elements, contribution: hasSubmitted ? contribution : null };

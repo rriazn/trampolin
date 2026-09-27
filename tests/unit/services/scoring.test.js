@@ -229,6 +229,45 @@ describe('computeAttemptScore', () => {
     });
   });
 
+  describe('missing compulsory skill deduction (difficulty judges, element 12)', () => {
+    it('subtracts the 2.0-point penalty from the difficulty total when present', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]], [12, [2.0]]])], // difficulty: 1 trick worth 2.0, penalty applied
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(0);
+    });
+
+    it('can drive the difficulty value (and the attempt total) negative when the penalty exceeds tricks scored', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 1 - 0 = 1
+        [2, new Map([[1, [1.0]], [12, [2.0]]])], // difficulty: 1.0 minus 2.0 penalty -> -1.0
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [0]], [4, [0]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(-1.0);
+      expect(result.total).toBeCloseTo(1 - 1.0);
+    });
+
+    it('defaults to 0 (no penalty) when the deduction was not entered', () => {
+      const elementScoresByJudgeRoleId = new Map([
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])],
+        [2, new Map([[1, [2.0]]])],
+      ]);
+      const scoresByJudgeRoleId = new Map([[3, [8]], [4, [8]], [5, [0]]]);
+
+      const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
+      const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
+      expect(difficultyBreakdown.value).toBeCloseTo(2.0);
+    });
+  });
+
   describe('elementCount 0 (no skills performed at all)', () => {
     it('only requires and counts head_judge; every other role auto-completes with 0 contribution', () => {
       const result = computeAttemptScore(FIG_SLOTS, new Map([[5, [0.4]]]), new Map(), 0);

@@ -207,6 +207,7 @@ test.describe('per-trick transparency table', () => {
     await page.getByText('Group A · Finals').click();
     await page.waitForURL(/\/referee\/competitions\/\d+\/groups\/\d+\/rounds\/\d+/);
     await page.locator('input[name=element_1]').fill('15');
+    await page.locator('input[type=radio][name=element_12][value="2"]').check();
     await page.getByRole('button', { name: /Save/ }).click();
 
     await context.close();
@@ -227,5 +228,12 @@ test.describe('per-trick transparency table', () => {
     await expect(modal.getByText('Diff Judge')).toBeVisible();
     await expect(modal).toContainText('0.3');
     await expect(modal).toContainText('1.5'); // difficulty's "15" entry, true value 1.5
+  });
+
+  test('labels the missing-skill deduction column instead of showing a bare element number', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${hjSeed.competitionId}/groups/${hjSeed.groupId}/rounds/${hjSeed.roundId}`);
+    await page.locator('button[data-bs-toggle="modal"]').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('columnheader', { name: 'Missing skill' })).toBeVisible();
   });
 });

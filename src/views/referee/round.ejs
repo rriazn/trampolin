@@ -46,10 +46,11 @@
     <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
     <% input.elements.forEach((el, idx) => { %>
     <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
-        <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
+        <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : el.kind === 'missingSkill' ? 'bg-danger bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
       <span class="fw-600" style="width:90px">
         <% if (el.kind === 'landing') { %><%= t('referee:round.landing') %>
         <% } else if (el.kind === 'bonus') { %><%= t('referee:round.bonus') %>
+        <% } else if (el.kind === 'missingSkill') { %><%= t('referee:round.missingSkill') %>
         <% } else { %><%= t('referee:round.trick', { number: el.number }) %>
         <% } %>
       </span>
@@ -66,9 +67,20 @@
         </div>
         <% }) %>
       </div>
+      <% } else if (el.kind === 'missingSkill') { %>
+      <div class="d-flex gap-3 flex-wrap">
+        <% [0, 2.0].forEach(v => { %>
+        <div class="form-check form-check-inline m-0">
+          <input class="form-check-input" type="radio" name="element_<%= el.number %>"
+                 id="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>" value="<%= v %>"
+                 <%= (el.value !== null ? el.value : 0) === v ? 'checked' : '' %>>
+          <label class="form-check-label small" for="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>"><%= v %></label>
+        </div>
+        <% }) %>
+      </div>
       <% } else { %>
       <input type="number" name="element_<%= el.number %>"
-             value="<%= el.value !== null ? Math.round(el.value * 10) : '' %>"
+             value="<%= el.value !== null ? Math.round(el.value * 10) : 0 %>"
              min="0" step="1" class="form-control form-control-sm" style="width:90px"
              <% if (el.kind !== 'bonus') { %>required<% } %>>
       <span class="text-muted small">/10</span>

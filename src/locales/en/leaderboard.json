@@ -18,6 +18,7 @@
     "attemptTitle": "{{name}} — Attempt {{number}}",
     "judge": "Judge",
     "landing": "Landing",
-    "bonus": "Bonus"
+    "bonus": "Bonus",
+    "missingSkill": "Missing skill"
   }
 }
