@@ -8,8 +8,9 @@ npm run seed
 npm start
 ```
 
-A pre-commit hook runs `eslint src/ tests/` - fix lint errors before committing, don't bypass with
-`--no-verify`.
+A pre-commit hook runs `eslint src/ tests/` and `gitleaks protect --staged` - fix lint errors and
+remove any flagged secrets before committing, don't bypass with `--no-verify`. `gitleaks` is
+installed automatically in the devcontainer via `scripts/install-gitleaks.sh`.
 
 ## Architecture
 

@@ -11,7 +11,7 @@
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "npx eslint src/ tests/"
+    "pre-commit": "npx eslint src/ tests/ && gitleaks protect --staged --redact -v"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
