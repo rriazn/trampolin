@@ -105,6 +105,16 @@ npx playwright test tests/integration --config playwright.integration.config.js
 ./scripts/run-integration-tests.sh --local --production-image trampolin-test:1
 ```
 
+## Secret scanning
+
+[gitleaks](https://github.com/gitleaks/gitleaks) scans for committed secrets. It runs as a pre-commit
+hook (installed via `scripts/install-gitleaks.sh` in the devcontainer) and as a CI step. To run it
+manually:
+
+```bash
+gitleaks detect --source . --no-git --redact -v
+```
+
 ## Architecture
 
 `src/routes` -> `src/controllers` -> `src/services` -> `src/services/db`. Routes wire up path + verb +

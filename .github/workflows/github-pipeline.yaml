@@ -98,6 +98,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+      - name: Install gitleaks
+        run: |
+          ./scripts/install-gitleaks.sh "$RUNNER_TEMP/gitleaks-bin"
+          echo "$RUNNER_TEMP/gitleaks-bin" >> "$GITHUB_PATH"
+      - name: Run gitleaks
+        run: gitleaks detect --source . --no-git --redact -v
+      - uses: IgnaceMaes/comment-ratio@v1
+        with:
+          max-comment-ratio: 0.10
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Log in to Docker Hub

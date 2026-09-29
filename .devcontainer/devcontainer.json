@@ -5,8 +5,11 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   "forwardPorts": [3000],
-  "postCreateCommand": "npm install && npx playwright install --with-deps chromium",
+  "postCreateCommand": "npm install && npx playwright install --with-deps chromium && bash scripts/install-gitleaks.sh",
   "postStartCommand": "npm rebuild",
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/home/node/.local/bin"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
