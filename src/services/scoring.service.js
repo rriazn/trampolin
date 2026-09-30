@@ -112,7 +112,8 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         roleValue = exports.combineScores({ scores: perJudgeScores, dropHigh, dropLow, combine, multiplier: 1 }) ?? 0;
         roleComplete = fullyDoneCount >= slot.judgeCount;
       } else {
-        roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
+        const countedJudges = combine === 'sum' && slot.judgeCount > dropHigh + dropLow ? slot.judgeCount - dropHigh - dropLow : 1;
+        roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? countedJudges * elementCount - combinedTotal : combinedTotal);
         roleComplete = perTrickComplete;
       }
 

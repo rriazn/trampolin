@@ -78,26 +78,26 @@ describe('computeAttemptScore', () => {
 
     const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 2);
 
-    // execution: elementCount(2) - (0.3 + 0.5) = 1.2, max scales to skills performed not the fixed max_value
+    // execution: 2 counted judges x elementCount(2) - (0.3 + 0.5) = 3.2 (FIG 17.2.3.2)
     // difficulty: 2.5, time_of_flight: 8.0, horizontal_displacement: 9.4, head_judge: -0.2
-    expect(result.total).toBeCloseTo(1.2 + 2.5 + 8.0 + 9.4 - 0.2);
+    expect(result.total).toBeCloseTo(3.2 + 2.5 + 8.0 + 9.4 - 0.2);
     expect(result.isComplete).toBe(true);
     expect(result.breakdown).toHaveLength(5);
   });
 
   it('computes a full local-shape attempt score (execution + difficulty - head_judge penalty)', () => {
     const elementScoresByJudgeRoleId = new Map([
-      [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> elementCount(1) - 0 = 1
+      [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 2 counted judges x elementCount(1) - 0 = 2
       [2, new Map([[1, [2.0]]])], // difficulty
     ]);
     const scoresByJudgeRoleId = new Map([[5, [0.4]]]); // head_judge penalty
 
     const result = computeAttemptScore(LOCAL_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
-    expect(result.total).toBeCloseTo(1 + 2.0 - 0.4);
+    expect(result.total).toBeCloseTo(2 + 2.0 - 0.4);
   });
 
   it('scales a deduction role\'s max to the number of skills actually performed, not a fixed constant', () => {
-    // a routine shortened to 6 tricks: execution's max is 6, not the role's max_value (10)
+    // a routine shortened to 6 tricks: execution's max is 2 counted judges x 6, not the role's max_value (10)
     const elementScoresByJudgeRoleId = new Map([
       [1, new Map([
         // trick 1: all 6 judges give 0.1 -> drop 2 hi/2 lo -> keep two 0.1s -> sum 0.2; tricks 2-6: 0
@@ -110,7 +110,36 @@ describe('computeAttemptScore', () => {
 
     const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 6);
     const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
-    expect(executionBreakdown.value).toBeCloseTo(6 - 0.2); // not 10 - 0.2
+    expect(executionBreakdown.value).toBeCloseTo(12 - 0.2); // not 20 - 0.2
+  });
+
+  describe('execution max (FIG 17.2.3.2)', () => {
+    const fullRoutine = (judgeValues) => {
+      const tricks = new Map();
+      for (let n = 1; n <= 10; n++) tricks.set(n, judgeValues);
+      tricks.set(11, judgeValues);
+      return tricks;
+    };
+    const executionSlot = (overrides) => ({ ...FIG_SLOTS[0], ...overrides });
+
+    it('gives a max of 20 for a clean full routine on the fig panel (sum of the two median judges)', () => {
+      const result = computeAttemptScore([FIG_SLOTS[0]], new Map(), new Map([[1, fullRoutine([0, 0, 0, 0, 0, 0])]]), 10);
+      expect(result.breakdown[0].value).toBeCloseTo(20);
+    });
+
+    it('keeps a max of 10 when only one judge is counted after drops', () => {
+      const slot = executionSlot({ judgeCount: 1, dropHigh: 1, dropLow: 1 });
+      const result = computeAttemptScore([slot], new Map(), new Map([[1, fullRoutine([0.1])]]), 10);
+      expect(result.breakdown[0].value).toBeCloseTo(10 - 1.1);
+    });
+
+    it('keeps a max of 10 for median and mean combines', () => {
+      for (const combine of ['median', 'mean']) {
+        const slot = executionSlot({ judgeCount: 3, dropHigh: 0, dropLow: 0, combine });
+        const result = computeAttemptScore([slot], new Map(), new Map([[1, fullRoutine([0.1, 0.1, 0.1])]]), 10);
+        expect(result.breakdown[0].value).toBeCloseTo(10 - 1.1);
+      }
+    });
   });
 
   it('is not complete until every trick meets the required judge count for element roles', () => {
@@ -165,7 +194,7 @@ describe('computeAttemptScore', () => {
 
       const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 10);
       const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
-      expect(executionBreakdown.value).toBeCloseTo(10 - 0.2); // 10 tricks, 0 deduction each, minus landing's 0.2
+      expect(executionBreakdown.value).toBeCloseTo(20 - 0.2); // 2 counted judges x 10 tricks, minus landing's 0.2
       expect(executionBreakdown.perTrick).toHaveLength(11);
       expect(executionBreakdown.perTrick[10].isLanding).toBe(true);
       expect(result.isComplete).toBe(true);
@@ -195,7 +224,7 @@ describe('computeAttemptScore', () => {
 
       const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 6);
       const executionBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'execution');
-      expect(executionBreakdown.value).toBeCloseTo(6); // no deductions, landing ignored
+      expect(executionBreakdown.value).toBeCloseTo(12); // no deductions, landing ignored
       expect(executionBreakdown.perTrick).toHaveLength(6);
       expect(result.isComplete).toBe(true);
     });
@@ -243,7 +272,7 @@ describe('computeAttemptScore', () => {
 
     it('can drive the difficulty value (and the attempt total) negative when the penalty exceeds tricks scored', () => {
       const elementScoresByJudgeRoleId = new Map([
-        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 1 - 0 = 1
+        [1, new Map([[1, [0, 0, 0, 0, 0, 0]]])], // execution: no deductions -> 2 counted judges x 1 - 0 = 2
         [2, new Map([[1, [1.0]], [12, [2.0]]])], // difficulty: 1.0 minus 2.0 penalty -> -1.0
       ]);
       const scoresByJudgeRoleId = new Map([[3, [0]], [4, [0]], [5, [0]]]);
@@ -251,7 +280,7 @@ describe('computeAttemptScore', () => {
       const result = computeAttemptScore(FIG_SLOTS, scoresByJudgeRoleId, elementScoresByJudgeRoleId, 1);
       const difficultyBreakdown = result.breakdown.find(b => b.judgeRoleKey === 'difficulty');
       expect(difficultyBreakdown.value).toBeCloseTo(-1.0);
-      expect(result.total).toBeCloseTo(1 - 1.0);
+      expect(result.total).toBeCloseTo(2 - 1.0);
     });
 
     it('defaults to 0 (no penalty) when the deduction was not entered', () => {
