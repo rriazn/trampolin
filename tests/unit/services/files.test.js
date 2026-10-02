@@ -88,6 +88,14 @@ describe('createSportsmenXlsx / parseSportsmenXlsx', () => {
     expect(row.group_id).toBeNull();
   });
 
+  it('does not count an unknown group for a row that is skipped anyway', async () => {
+    const comp = makeCompetition();
+    const buf = xlsxBufferFromRows([['Name', 'Group'], ['', 'NOPE']]);
+    const { skipped, unknownGroup } = parseSportsmenXlsx(comp.id, buf);
+    expect(skipped).toBe(1);
+    expect(unknownGroup).toBe(0);
+  });
+
   it('skips rows with no name', async () => {
     const comp = makeCompetition();
     const buf = xlsxBufferFromRows([['Name', 'Club'], ['', 'Some Club']]);
@@ -104,5 +112,129 @@ describe('createSportsmenXlsx / parseSportsmenXlsx', () => {
 
     const buf = createSportsmenXlsx(comp.id);
     expect(await isXlsxBuffer(buf)).toBe(true);
+  });
+});
+
+function makeSynchroCompetition() {
+  const id = db.prepare("INSERT INTO competitions (name, type) VALUES (?, 'synchro')").run(`Synchro ${Math.random()}`).lastInsertRowid;
+  return { id };
+}
+
+function sheetRows(buffer) {
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+}
+
+const pairByName = (compId, name) => db.prepare('SELECT * FROM sportsmen WHERE competition_id=? AND name=?').get(compId, name);
+
+describe('sportsmen gender in imports', () => {
+  it('reads upper case genders and stores an unknown gender as null instead of failing the import', () => {
+    const comp = makeCompetition();
+    const buf = xlsxBufferFromRows([['Name', 'Gender'], ['Upper Case', 'M'], ['Unknown Gender', 'x'], ['Word Gender', 'female']]);
+
+    const { created } = parseSportsmenXlsx(comp.id, buf);
+
+    expect(created).toBe(3);
+    expect(pairByName(comp.id, 'Upper Case').gender).toBe('m');
+    expect(pairByName(comp.id, 'Unknown Gender').gender).toBeNull();
+    expect(pairByName(comp.id, 'Word Gender').gender).toBeNull();
+  });
+});
+
+describe('individual sportsmen xlsx layout', () => {
+  it('keeps the single athlete columns and ignores second athlete columns on import', () => {
+    const comp = makeCompetition();
+    const buf = xlsxBufferFromRows([['Name', 'Name 2', 'Club'], ['Solo Jumper', 'Not A Partner', 'TSV']]);
+
+    parseSportsmenXlsx(comp.id, buf);
+
+    expect(pairByName(comp.id, 'Solo Jumper')).toMatchObject({ club: 'TSV', partner_name: null });
+    parseSportsmenXlsx(comp.id, xlsxBufferFromRows([['Name'], ['Header Check']]));
+    expect(sheetRows(createSportsmenXlsx(comp.id))[0]).toEqual(['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group']);
+  });
+});
+
+describe('synchro sportsmen xlsx layout', () => {
+  const headers = ['Name 1', 'Club 1', 'Gender 1', 'Birthyear 1', 'Name 2', 'Club 2', 'Gender 2', 'Birthyear 2', 'Routine', 'Group'];
+
+  it('imports one pair per row', () => {
+    const comp = makeSynchroCompetition();
+    const group = makeGroup(comp.id, 'Pairs A');
+    const abbrev = db.prepare('SELECT abbreviation FROM groups WHERE id=?').get(group.id).abbreviation;
+    const buf = xlsxBufferFromRows([headers, ['Leon Weber', 'TSV', 'M', 2008, 'Emma Fischer', 'SV', 'f', 2009, 'W11', abbrev]]);
+
+    const { created, skipped, unknownGroup } = parseSportsmenXlsx(comp.id, buf);
+
+    expect({ created, skipped, unknownGroup }).toEqual({ created: 1, skipped: 0, unknownGroup: 0 });
+    expect(pairByName(comp.id, 'Leon Weber')).toMatchObject({
+      club: 'TSV', gender: 'm', birth_year: 2008, routine: 'W11', group_id: group.id,
+      partner_name: 'Emma Fischer', partner_club: 'SV', partner_gender: 'f', partner_birth_year: 2009,
+    });
+  });
+
+  it('accepts lower case headers', () => {
+    const comp = makeSynchroCompetition();
+    const buf = xlsxBufferFromRows([['name 1', 'club 1', 'name 2', 'club 2'], ['Lower A', 'X', 'Lower B', 'Y']]);
+
+    parseSportsmenXlsx(comp.id, buf);
+
+    expect(pairByName(comp.id, 'Lower A')).toMatchObject({ club: 'X', partner_name: 'Lower B', partner_club: 'Y' });
+  });
+
+  it('skips a row that is missing either athlete name', () => {
+    const comp = makeSynchroCompetition();
+    const buf = xlsxBufferFromRows([
+      ['Name 1', 'Name 2'],
+      ['Only First', ''],
+      ['', 'Only Second'],
+      ['Complete A', 'Complete B'],
+    ]);
+
+    const { created, skipped } = parseSportsmenXlsx(comp.id, buf);
+
+    expect({ created, skipped }).toEqual({ created: 1, skipped: 2 });
+    expect(pairByName(comp.id, 'Only First')).toBeUndefined();
+  });
+
+  it('counts an unknown group abbreviation and leaves the pair ungrouped', () => {
+    const comp = makeSynchroCompetition();
+    const buf = xlsxBufferFromRows([['Name 1', 'Name 2', 'Group'], ['A', 'B', 'NOPE']]);
+
+    const { created, unknownGroup } = parseSportsmenXlsx(comp.id, buf);
+
+    expect({ created, unknownGroup }).toEqual({ created: 1, unknownGroup: 1 });
+    expect(pairByName(comp.id, 'A').group_id).toBeNull();
+  });
+
+  it('stores unknown genders as null', () => {
+    const comp = makeSynchroCompetition();
+    const buf = xlsxBufferFromRows([['Name 1', 'Gender 1', 'Name 2', 'Gender 2'], ['G1', 'x', 'G2', 'y']]);
+
+    parseSportsmenXlsx(comp.id, buf);
+
+    expect(pairByName(comp.id, 'G1')).toMatchObject({ gender: null, partner_gender: null });
+  });
+
+  it('exports both athletes with the synchro columns', () => {
+    const comp = makeSynchroCompetition();
+    parseSportsmenXlsx(comp.id, xlsxBufferFromRows([headers, ['Leon Weber', 'TSV', 'm', 2008, 'Emma Fischer', 'SV', 'f', 2009, 'W11', '']]));
+
+    const rows = sheetRows(createSportsmenXlsx(comp.id));
+
+    expect(rows[0]).toEqual(headers);
+    expect(rows[1]).toEqual(['Leon Weber', 'TSV', 'm', 2008, 'Emma Fischer', 'SV', 'f', 2009, 'W11', '']);
+  });
+
+  it('round-trips: an exported pair list re-imports into another synchro competition', () => {
+    const source = makeSynchroCompetition();
+    parseSportsmenXlsx(source.id, xlsxBufferFromRows([headers, ['Round A', 'TSV', 'm', 2008, 'Round B', 'SV', 'f', 2009, 'W11', '']]));
+    const target = makeSynchroCompetition();
+
+    parseSportsmenXlsx(target.id, createSportsmenXlsx(source.id));
+
+    expect(pairByName(target.id, 'Round A')).toMatchObject({
+      club: 'TSV', gender: 'm', birth_year: 2008, routine: 'W11',
+      partner_name: 'Round B', partner_club: 'SV', partner_gender: 'f', partner_birth_year: 2009,
+    });
   });
 });

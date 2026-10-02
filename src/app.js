@@ -55,6 +55,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || {};
   res.locals.appVersion = appVersion;
   res.locals.currentUrl = req.originalUrl;
+  Object.assign(res.locals, require('./services/helpers/competitor.helpers'));
   delete req.session.flash;
   next();
 });

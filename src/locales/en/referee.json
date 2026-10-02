@@ -19,6 +19,7 @@
     "saved": "Saved",
     "currentValue": "Current {{name}} value:",
     "partialNote": "(partial — not every judge has submitted yet)",
+    "partialLinesNote": "(partial — not every line has been scored yet)",
     "notApplicable": "No skills were performed for this attempt — this role does not apply."
   },
   "errors": {

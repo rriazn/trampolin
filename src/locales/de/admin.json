@@ -16,7 +16,7 @@
     "heading": "Wettkämpfe",
     "subtitle": "Erstellen und Verwalten von Wettkämpfen",
     "newCompetition": "Neuer Wettkampf",
-    "table": { "name": "Name", "date": "Datum", "status": "Status" },
+    "table": { "name": "Name", "date": "Datum", "status": "Status", "type": "Typ" },
     "groups": "Gruppen",
     "judges": "Kampfrichter",
     "activate": "Aktivieren",
@@ -34,7 +34,14 @@
     "judgePanel": "Kampfgericht",
     "noneSelected": "— Nichts ausgewählt —",
     "panelHelp": "Wird für jede Gruppe und Runde in diesem Wettkampf genutzt. Kampfrichter können später in der Wettkampfübersicht zugewiesen werden.",
-    "errors": { "nameRequired": "Wettkampfname ist Pflichtfeld." }
+    "type": "Wettkampftyp",
+    "typeLockedHelp": "Der Typ kann nicht mehr geändert werden, sobald Athleten oder Kampfrichter hinzugefügt wurden.",
+    "errors": {
+      "nameRequired": "Wettkampfname ist Pflichtfeld.",
+      "typeInvalid": "Unbekannter Wettkampftyp.",
+      "panelTypeMismatch": "Das gewählte Kampfgericht passt nicht zum Wettkampftyp.",
+      "typeLocked": "Der Typ kann nicht mehr geändert werden, sobald Athleten oder Kampfrichter hinzugefügt wurden."
+    }
   },
   "users": {
     "pageTitle": "Nutzer",
@@ -97,6 +104,7 @@
     "addAthlete": "Athleten hinzufügen",
     "importHeading": "Aus Excel importieren",
     "importHelp": "Pflichtfelder: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Verein</strong>, <strong>Geschlecht</strong>, <strong>Geburtsjahr</strong>, <strong>Übung</strong>",
+    "importHelpSynchro": "Eine Zeile pro Paar. Pflichtfelder: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Club 1/2</strong>, <strong>Gender 1/2</strong>, <strong>Birthyear 1/2</strong>, <strong>Routine</strong>, <strong>Group</strong>",
     "upload": "Upload",
     "noAthletes": "Noch keine Athleten verfügbar.",
     "addOne": "Einen hinzufügen",
@@ -119,7 +127,12 @@
     "routinePlaceholder": "z.B. W11, P8",
     "group": "Gruppe",
     "groupUnassigned": "– nicht zugewiesen –",
-    "errors": { "nameRequired": "Name ist ein Pflichtfeld." }
+    "athlete1": "Athlet 1",
+    "athlete2": "Athlet 2",
+    "errors": {
+      "nameRequired": "Name ist ein Pflichtfeld.",
+      "partnerNameRequired": "Der Name des zweiten Athleten ist ein Pflichtfeld."
+    }
   },
   "groups": {
     "pageTitle": "Gruppen – {{name}}",

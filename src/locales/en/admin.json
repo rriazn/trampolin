@@ -16,7 +16,7 @@
     "heading": "Competitions",
     "subtitle": "Create and manage tournament events",
     "newCompetition": "New Competition",
-    "table": { "name": "Name", "date": "Date", "status": "Status" },
+    "table": { "name": "Name", "date": "Date", "status": "Status", "type": "Type" },
     "groups": "Groups",
     "judges": "Judges",
     "activate": "Activate",
@@ -34,7 +34,14 @@
     "judgePanel": "Judge Panel",
     "noneSelected": "— None selected —",
     "panelHelp": "Applies to every group and round in this competition. Assign judges to it afterwards from the competition list.",
-    "errors": { "nameRequired": "Competition name is required." }
+    "type": "Competition Type",
+    "typeLockedHelp": "The type cannot be changed once athletes or judges have been added.",
+    "errors": {
+      "nameRequired": "Competition name is required.",
+      "typeInvalid": "Unknown competition type.",
+      "panelTypeMismatch": "The selected judge panel does not match the competition type.",
+      "typeLocked": "The type cannot be changed once athletes or judges have been added."
+    }
   },
   "users": {
     "pageTitle": "Users",
@@ -97,6 +104,7 @@
     "addAthlete": "Add Athlete",
     "importHeading": "Import from Excel",
     "importHelp": "Required: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Club</strong>, <strong>Gender</strong>, <strong>Birthyear</strong>, <strong>Routine</strong>",
+    "importHelpSynchro": "One row per pair. Required: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Club 1/2</strong>, <strong>Gender 1/2</strong>, <strong>Birthyear 1/2</strong>, <strong>Routine</strong>, <strong>Group</strong>",
     "upload": "Upload",
     "noAthletes": "No athletes yet.",
     "addOne": "Add one",
@@ -119,7 +127,12 @@
     "routinePlaceholder": "e.g. W11, P8",
     "group": "Group",
     "groupUnassigned": "– unassigned –",
-    "errors": { "nameRequired": "Name is required." }
+    "athlete1": "Athlete 1",
+    "athlete2": "Athlete 2",
+    "errors": {
+      "nameRequired": "Name is required.",
+      "partnerNameRequired": "The name of the second athlete is required."
+    }
   },
   "groups": {
     "pageTitle": "Groups – {{name}}",

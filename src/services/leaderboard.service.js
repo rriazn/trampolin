@@ -1,6 +1,7 @@
 const { computeAttemptScore } = require("./scoring.service");
 const { loadPanelSlots } = require("./panels.service");
 const { getDetailedEntryRows } = require("./db/entries.crud");
+const { competitorName, competitorClub } = require("./helpers/competitor.helpers");
 const { getAttemptScoreRows, getElementScoreRows, getPerJudgeElementScoreRows } = require("./db/scores.crud");
 
 function buildScoreMaps(scoreRows) {
@@ -69,8 +70,8 @@ function buildSportsmenAttempts(entryRows, panelSlots, scoresByAttempt, elementS
     for (const row of entryRows) {
         if (!map.has(row.sportsman_id)) {
             map.set(row.sportsman_id, {
-                name: row.sportsman_name,
-                club: row.club,
+                name: competitorName(row.sportsman_name, row.partner_name),
+                club: competitorClub(row.club, row.partner_club),
                 group: row.group_name,
                 startOrder: row.start_order,
                 attempts: []

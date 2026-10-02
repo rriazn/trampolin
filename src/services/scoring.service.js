@@ -24,7 +24,7 @@ exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', m
   return combined * multiplier;
 };
 
-// panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction, maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
+// panelSlots: array of { judgeRoleId, judgeRoleKey, judgeRoleName, granularity, isDeduction, hasLanding, maxValue, judgeCount, dropHigh, dropLow, combine, multiplier, aggregation }
 exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJudgeRoleId, elementCount, elementScoresByAssignment = new Map()) => {
   let total = 0;
   let isComplete = true;
@@ -53,8 +53,9 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
       }
 
       // Landing deduction
-      const hasExtra = (slot.isDeduction && elementCount === 10) || (!slot.isDeduction && elementCount > 0);
-      if (slot.isDeduction && elementCount === 10) {
+      const hasLandingLine = Boolean(slot.hasLanding) && elementCount === 10;
+      const hasExtra = hasLandingLine || (!slot.isDeduction && elementCount > 0);
+      if (hasLandingLine) {
         const values = elementScores.get(11) || [];
         const landingValue = exports.combineScores({ scores: values, dropHigh, dropLow, combine, multiplier: 1 });
         combinedTotal += landingValue ?? 0;
@@ -86,7 +87,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
 
       // each assignment's own personal, uncombined value, used by per_judge aggregation below and exposed for the head judge's checklist
       const byAssignment = (elementScoresByAssignment.get(slot.judgeRoleId)) || new Map();
-      const requiredCount = elementCount + (slot.isDeduction && elementCount === 10 ? 1 : 0);
+      const requiredCount = elementCount + (hasLandingLine ? 1 : 0);
       const perJudge = [...byAssignment.entries()].map(([assignmentId, elementsMap]) => {
         let personalTricksTotal = 0;
         let tricksSubmitted = 0;
@@ -112,7 +113,8 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         roleValue = exports.combineScores({ scores: perJudgeScores, dropHigh, dropLow, combine, multiplier: 1 }) ?? 0;
         roleComplete = fullyDoneCount >= slot.judgeCount;
       } else {
-        roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? elementCount - combinedTotal : combinedTotal);
+        const countedJudges = combine === 'sum' && slot.judgeCount > dropHigh + dropLow ? slot.judgeCount - dropHigh - dropLow : 1;
+        roleValue = submittedCount === 0 ? 0 : (slot.isDeduction ? countedJudges * elementCount - combinedTotal : combinedTotal);
         roleComplete = perTrickComplete;
       }
 
@@ -193,7 +195,7 @@ exports.parseMissingSkillDeduction = (assignment, elementCount, element_12, t) =
 };
 
 exports.parseAndValidate11thScore = (assignment, elementCount, element_11, t) => {
-    if (assignment.isDeduction && elementCount === 10) {
+    if (assignment.hasLanding && elementCount === 10) {
         const raw = parseFloat(element_11);
         if (isNaN(raw) || raw < 0 || raw > 1.0) {
             throw new RangeError(t('referee:errors.landingRange'));

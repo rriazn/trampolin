@@ -24,12 +24,20 @@
     "head_judge": "Head Judge",
     "viewer": "Viewer"
   },
+  "competitionTypes": {
+    "individual": "Individual",
+    "synchro": "Synchro"
+  },
   "judgeRoles": {
     "execution": "Execution",
     "difficulty": "Difficulty",
     "time_of_flight": "Time of Flight",
     "horizontal_displacement": "Horizontal Displacement",
-    "head_judge": "Head Judge (Penalties)"
+    "head_judge": "Head Judge (Penalties)",
+    "execution_t1": "Execution Trampoline 1",
+    "execution_t2": "Execution Trampoline 2",
+    "synchronisation": "Synchronisation",
+    "synchronisation_skill": "Synchronisation per Skill"
   },
   "panelTemplates": {
     "fig": {
@@ -43,6 +51,18 @@
     "test": {
       "name": "Test Panel",
       "description": "Test panel for development and testing purposes."
+    },
+    "test_synchro": {
+      "name": "Test Synchro Panel",
+      "description": "Synchro test panel for development and testing purposes: one judge per role, synchronisation as device mark."
+    },
+    "fig_synchro": {
+      "name": "FIG Synchro Panel",
+      "description": "FIG synchronised panel: 3 execution judges per trampoline, 1 difficulty, 1 horizontal displacement and 1 synchronisation (device) operated by the same person, 1 head judge (penalties)."
+    },
+    "local_synchro": {
+      "name": "Local Synchro Panel",
+      "description": "Simplified synchronised panel without a synchro device: 2 execution judges per trampoline, 1 difficulty, 1 synchronisation judge scoring per skill, 1 head judge (penalties)."
     }
   },
   "actions": {

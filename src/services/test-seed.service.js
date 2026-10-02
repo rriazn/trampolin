@@ -8,8 +8,31 @@ const { addSportsmanDB, deleteAllSportsmenDB } = require('./db/sportsmen.crud');
 const { addEntryDB, addAttemptDB, deleteAllEntriesDB, deleteAllAttemptsDB } = require('./db/entries.crud');
 const { deleteAllScoresDB, deleteAllElementScoresDB } = require('./db/scores.crud');
 
+// the synchro fixture uses pairs and the synchronisation device mark, so one referee can score a whole attempt by typing a single number
+const FIXTURES = {
+  individual: {
+    panelKey: 'fig',
+    athletes: [
+      { name: 'Leon Weber', club: 'TSV München' },
+      { name: 'Emma Fischer', club: 'SV Hamburg' },
+    ],
+    refereeRoleKey: 'time_of_flight',
+  },
+  synchro: {
+    panelKey: 'test_synchro',
+    athletes: [
+      { name: 'Leon Weber', club: 'TSV München', partner: { name: 'Emma Fischer', club: 'SV Hamburg' } },
+      { name: 'Anna Klein', club: 'TSV München', partner: { name: 'Mia Braun', club: 'TSV München' } },
+    ],
+    refereeRoleKey: 'synchronisation',
+  },
+};
+
 // resets all tables and creates a fixed, small fixture for integration tests, staffed just enough to reach the turn-based scoring UI without going through head-judge.js
-exports.seedTestData = async () => {
+exports.seedTestData = async ({ type = 'individual' } = {}) => {
+  const fixture = FIXTURES[type] || FIXTURES.individual;
+  const competitionType = FIXTURES[type] ? type : 'individual';
+
   // wipe children before parents, matching the FK dependency order
   deleteAllElementScoresDB();
   deleteAllScoresDB();
@@ -31,15 +54,15 @@ exports.seedTestData = async () => {
   await createUser('Petra Voss', 'petra@example.com', 'headjudge123', 'head_judge');
   const petra = getUserByEmail('petra@example.com');
 
-  const figPanel = getPanels().find(p => p.key === 'fig');
-  const competitionId = createCompetitionDB('Spring Championship', null, figPanel.id).lastInsertRowid;
+  const panel = getPanels().find(p => p.key === fixture.panelKey);
+  const competitionId = createCompetitionDB('Spring Championship', null, panel.id, competitionType).lastInsertRowid;
   updateCompetitionStatusDB(competitionId, 'active');
 
   const groupId = addGroupDB('Junior', 'JR', competitionId).lastInsertRowid;
   const roundId = addRoundDB(groupId, 'Qualifications', 1, 'sum').lastInsertRowid;
 
-  const sp1Id = addSportsmanDB('Leon Weber', 'TSV München', null, null, null, competitionId, groupId).lastInsertRowid;
-  const sp2Id = addSportsmanDB('Emma Fischer', 'SV Hamburg', null, null, null, competitionId, groupId).lastInsertRowid;
+  const [sp1Id, sp2Id] = fixture.athletes.map(a =>
+    addSportsmanDB(a.name, a.club, null, null, null, competitionId, groupId, a.partner).lastInsertRowid);
 
   const e1Id = addEntryDB(roundId, sp1Id, 1).lastInsertRowid;
   const e2Id = addEntryDB(roundId, sp2Id, 2).lastInsertRowid;
@@ -49,11 +72,11 @@ exports.seedTestData = async () => {
   const attempt3Id = addAttemptDB(e2Id, 1).lastInsertRowid;
   const attempt4Id = addAttemptDB(e2Id, 2).lastInsertRowid;
 
-  // Maria judges time_of_flight so the turn-based scoring UI is reachable without staffing/starting the round through head-judge.js
+  // Maria judges a single-number role so the turn-based scoring UI is reachable without staffing/starting the round through head-judge.js
   const judgeRoles = getJudgeRoles();
-  const timeOfFlightRoleId = judgeRoles.find(r => r.key === 'time_of_flight').id;
+  const refereeRoleId = judgeRoles.find(r => r.key === fixture.refereeRoleKey).id;
   const headJudgeRoleId = judgeRoles.find(r => r.key === 'head_judge').id;
-  addAssignment(competitionId, maria.id, [timeOfFlightRoleId]);
+  addAssignment(competitionId, maria.id, [refereeRoleId]);
   addAssignment(competitionId, petra.id, [headJudgeRoleId]);
 
   // round starts on Leon's first attempt, advancing turns is head-judge.js's job and isn't exercised here
@@ -70,7 +93,9 @@ exports.seedTestData = async () => {
     attempt2Id: Number(attempt2Id),
     attempt3Id: Number(attempt3Id),
     attempt4Id: Number(attempt4Id),
-    timeOfFlightRoleId: Number(timeOfFlightRoleId),
+    competitionType,
+    // the role Maria judges, named per type since integration specs post scores against it
+    ...(competitionType === 'synchro' ? { synchronisationRoleId: Number(refereeRoleId) } : { timeOfFlightRoleId: Number(refereeRoleId) }),
     headJudgeRoleId: Number(headJudgeRoleId),
     headJudgeUserId: Number(petra.id),
   };

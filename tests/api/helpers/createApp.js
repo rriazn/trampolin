@@ -54,6 +54,7 @@ function createApp() {
     res.locals.currentUser = req.session.user || null;
     res.locals.flash = req.session.flash || {};
     res.locals.currentUrl = req.originalUrl;
+    Object.assign(res.locals, require('../../../src/services/helpers/competitor.helpers'));
     delete req.session.flash;
     next();
   });

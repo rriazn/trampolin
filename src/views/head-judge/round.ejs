@@ -59,13 +59,13 @@
     <span class="badge bg-secondary rounded-pill fs-6">#<%= attempt.start_order %></span>
     <div>
       <div class="fw-700 fs-5">
-        <%= attempt.sportsman_name %>
+        <%= competitorName(attempt.sportsman_name, attempt.partner_name) %>
         <% if (typeof attemptTotal !== 'undefined' && attemptTotal !== null) { %>
         <span class="text-muted">— <%= attemptTotal.toFixed(2) %><% if (!attemptIsComplete) { %><sup>*</sup><% } %></span>
         <% } %>
       </div>
       <div class="text-muted small">
-        <%= attempt.club || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
+        <%= competitorClub(attempt.club, attempt.partner_club) || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
     <span class="badge rounded-pill bg-primary ms-auto"><%= t('headJudge:round.attemptNumber', { number: attempt.attempt_number }) %></span>
@@ -141,7 +141,7 @@
     <button class="btn btn-brand rounded-pill px-4"><i class="bi bi-skip-end-fill me-1"></i><%= t('headJudge:round.next') %></button>
   </form>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/skip"
-        onsubmit="return confirm(<%= JSON.stringify(t('headJudge:round.confirmSkip', { name: attempt.sportsman_name, number: attempt.attempt_number })) %>)">
+        onsubmit="return confirm(<%= JSON.stringify(t('headJudge:round.confirmSkip', { name: competitorName(attempt.sportsman_name, attempt.partner_name), number: attempt.attempt_number })) %>)">
     <button class="btn btn-outline-warning rounded-pill px-4"><i class="bi bi-skip-forward-fill me-1"></i><%= t('headJudge:round.skipAthlete') %></button>
   </form>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/complete"

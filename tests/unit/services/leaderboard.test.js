@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt,
-  getJudgeRoleIds, makeUser, assignJudge, addScore, require,
+  getJudgeRoleIds, makeUser, assignJudge, addScore, db, require,
 } from './testHelpers.js';
 const { buildLeaderboard } = require('../../../src/services/leaderboard.service.js');
 
@@ -35,6 +35,19 @@ describe('buildLeaderboard', () => {
     expect(leaderboard.map(r => r.name)).toEqual(['Emma', 'Leon']);
     expect(leaderboard[0].rank).toBe(1);
     expect(leaderboard[1].rank).toBe(2);
+  });
+
+  it('shows a synchro pair as "A / B" with one club when both share it, and as a single name otherwise', () => {
+    const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge();
+    const pair = scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Leon Weber', [1]);
+    db.prepare("UPDATE sportsmen SET club='TSV', partner_name='Emma Fischer', partner_club='TSV' WHERE id=?").run(pair.id);
+    scoreAttempt(round, group, comp, roleIds, hjAssignment, 'Solo', [2]);
+
+    const { leaderboard } = buildLeaderboard(comp, round);
+    const row = leaderboard.find(r => r.sportsmanId === pair.id);
+    expect(row.name).toBe('Leon Weber / Emma Fischer');
+    expect(row.club).toBe('TSV');
+    expect(leaderboard.find(r => r.name === 'Solo').club).toBeNull();
   });
 
   it('gives tied best scores the same rank', () => {

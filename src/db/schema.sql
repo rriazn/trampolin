@@ -19,14 +19,16 @@ CREATE TABLE IF NOT EXISTS judge_roles (
     is_deduction INTEGER NOT NULL DEFAULT 0 CHECK(is_deduction IN (0,1)),
     max_value    REAL,
     score_min    REAL    NOT NULL DEFAULT 0,
-    score_max    REAL
+    score_max    REAL,
+    has_landing  INTEGER NOT NULL DEFAULT 0 CHECK(has_landing IN (0,1))
 );
 
 CREATE TABLE IF NOT EXISTS panel_templates (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     key         TEXT    NOT NULL UNIQUE,
     name        TEXT    NOT NULL,
-    description TEXT
+    description TEXT,
+    competition_type TEXT NOT NULL DEFAULT 'individual' CHECK(competition_type IN ('individual','synchro'))
 );
 
 CREATE TABLE IF NOT EXISTS panel_template_slots (
@@ -52,6 +54,7 @@ CREATE TABLE IF NOT EXISTS competitions (
     date              TEXT,
     status            TEXT NOT NULL CHECK(status IN ('planned','active','closed')) DEFAULT 'planned',
     panel_template_id INTEGER REFERENCES panel_templates(id),
+    type              TEXT NOT NULL DEFAULT 'individual' CHECK(type IN ('individual','synchro')),
     created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
@@ -70,9 +73,13 @@ CREATE TABLE IF NOT EXISTS sportsmen (
     gender         TEXT    CHECK(gender IN ('m','f')),
     birth_year     INTEGER,
     routine        TEXT,
+    partner_name       TEXT,
+    partner_club       TEXT,
+    partner_gender     TEXT CHECK(partner_gender IN ('m','f')),
+    partner_birth_year INTEGER,
     competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
     group_id       INTEGER REFERENCES groups(id) ON DELETE SET NULL,
-    created_at     TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+    created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
 CREATE TABLE IF NOT EXISTS panel_assignments (

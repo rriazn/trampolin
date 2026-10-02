@@ -19,29 +19,42 @@
 <% if (locals.error) { %>
 <div class="alert alert-danger"><%= locals.error %></div>
 <% } %>
+<%
+  // athlete 1 uses the plain column names, athlete 2 of a synchro pair uses the partner_ prefix
+  var isSynchro = competition.type === 'synchro';
+  var athletes = [{ prefix: '', title: 'admin:sportsmanForm.athlete1', nameRequired: true }];
+  if (isSynchro) athletes.push({ prefix: 'partner_', title: 'admin:sportsmanForm.athlete2', nameRequired: true });
+%>
 <form method="POST" action="<%= action %>">
-  <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.fullName') %></label>
-    <input type="text" name="name" class="form-control" value="<%= sportsman ? sportsman.name : '' %>" required>
-  </div>
-  <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.club') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-    <input type="text" name="club" class="form-control" value="<%= sportsman ? (sportsman.club || '') : '' %>">
-  </div>
-  <div class="row mb-3">
-    <div class="col-md-6">
-      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.gender') %></label>
-      <select name="gender" class="form-select">
-        <option value=""><%= t('admin:sportsmanForm.genderNotSet') %></option>
-        <option value="m" <%= sportsman && sportsman.gender === 'm' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderMale') %></option>
-        <option value="f" <%= sportsman && sportsman.gender === 'f' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderFemale') %></option>
-      </select>
+  <% athletes.forEach(a => {
+    var v = function (col) { return sportsman ? (sportsman[a.prefix + col] || '') : ''; };
+  %>
+  <div class="athlete-block" data-athlete="<%= a.prefix ? 'partner' : 'main' %>">
+    <% if (isSynchro) { %><h6 class="fw-700 mb-3"><%= t(a.title) %></h6><% } %>
+    <div class="mb-3">
+      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.fullName') %></label>
+      <input type="text" name="<%= a.prefix %>name" class="form-control" value="<%= v('name') %>" required>
     </div>
-    <div class="col-md-6">
-      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.birthYear') %></label>
-      <input type="number" name="birth_year" class="form-control" value="<%= sportsman ? (sportsman.birth_year || '') : '' %>" placeholder="<%= t('admin:sportsmanForm.birthYearPlaceholder') %>" min="1900" max="2099">
+    <div class="mb-3">
+      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.club') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+      <input type="text" name="<%= a.prefix %>club" class="form-control" value="<%= v('club') %>">
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.gender') %></label>
+        <select name="<%= a.prefix %>gender" class="form-select">
+          <option value=""><%= t('admin:sportsmanForm.genderNotSet') %></option>
+          <option value="m" <%= v('gender') === 'm' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderMale') %></option>
+          <option value="f" <%= v('gender') === 'f' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderFemale') %></option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.birthYear') %></label>
+        <input type="number" name="<%= a.prefix %>birth_year" class="form-control" value="<%= v('birth_year') %>" placeholder="<%= t('admin:sportsmanForm.birthYearPlaceholder') %>" min="1900" max="2099">
+      </div>
     </div>
   </div>
+  <% }) %>
   <div class="mb-3">
     <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.routine') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
     <input type="text" name="routine" class="form-control" value="<%= sportsman ? (sportsman.routine || '') : '' %>" placeholder="<%= t('admin:sportsmanForm.routinePlaceholder') %>">

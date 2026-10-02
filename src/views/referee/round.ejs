@@ -27,9 +27,9 @@
   <div class="d-flex align-items-center gap-3">
     <span class="badge bg-secondary rounded-pill fs-6">#<%= attempt.start_order %></span>
     <div>
-      <div class="fw-700 fs-5"><%= attempt.sportsman_name %></div>
+      <div class="fw-700 fs-5"><%= competitorName(attempt.sportsman_name, attempt.partner_name) %></div>
       <div class="text-muted small">
-        <%= attempt.club || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
+        <%= competitorClub(attempt.club, attempt.partner_club) || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
     <span class="badge rounded-pill bg-primary ms-auto"><%= t('referee:round.attemptNumber', { number: attempt.attempt_number }) %></span>
@@ -89,10 +89,10 @@
     <% }) %>
     <button class="btn btn-sm btn-brand rounded-pill mt-2"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
   </form>
-  <% if (input.contribution) { %>
+  <% if (input.ownValue) { %>
   <p class="text-muted small mt-2 mb-0">
-    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.contribution.value.toFixed(2) %></strong>
-    <% if (!input.contribution.isComplete) { %> <%= t('referee:round.partialNote') %><% } %>
+    <%= t('referee:round.currentValue', { name: t('common:judgeRoles.' + input.key) }) %> <strong><%= input.ownValue.value.toFixed(2) %></strong>
+    <% if (!input.ownValue.isComplete) { %> <%= t('referee:round.partialLinesNote') %><% } %>
   </p>
   <% } %>
   <% } else if (input.notApplicable) { %>
@@ -104,7 +104,7 @@
     <input type="number" name="score"
            value="<%= input.score !== null ? input.score : '' %>"
            min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
-           step="0.1" class="form-control form-control-sm" style="width:100px"
+           step="<%= input.step %>" class="form-control form-control-sm" style="width:100px"
            placeholder="<%= input.score_min %>–<%= input.score_max !== null ? input.score_max : '∞' %>" required>
     <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
     <% if (input.score !== null) { %>

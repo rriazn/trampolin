@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { makeCompetition, makeUser, getJudgeRoleIds, assignJudge, require } from './testHelpers.js';
+const { getAssignmentWithInfo, getAssignmentsForUser } = require('../../../src/services/db/panels.crud.js');
 const {
   loadPanelSlots, groupPanelSlots, rosterReadiness, resolveAssignmentGroup,
   getJudgesForCompetition, removeJudgeFromRole,
@@ -17,6 +18,27 @@ describe('loadPanelSlots', () => {
     expect(slots.map(s => s.judgeRoleKey)).toEqual(['execution', 'difficulty', 'head_judge']);
     expect(slots[0].judgeCount).toBe(1);
     expect(slots[0].isDeduction).toBe(1);
+  });
+
+  it('exposes hasLanding per slot so only roles with a landing line carry one', () => {
+    const { panelTemplateId } = makeCompetition({ panelKey: 'test' });
+    const slots = loadPanelSlots(panelTemplateId);
+    expect(slots.map(s => Boolean(s.hasLanding))).toEqual([true, false, false]);
+  });
+});
+
+describe('referee assignment queries', () => {
+  it('expose hasLanding for the role behind each assignment', () => {
+    const comp = makeCompetition({ panelKey: 'local_synchro' });
+    const roleIds = getJudgeRoleIds();
+    const user = makeUser('referee');
+    assignJudge(comp.id, roleIds.execution_t1, user.id);
+    const other = makeUser('referee');
+    assignJudge(comp.id, roleIds.synchronisation_skill, other.id);
+
+    expect(getAssignmentWithInfo(comp.id, user.id, roleIds.execution_t1).hasLanding).toBe(1);
+    expect(getAssignmentWithInfo(comp.id, other.id, roleIds.synchronisation_skill).hasLanding).toBe(0);
+    expect(getAssignmentsForUser(comp.id, user.id).map(a => a.hasLanding)).toEqual([1]);
   });
 });
 

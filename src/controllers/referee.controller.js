@@ -7,7 +7,7 @@ const { addAttemptScoreDB, addAllElementScoresDB } = require("../services/db/sco
 const { getRefereeRoundInfo } = require("../services/rounds.service");
 const { renderNotFound } = require("../services/errors.service");
 const { recomputeAttemptCompletion } = require("../services/attempts.service");
-const { isWithinRange, rangeErrorMessage } = require("../services/helpers/referee.helpers");
+const { isWithinRange, rangeErrorMessage, scoreDecimals, maxScoreFor } = require("../services/helpers/referee.helpers");
 const { parseAndValidateElementScores, parseAndValidate11thScore, parseMissingSkillDeduction } = require("../services/scoring.service");
 
 exports.getRefereeDashboard = (req, res) => {
@@ -62,15 +62,16 @@ exports.postScore = (req, res) => {
     }
 
     const parsed = parseFloat(score);
-    if (isNaN(parsed) || !isWithinRange(parsed, assignment)) {
-        return res.status(400).send(rangeErrorMessage(assignment, req.t));
+    const limits = { ...assignment, score_max: maxScoreFor(assignment.roleKey, assignment.score_max, ctx.elementCount) };
+    if (isNaN(parsed) || !isWithinRange(parsed, limits)) {
+        return res.status(400).send(rangeErrorMessage(limits, req.t));
     }
 
     addAttemptScoreDB(attemptId, assignment.assignment_id, assignment.judge_role_id, parsed);
 
     recomputeAttemptCompletion(attemptId, ctx.panelTemplateId);
 
-    req.session.flash = { success: req.t('referee:flash.scoreSaved', { score: parsed.toFixed(1) }) };
+    req.session.flash = { success: req.t('referee:flash.scoreSaved', { score: parsed.toFixed(scoreDecimals(assignment.roleKey)) }) };
     res.redirect(`/referee/competitions/${ctx.competitionId}/groups/${ctx.groupId}/rounds/${ctx.roundId}`);
 };
 

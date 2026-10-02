@@ -19,6 +19,7 @@
     "saved": "Gespeichert",
     "currentValue": "Aktueller Wert für {{name}}:",
     "partialNote": "(unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben)",
+    "partialLinesNote": "(unvollständig — nicht jede Zeile wurde bewertet)",
     "notApplicable": "Keine Elemente wurden in diesem Versuch gezeigt."
   },
   "errors": {

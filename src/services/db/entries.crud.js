@@ -7,7 +7,7 @@ exports.getEntryIdsForRound = (roundId) => {
 
 exports.getEntriesWithAttemptsInfo = (roundId) => {
     return db.prepare(`
-        SELECT e.*, sp.name AS sportsman_name, sp.club, sp.routine,
+        SELECT e.*, sp.name AS sportsman_name, sp.club, sp.routine, sp.partner_name, sp.partner_club,
             (SELECT COUNT(*) FROM attempts a WHERE a.entry_id=e.id) AS attempt_count
         FROM entries e
         JOIN sportsmen sp ON sp.id = e.sportsman_id
@@ -20,7 +20,7 @@ exports.getEntriesWithAttemptsInfo = (roundId) => {
 exports.getDetailedEntryRows = (roundId) => {
     return db.prepare(`
         SELECT
-        sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club,
+        sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club, sp.partner_name, sp.partner_club,
         g.name AS group_name,
         e.start_order,
         a.id AS attempt_id, a.attempt_number, a.element_count
@@ -46,7 +46,7 @@ exports.getEntryAttemptRows = (roundId) => {
 exports.getAttemptForId = (attemptId) => {
     return db.prepare(`
         SELECT a.id AS attempt_id, a.attempt_number, a.element_count,
-            e.start_order, sp.name AS sportsman_name, sp.club, sp.routine
+            e.start_order, sp.name AS sportsman_name, sp.club, sp.routine, sp.partner_name, sp.partner_club
         FROM attempts a
         JOIN entries e ON e.id = a.entry_id
         JOIN sportsmen sp ON sp.id = e.sportsman_id

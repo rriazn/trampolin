@@ -26,6 +26,17 @@ const VIEWER = { name: 'Public Viewer', email: 'viewer@example.com' };
 const COMPETITION_NAME = 'Spring Championship';
 const PANEL_TEMPLATE_KEY = 'fig';
 
+const SYNCHRO_COMPETITION_NAME = 'Synchro Cup';
+const SYNCHRO_PANEL_TEMPLATE_KEY = 'local_synchro';
+const SYNCHRO_GROUP = { name: 'Synchro Pairs', abbreviation: 'SP' };
+
+const PAIRS = [
+  { name: 'Leon Weber',   club: 'TSV München',  gender: 'm', birth_year: 2008, partner: { name: 'Noah Becker',      club: 'TSV München', gender: 'm', birth_year: 2009 } },
+  { name: 'Emma Fischer', club: 'SV Hamburg',   gender: 'f', birth_year: 2008, partner: { name: 'Laura Zimmermann', club: 'SV Hamburg',  gender: 'f', birth_year: 2007 } },
+  { name: 'Felix Braun',  club: 'TV Frankfurt', gender: 'm', birth_year: 2002, partner: { name: 'Luca Schneider',   club: 'SC Berlin',   gender: 'm', birth_year: 2004 } },
+  { name: 'Mia Hoffmann', club: 'SC Berlin',    gender: 'f', birth_year: 2010, partner: { name: 'Sophie Richter',   club: 'SC Berlin',   gender: 'f', birth_year: 2009 } },
+];
+
 const GROUPS = [
   { name: 'Junior Men',   abbreviation: 'JM' },
   { name: 'Junior Women', abbreviation: 'JW' },
@@ -111,6 +122,38 @@ async function seed() {
     spCount++;
   }
   console.log(`Created ${spCount} athlete(s)`);
+
+  await seedSynchroCompetition(refereeIds, headJudgeId, roleIdByKey);
+}
+
+// referees[0..1] -> execution trampoline 1, [2..3] -> execution trampoline 2, [4] -> difficulty, [5] -> synchronisation per skill
+async function seedSynchroCompetition(refereeIds, headJudgeId, roleIdByKey) {
+  const panelTemplate = getPanels().find(p => p.key === SYNCHRO_PANEL_TEMPLATE_KEY);
+
+  let comp = getCompetitionByName(SYNCHRO_COMPETITION_NAME);
+  if (!comp) {
+    const competitionId = createCompetitionDB(SYNCHRO_COMPETITION_NAME, null, panelTemplate.id, 'synchro').lastInsertRowid;
+    updateCompetitionStatusDB(competitionId, 'active');
+    comp = { id: competitionId };
+    console.log(`Created competition: ${SYNCHRO_COMPETITION_NAME}`);
+  }
+
+  for (const refereeId of refereeIds.slice(0, 2)) addAssignmentIgnoreDB(comp.id, roleIdByKey.get('execution_t1'), refereeId);
+  for (const refereeId of refereeIds.slice(2, 4)) addAssignmentIgnoreDB(comp.id, roleIdByKey.get('execution_t2'), refereeId);
+  addAssignmentIgnoreDB(comp.id, roleIdByKey.get('difficulty'), refereeIds[4]);
+  addAssignmentIgnoreDB(comp.id, roleIdByKey.get('synchronisation_skill'), refereeIds[5]);
+  addAssignmentIgnoreDB(comp.id, roleIdByKey.get('head_judge'), headJudgeId);
+  console.log(`Assigned judge panel for "${SYNCHRO_COMPETITION_NAME}" (${SYNCHRO_PANEL_TEMPLATE_KEY} panel).`);
+
+  const groupId = addGroupIgnoreDB(SYNCHRO_GROUP.name, SYNCHRO_GROUP.abbreviation, comp.id);
+
+  let pairCount = 0;
+  for (const p of PAIRS) {
+    if (getSportsmanByNameAndCompetition(p.name, comp.id)) continue;
+    addSportsmanDB(p.name, p.club, p.gender, p.birth_year, null, comp.id, groupId, p.partner);
+    pairCount++;
+  }
+  console.log(`Created ${pairCount} pair(s)`);
 }
 
 module.exports = seed;
