@@ -1,0 +1,21 @@
+{
+  "labels": {
+    "title": "Ergebnisliste",
+    "generated": "Erstellt",
+    "groups": "Klassen",
+    "group": "Klasse",
+    "place": "Platz",
+    "round": "Durchgang",
+    "rank": "Platz",
+    "attempt": "Übung",
+    "total": "Summe",
+    "roundTotal": "Summe",
+    "skills": "Sprünge",
+    "landing": "Landung",
+    "bonus": "Bonus",
+    "missingSkill": "Fehlender Sprung",
+    "skipped": "Übersprungen",
+    "pending": "Nicht bewertet",
+    "judges": "Kampfrichter"
+  }
+}

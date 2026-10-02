@@ -1,0 +1,21 @@
+{
+  "labels": {
+    "title": "Results",
+    "generated": "Generated",
+    "groups": "Groups",
+    "group": "Group",
+    "place": "Place",
+    "round": "Round",
+    "rank": "Rank",
+    "attempt": "Attempt",
+    "total": "Total",
+    "roundTotal": "Round total",
+    "skills": "Skills",
+    "landing": "Landing",
+    "bonus": "Bonus",
+    "missingSkill": "Missing skill",
+    "skipped": "Skipped",
+    "pending": "Not scored",
+    "judges": "Judges"
+  }
+}

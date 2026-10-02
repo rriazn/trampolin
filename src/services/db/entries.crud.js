@@ -23,7 +23,7 @@ exports.getDetailedEntryRows = (roundId) => {
         sp.id AS sportsman_id, sp.name AS sportsman_name, sp.club, sp.partner_name, sp.partner_club,
         g.name AS group_name,
         e.start_order,
-        a.id AS attempt_id, a.attempt_number, a.element_count
+        a.id AS attempt_id, a.attempt_number, a.element_count, a.status AS attempt_status
         FROM entries e
         JOIN sportsmen sp ON sp.id = e.sportsman_id
         LEFT JOIN groups g ON g.id = sp.group_id

@@ -1,13 +1,18 @@
 const { isWithinRange, rangeErrorMessage } = require("./helpers/referee.helpers");
 
+// positions in scores that survive dropping the lowest and highest values, ascending by value
+exports.keptIndices = (scores, dropHigh = 0, dropLow = 0) => {
+  const order = scores.map((_, i) => i).sort((a, b) => scores[a] - scores[b] || a - b);
+  return new Set(order.length <= dropHigh + dropLow
+    ? order
+    : order.slice(dropLow, order.length - dropHigh));
+};
+
 // combine scores and drop high/low values
 exports.combineScores = ({ scores, dropHigh = 0, dropLow = 0, combine = 'sum', multiplier = 1 }) => {
   if (!scores || scores.length === 0) return null;
 
-  const sorted = [...scores].sort((a, b) => a - b);
-  const kept = sorted.length <= dropHigh + dropLow
-    ? sorted
-    : sorted.slice(dropLow, sorted.length - dropHigh);
+  const kept = [...exports.keptIndices(scores, dropHigh, dropLow)].map(i => scores[i]);
 
   let combined;
   if (combine === 'sum') {

@@ -50,6 +50,20 @@ describe('buildLeaderboard', () => {
     expect(leaderboard.find(r => r.name === 'Solo').club).toBeNull();
   });
 
+  it('exposes each attempt status and skill count for the results export', () => {
+    const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge();
+    const sportsman = makeSportsman(comp.id, group.id, 'Anna');
+    const entry = makeEntry(round.id, sportsman.id, 1);
+    const scored = makeAttempt(entry.id, 1, 8);
+    addScore(scored.id, hjAssignment, roleIds.head_judge, 1);
+    const skipped = makeAttempt(entry.id, 2, 10);
+    db.prepare("UPDATE attempts SET status='scored' WHERE id=?").run(scored.id);
+    db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(skipped.id);
+
+    const { leaderboard } = buildLeaderboard(comp, round);
+    expect(leaderboard[0].attempts.map(a => [a.status, a.elementCount])).toEqual([['scored', 8], ['skipped', 10]]);
+  });
+
   it('gives tied best scores the same rank', () => {
     const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge();
     scoreAttempt(round, group, comp, roleIds, hjAssignment, 'A', [2]);
