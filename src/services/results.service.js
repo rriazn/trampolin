@@ -18,9 +18,14 @@ exports.ROLE_LETTERS = {
     synchronisation_skill: 'S',
     head_judge: 'P',
 };
+// tells rows with the same letter apart, e.g. the two trampolines of a synchro pair
+exports.ROLE_SUFFIXES = {
+    execution_t1: 'T1',
+    execution_t2: 'T2',
+};
 const LABEL_KEYS = [
     'title', 'generated', 'groups', 'group', 'place', 'round', 'rank', 'attempt', 'total', 'roundTotal',
-    'skills', 'landing', 'bonus', 'missingSkill', 'skipped', 'pending', 'judges',
+    'skills', 'landing', 'bonus', 'missingSkill', 'skipped', 'pending', 'judges', 'bestAttemptCounts',
 ];
 
 const NUMBER_FORMATS = new Map();
@@ -80,7 +85,7 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
             .sort((a, b) => labelByAssignment.get(a.assignmentId).order - labelByAssignment.get(b.assignmentId).order);
         const kept = keptIndices(judges.map(pj => pj.value), slot.dropHigh, slot.dropLow);
         return {
-            kind: 'judges', roleKey: slot.judgeRoleKey, label: letter,
+            kind: 'judges', roleKey: slot.judgeRoleKey, label: letter, suffix: exports.ROLE_SUFFIXES[slot.judgeRoleKey] || null,
             judges: judges.map((pj, i) => ({
                 label: labelByAssignment.get(pj.assignmentId).label,
                 value: exports.formatScore(pj.value, lng),
@@ -91,7 +96,7 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
     }
     const format = (item) => (item ? exports.formatScore(item.value, lng) : null);
     return {
-        kind: 'tricks', roleKey: slot.judgeRoleKey, label: letter,
+        kind: 'tricks', roleKey: slot.judgeRoleKey, label: letter, suffix: exports.ROLE_SUFFIXES[slot.judgeRoleKey] || null,
         tricks: entry.perTrick.filter(p => !p.isLanding && !p.isBonus && !p.isMissingSkill).map(format),
         landing: format(entry.perTrick.find(p => p.isLanding)),
         bonus: format(entry.perTrick.find(p => p.isBonus)),
@@ -127,6 +132,8 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
                 competitors.set(row.sportsmanId, { name: row.name, club: row.club, rounds: [] });
             }
             const competitor = competitors.get(row.sportsmanId);
+            // the first attempt that reaches the round total is the one counting in a best attempt round
+            const bestIndex = row.attempts.findIndex(a => a.finalScore !== null && a.finalScore === row.total);
             competitor.lastRoundIndex = roundIndex;
             competitor.lastRank = typeof row.rank === 'number' ? row.rank : Infinity;
             competitor.startOrder = row.startOrder;
@@ -135,7 +142,10 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
                 scoringMode: round.scoring_mode,
                 total: exports.formatScore(row.total, lng),
                 rank: row.rank,
-                attempts: row.attempts.map(a => buildAttempt(a, panelSlots, labelByAssignment, t, lng)),
+                attempts: row.attempts.map((a, i) => ({
+                    ...buildAttempt(a, panelSlots, labelByAssignment, t, lng),
+                    counted: a.finalScore !== null && (round.scoring_mode !== 'best_attempt' || i === bestIndex),
+                })),
             });
         }
     });

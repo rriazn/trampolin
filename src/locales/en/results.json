@@ -16,7 +16,8 @@
     "missingSkill": "Missing skill",
     "skipped": "Skipped",
     "pending": "Not scored",
-    "judges": "Judges"
+    "judges": "Judges",
+    "bestAttemptCounts": "best attempt counts"
   },
   "errors": {
     "noFile": "Choose a .typ template file first",

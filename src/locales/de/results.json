@@ -16,7 +16,8 @@
     "missingSkill": "Fehlender Sprung",
     "skipped": "Übersprungen",
     "pending": "Nicht bewertet",
-    "judges": "Kampfrichter"
+    "judges": "Kampfrichter",
+    "bestAttemptCounts": "bester Versuch zählt"
   },
   "errors": {
     "noFile": "Wähle zuerst eine .typ-Vorlage aus",

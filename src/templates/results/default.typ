@@ -47,7 +47,10 @@
 // the values of one judges row, dropped values in parentheses
 #let judge-values(judges) = judges.map(j => if j.dropped [(#j.label #j.value)] else [#j.label #j.value]).join(h(8pt))
 
-#let attempt-rows(a) = {
+// role letter with a small suffix when needed, e.g. E and T1 for the first trampoline
+#let row-label(r) = strong[#r.label#if r.suffix != none [#h(1.5pt)#text(size: 6pt)[#r.suffix]]]
+
+#let attempt-rows(a, best-only) = {
   let span = skill-columns + 3
   // small header: attempt label, skill numbers, landing, bonus, missing skill, sum
   let header = (
@@ -70,7 +73,7 @@
     if r.kind == "tricks" {
       let cells = range(skill-columns).map(i => if i < r.tricks.len() and r.tricks.at(i) != none { r.tricks.at(i) } else { [] })
       rows += (
-        table.cell(strong[#r.label]),
+        table.cell(row-label(r)),
         ..cells,
         if r.landing != none [#r.landing],
         if r.bonus != none [#r.bonus],
@@ -79,13 +82,14 @@
       )
     } else {
       rows += (
-        table.cell(strong[#r.label]),
+        table.cell(row-label(r)),
         table.cell(colspan: span, align: left + horizon)[#judge-values(r.judges)],
         text(weight: "bold")[#r.total],
       )
     }
   }
-  // last line: one cell per judge type, skills performed, attempt total in a box
+  // last line: one cell per judge type, skills performed, attempt total in a box, filled when it is the attempt that counts
+  let marked = best-only and a.counted
   let available = skill-columns + 3
   let item-span = calc.max(1, calc.floor((available - 2) / calc.max(1, a.summary.len())))
   rows += (
@@ -93,7 +97,7 @@
     table.cell[#text(size: 7pt, weight: "bold")[#l.total]],
     ..a.summary.map(s => table.cell(colspan: item-span)[#text(size: 7pt)[#s.label] #h(3pt) #s.value]),
     table.cell(colspan: available - item-span * a.summary.len())[#text(size: 7pt)[#l.skills: #a.elementCount]],
-    table.cell(stroke: 0.9pt)[#text(weight: "bold")[#a.final]],
+    table.cell(stroke: 0.9pt, fill: if marked { black } else { none })[#text(weight: "bold", fill: if marked { white } else { black })[#a.final]],
   )
   (..header, ..rows)
 }
@@ -109,9 +113,9 @@
     table.hline(stroke: 1.2pt),
     table.cell(colspan: total-columns)[
       #set text(weight: "bold", size: 9.5pt)
-      #r.name #h(1fr) #l.roundTotal: #r.total#rank
+      #r.name#if r.scoringMode == "best_attempt" [ #text(weight: "regular", size: 8pt)[(#l.bestAttemptCounts)]] #h(1fr) #l.roundTotal: #r.total#rank
     ],
-    ..r.attempts.map(attempt-rows).flatten(),
+    ..r.attempts.map(a => attempt-rows(a, r.scoringMode == "best_attempt")).flatten(),
     table.hline(stroke: 1.2pt),
   )
 }

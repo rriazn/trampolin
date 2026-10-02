@@ -18,7 +18,8 @@
     "missingSkill": "Missing skill",
     "skipped": "Skipped",
     "pending": "Not scored",
-    "judges": "Judges"
+    "judges": "Judges",
+    "bestAttemptCounts": "best attempt counts"
   },
   "competition": {
     "name": "City Championships 2026",
@@ -50,6 +51,7 @@
                       "kind": "tricks",
                       "roleKey": "execution",
                       "label": "E",
+                      "suffix": null,
                       "tricks": [
                         "0.2",
                         "0.3",
@@ -71,6 +73,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.5",
                         "0.6",
@@ -116,7 +119,8 @@
                       "value": "-0.3"
                     }
                   ],
-                  "final": "37.3"
+                  "final": "37.3",
+                  "counted": true
                 },
                 {
                   "number": 2,
@@ -127,6 +131,7 @@
                       "kind": "tricks",
                       "roleKey": "execution",
                       "label": "E",
+                      "suffix": null,
                       "tricks": [
                         "0.1",
                         "0.2",
@@ -148,6 +153,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.5",
                         "0.6",
@@ -193,7 +199,8 @@
                       "value": "0.0"
                     }
                   ],
-                  "final": "39.1"
+                  "final": "39.1",
+                  "counted": true
                 }
               ]
             },
@@ -212,6 +219,7 @@
                       "kind": "tricks",
                       "roleKey": "execution",
                       "label": "E",
+                      "suffix": null,
                       "tricks": [
                         "0.1",
                         "0.2",
@@ -233,6 +241,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.5",
                         "0.6",
@@ -278,7 +287,88 @@
                       "value": "0.0"
                     }
                   ],
-                  "final": "39.2"
+                  "final": "39.2",
+                  "counted": true
+                },
+                {
+                  "number": 2,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.3"
+                      ],
+                      "landing": "0.2",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "7.8"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.6"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "5.1"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "7.8"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.1"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "16.4"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "9.3"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.3"
+                    }
+                  ],
+                  "final": "38.3",
+                  "counted": false
                 }
               ]
             }
@@ -304,6 +394,7 @@
                       "kind": "tricks",
                       "roleKey": "execution",
                       "label": "E",
+                      "suffix": null,
                       "tricks": [
                         "0.3",
                         "0.3",
@@ -325,6 +416,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.4",
                         "0.4",
@@ -370,7 +462,8 @@
                       "value": "-0.6"
                     }
                   ],
-                  "final": "31.6"
+                  "final": "31.6",
+                  "counted": true
                 },
                 {
                   "number": 2,
@@ -378,7 +471,8 @@
                   "elementCount": 10,
                   "rows": [],
                   "summary": [],
-                  "final": null
+                  "final": null,
+                  "counted": false
                 }
               ]
             }
@@ -410,6 +504,7 @@
                       "kind": "judges",
                       "roleKey": "execution",
                       "label": "E",
+                      "suffix": null,
                       "judges": [
                         {
                           "label": "E1",
@@ -438,6 +533,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.6",
                         "0.7",
@@ -471,7 +567,8 @@
                       "value": "-0.3"
                     }
                   ],
-                  "final": "20.7"
+                  "final": "20.7",
+                  "counted": true
                 }
               ]
             }
@@ -503,6 +600,7 @@
                       "kind": "tricks",
                       "roleKey": "execution_t1",
                       "label": "E",
+                      "suffix": "T1",
                       "tricks": [
                         "0.2",
                         "0.1",
@@ -524,6 +622,7 @@
                       "kind": "tricks",
                       "roleKey": "execution_t2",
                       "label": "E",
+                      "suffix": "T2",
                       "tricks": [
                         "0.1",
                         "0.2",
@@ -545,6 +644,7 @@
                       "kind": "tricks",
                       "roleKey": "difficulty",
                       "label": "D",
+                      "suffix": null,
                       "tricks": [
                         "0.5",
                         "0.6",
@@ -566,6 +666,7 @@
                       "kind": "tricks",
                       "roleKey": "synchronisation_skill",
                       "label": "S",
+                      "suffix": null,
                       "tricks": [
                         "0.1",
                         "0.0",
@@ -606,7 +707,8 @@
                       "value": "-0.3"
                     }
                   ],
-                  "final": "31.9"
+                  "final": "31.9",
+                  "counted": true
                 }
               ]
             }

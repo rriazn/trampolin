@@ -154,7 +154,7 @@ describe('buildResultsData', () => {
       elementCount: 2,
       rows: [
         {
-          kind: 'judges', roleKey: 'execution', label: 'E', total: '3.5',
+          kind: 'judges', roleKey: 'execution', label: 'E', suffix: null, total: '3.5',
           judges: [
             { label: 'E1', value: '1.8', dropped: false },
             { label: 'E2', value: '1.7', dropped: false },
@@ -162,7 +162,7 @@ describe('buildResultsData', () => {
             { label: 'E4', value: '1.4', dropped: true },
           ],
         },
-        { kind: 'tricks', roleKey: 'difficulty', label: 'D', tricks: ['0.5', '0.6'], landing: null, bonus: null, missingSkill: null, total: '1.1' },
+        { kind: 'tricks', roleKey: 'difficulty', label: 'D', suffix: null, tricks: ['0.5', '0.6'], landing: null, bonus: null, missingSkill: null, total: '1.1' },
       ],
       summary: [
         { roleKey: 'execution', label: 'E', value: '3.5' },
@@ -170,6 +170,7 @@ describe('buildResultsData', () => {
         { roleKey: 'head_judge', label: 'P', value: '-0.3' },
       ],
       final: '4.3',
+      counted: true,
     });
     expect(data.judges.map(j => j.label)).toEqual(['Execution', 'Difficulty', 'Head Judge (Penalties)']);
   });
@@ -265,11 +266,11 @@ describe('buildResultsData rows per panel', () => {
     });
 
     const [attempt] = attemptsOf(buildResultsData(comp, makeT('en'), 'en'));
-    expect(attempt.rows.map(r => [r.roleKey, r.label, r.tricks, r.total])).toEqual([
-      ['execution_t1', 'E', ['0.2', '0.2'], '0.8'],
-      ['execution_t2', 'E', ['0.1', '0.1'], '0.9'],
-      ['difficulty', 'D', ['0.5', '0.5'], '1.0'],
-      ['synchronisation_skill', 'S', ['0.1', '0.0'], '3.8'],
+    expect(attempt.rows.map(r => [r.roleKey, r.label, r.suffix, r.tricks, r.total])).toEqual([
+      ['execution_t1', 'E', 'T1', ['0.2', '0.2'], '0.8'],
+      ['execution_t2', 'E', 'T2', ['0.1', '0.1'], '0.9'],
+      ['difficulty', 'D', null, ['0.5', '0.5'], '1.0'],
+      ['synchronisation_skill', 'S', null, ['0.1', '0.0'], '3.8'],
     ]);
     expect(attempt.summary.map(x => [x.label, x.value])).toEqual([['E', '1.7'], ['D', '1.0'], ['S', '3.8'], ['P', '-0.2']]);
     expect(attempt.final).toBe('6.3');
@@ -380,5 +381,37 @@ describe('sample-results.json', () => {
     const sampled = pathsOf(sample);
     expect([...built].filter(p => !sampled.has(p)), 'missing from the sample').toEqual([]);
     expect([...sampled].filter(p => !built.has(p)), 'not produced by the builder').toEqual([]);
+  });
+});
+
+describe('buildResultsData counted attempts', () => {
+  // head judge penalties only, a lower penalty gives a higher attempt total
+  function roundWithAttempts(mode, penalties) {
+    const comp = makeCompetition({ panelKey: 'test' });
+    const group = makeGroup(comp.id);
+    const head = assignJudge(comp.id, getJudgeRoleIds().head_judge, makeUser('head_judge').id);
+    const entry = makeEntry(makeRound(group.id, { scoringMode: mode }).id, makeSportsman(comp.id, group.id, 'Solo').id, 1);
+    penalties.forEach((penalty, i) => {
+      const attempt = makeAttempt(entry.id, i + 1, 0);
+      if (penalty === 'skipped') {
+        db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(attempt.id);
+        return;
+      }
+      addScore(attempt.id, head, getJudgeRoleIds().head_judge, penalty);
+      db.prepare("UPDATE attempts SET status='scored' WHERE id=?").run(attempt.id);
+    });
+    return buildResultsData(comp, makeT('en'), 'en').groups[0].competitors[0].rounds[0].attempts.map(a => a.counted);
+  }
+
+  it('counts only the best attempt of a best attempt round', () => {
+    expect(roundWithAttempts('best_attempt', [0.3, 0.1, 0.2])).toEqual([false, true, false]);
+  });
+
+  it('counts the first attempt when the best attempts are tied', () => {
+    expect(roundWithAttempts('best_attempt', [0.3, 0.1, 0.1])).toEqual([false, true, false]);
+  });
+
+  it('counts every scored attempt of a sum round but not a skipped one', () => {
+    expect(roundWithAttempts('sum', [0.3, 0.1, 'skipped'])).toEqual([true, true, false]);
   });
 });
