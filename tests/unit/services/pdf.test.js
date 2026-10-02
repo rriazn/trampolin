@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import { makeT, require } from './testHelpers.js';
-const { compileResultsPdf, readUploadedTemplate, readDefaultTemplate, readSampleData } = require('../../../src/services/pdf.service.js');
+const { compileResultsPdf, createPackageGuard, readUploadedTemplate, readDefaultTemplate, readSampleData } = require('../../../src/services/pdf.service.js');
 
 const t = makeT('en');
 const data = { name: 'Anna' };
@@ -58,6 +59,20 @@ describe('compileResultsPdf', { timeout: 20000 }, () => {
     await compile('Hello');
     await compile('#let x = ').catch(() => {});
     expect(resultsDirs().length).toBe(before);
+  });
+});
+
+describe('createPackageGuard', () => {
+  // a directory would not stop root from storing packages, nothing can be created below a file
+  it('is a plain file, so no user can store a package below it', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pkg-guard-test-'));
+    try {
+      const guard = createPackageGuard(dir);
+      expect(fs.statSync(guard).isFile()).toBe(true);
+      expect(() => fs.mkdirSync(path.join(guard, 'preview'), { recursive: true })).toThrow(/ENOTDIR|EEXIST/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

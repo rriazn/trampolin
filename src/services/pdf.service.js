@@ -35,20 +35,26 @@ function parseDiagnostic(stderr) {
     return plain ? { message: plain[1] } : null;
 }
 
+// package location that is a file, so nothing can be stored below it, not even by root (a read-only directory would not stop root)
+function createPackageGuard(workDir) {
+    const guard = path.join(workDir, 'no-packages');
+    fs.writeFileSync(guard, '');
+    return guard;
+}
+exports.createPackageGuard = createPackageGuard;
+
 // runs typst on main.typ and results.json in a throwaway directory and resolves with the PDF buffer
 exports.compileResultsPdf = async (templateSource, data, t, { timeoutMs = COMPILE_TIMEOUT_MS } = {}) => {
     const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trampolin-results-'));
     const rootDir = path.join(workDir, 'root');
-    // empty and read-only, so no package can be stored or loaded
-    const packageDir = path.join(workDir, 'packages');
     const outFile = path.join(workDir, 'out.pdf');
     try {
         fs.mkdirSync(rootDir);
-        fs.mkdirSync(packageDir, { mode: 0o555 });
+        const packageGuard = createPackageGuard(workDir);
         fs.writeFileSync(path.join(rootDir, 'main.typ'), templateSource);
         fs.writeFileSync(path.join(rootDir, 'results.json'), JSON.stringify(data));
 
-        const { code, stderr, timedOut } = await runTypst(rootDir, outFile, packageDir, timeoutMs);
+        const { code, stderr, timedOut } = await runTypst(rootDir, outFile, packageGuard, timeoutMs);
         if (timedOut) throw new TemplateError(t('results:errors.timeout'));
         if (code !== 0) {
             const diagnostic = parseDiagnostic(stderr);
@@ -60,7 +66,7 @@ exports.compileResultsPdf = async (templateSource, data, t, { timeoutMs = COMPIL
     }
 };
 
-function runTypst(rootDir, outFile, packageDir, timeoutMs) {
+function runTypst(rootDir, outFile, packageGuard, timeoutMs) {
     return new Promise((resolve, reject) => {
         // the shell sets the memory limit and then becomes typst, so killing the child kills typst
         const child = spawn('sh', ['-c', `ulimit -v ${COMPILE_MEMORY_KB} && exec "$0" "$@"`, TYPST_BIN,
@@ -69,7 +75,7 @@ function runTypst(rootDir, outFile, packageDir, timeoutMs) {
         ], {
             cwd: rootDir,
             stdio: ['ignore', 'ignore', 'pipe'],
-            env: { PATH: process.env.PATH, HOME: rootDir, TYPST_PACKAGE_PATH: packageDir, TYPST_PACKAGE_CACHE_PATH: packageDir },
+            env: { PATH: process.env.PATH, HOME: rootDir, TYPST_PACKAGE_PATH: packageGuard, TYPST_PACKAGE_CACHE_PATH: packageGuard },
         });
 
         let stderr = '';
@@ -93,7 +99,7 @@ exports.readUploadedTemplate = (file, t) => {
     } catch {
         throw new TemplateError(t('results:errors.notUtf8'));
     }
-    // early friendly error only, the read-only package directory is the real guard
+    // early friendly error only, the package guard file is the real guard
     if (/["']@[\w-]+\//.test(source)) throw new TemplateError(t('results:errors.packages'));
     return source;
 };

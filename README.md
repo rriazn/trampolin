@@ -203,7 +203,8 @@ Rules for uploaded templates, enforced by the app:
 
 - a UTF-8 `.typ` file of at most 256 KB, without package imports (`@preview/...`, `@local/...`)
 - compiled in an empty temporary directory that only holds `main.typ` and `results.json`, so a template
-  cannot read other files, and it cannot load packages (no network, read-only package directory)
+  cannot read other files, and it cannot load packages (the package location is a plain file, so
+  nothing can be stored or used, whoever runs the app)
 - stopped after 10 seconds, with a memory limit of 1 GB per compile
 
 ### Data contract (`results.json`, version 1)
