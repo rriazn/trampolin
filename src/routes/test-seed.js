@@ -1,7 +1,8 @@
 'use strict';
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 const testSeedController = require('../controllers/test-seed.controller');
 
-router.post('/test/seed', testSeedController.seedTestData);
+router.post('/test/seed', express.json(), testSeedController.seedTestData);
 
 module.exports = router;

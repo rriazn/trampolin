@@ -80,6 +80,39 @@ describe('POST /admin/competitions', () => {
     });
 });
 
+describe('POST /admin/competitions with a competition type', () => {
+    const typeOf = (name) => db.prepare('SELECT type FROM competitions WHERE name=?').get(name)?.type;
+    const templateId = (key) => db.prepare('SELECT id FROM panel_templates WHERE key=?').get(key).id;
+
+    it('defaults to an individual competition when no type is sent', async () => {
+        await agent.post('/admin/competitions').type('form').send({ name: 'Type Default Cup' });
+        expect(typeOf('Type Default Cup')).toBe('individual');
+    });
+
+    it('creates a synchro competition with a matching synchro panel', async () => {
+        const res = await agent.post('/admin/competitions').type('form')
+            .send({ name: 'Type Synchro Cup', type: 'synchro', panel_template_id: templateId('fig_synchro') });
+        expect(res.status).toBe(302);
+        const comp = db.prepare('SELECT type, panel_template_id FROM competitions WHERE name=?').get('Type Synchro Cup');
+        expect(comp).toEqual({ type: 'synchro', panel_template_id: templateId('fig_synchro') });
+    });
+
+    it('returns 400 and creates nothing for an unknown type', async () => {
+        const res = await agent.post('/admin/competitions').type('form').send({ name: 'Type Bad Cup', type: 'team' });
+        expect(res.status).toBe(400);
+        expect(res.text).toContain('Unknown competition type.');
+        expect(typeOf('Type Bad Cup')).toBeUndefined();
+    });
+
+    it('returns 400 and creates nothing when the panel belongs to the other type', async () => {
+        const res = await agent.post('/admin/competitions').type('form')
+            .send({ name: 'Type Mismatch Cup', type: 'synchro', panel_template_id: templateId('fig') });
+        expect(res.status).toBe(400);
+        expect(res.text).toContain('The selected judge panel does not match the competition type.');
+        expect(typeOf('Type Mismatch Cup')).toBeUndefined();
+    });
+});
+
 describe('GET /admin/competitions/:id/edit', () => {
     it('returns 403 when unauthenticated', async () => {
         const res = await request(app).get(`/admin/competitions/${data.competitionId}/edit`);
@@ -124,6 +157,53 @@ describe('POST /admin/competitions/:id', () => {
         expect(res.status).toBe(302);
         const comp = db.prepare('SELECT panel_template_id FROM competitions WHERE id=?').get(data.competitionId);
         expect(comp.panel_template_id).toBe(localId);
+    });
+});
+
+describe('POST /admin/competitions/:id with a competition type', () => {
+    const typeOfId = (id) => db.prepare('SELECT type FROM competitions WHERE id=?').get(id).type;
+    const newCompetition = (name) => db.prepare('INSERT INTO competitions (name) VALUES (?)').run(name).lastInsertRowid;
+
+    it('changes the type while the competition is still empty', async () => {
+        const id = newCompetition('Type Edit Empty');
+        const res = await agent.post(`/admin/competitions/${id}`).type('form').send({ name: 'Type Edit Empty', type: 'synchro' });
+        expect(res.status).toBe(302);
+        expect(typeOfId(id)).toBe('synchro');
+    });
+
+    it('rejects a type change once the competition has sportsmen', async () => {
+        const id = newCompetition('Type Edit Sportsmen');
+        db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Alice', id);
+        const res = await agent.post(`/admin/competitions/${id}`).type('form').send({ name: 'Type Edit Sportsmen', type: 'synchro' });
+        expect(res.status).toBe(400);
+        expect(res.text).toContain('The type cannot be changed once athletes or judges have been added.');
+        expect(typeOfId(id)).toBe('individual');
+    });
+
+    it('rejects a type change once judges are assigned', async () => {
+        const id = newCompetition('Type Edit Judges');
+        const roleId = db.prepare("SELECT id FROM judge_roles WHERE key='execution'").get().id;
+        const userId = db.prepare("SELECT id FROM users WHERE email='ref@test.com'").get().id;
+        db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)').run(id, roleId, userId);
+        const res = await agent.post(`/admin/competitions/${id}`).type('form').send({ name: 'Type Edit Judges', type: 'synchro' });
+        expect(res.status).toBe(400);
+        expect(typeOfId(id)).toBe('individual');
+    });
+
+    it('keeps the type when the form omits it, as a disabled select does', async () => {
+        const id = db.prepare("INSERT INTO competitions (name, type) VALUES ('Type Edit Locked', 'synchro')").run().lastInsertRowid;
+        db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Pair', id);
+        const res = await agent.post(`/admin/competitions/${id}`).type('form').send({ name: 'Type Edit Locked Renamed' });
+        expect(res.status).toBe(302);
+        expect(typeOfId(id)).toBe('synchro');
+    });
+
+    it('returns 400 when the panel belongs to the other type', async () => {
+        const id = newCompetition('Type Edit Panel');
+        const synchroPanel = db.prepare("SELECT id FROM panel_templates WHERE key='fig_synchro'").get().id;
+        const res = await agent.post(`/admin/competitions/${id}`).type('form').send({ name: 'Type Edit Panel', panel_template_id: synchroPanel });
+        expect(res.status).toBe(400);
+        expect(db.prepare('SELECT panel_template_id FROM competitions WHERE id=?').get(id).panel_template_id).toBeNull();
     });
 });
 

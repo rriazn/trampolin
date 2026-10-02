@@ -36,7 +36,7 @@ exports.getAssignmentsForRoles = (competitionId, judgeRoleIds) => {
 exports.getAssignmentWithInfo = (competitionId, userId, judgeRoleId) => {
     return db.prepare(`
         SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.key AS roleKey, jr.granularity,
-            jr.score_min, jr.score_max, jr.is_deduction AS isDeduction
+            jr.score_min, jr.score_max, jr.is_deduction AS isDeduction, jr.has_landing AS hasLanding
         FROM panel_assignments pa
         JOIN judge_roles jr ON jr.id = pa.judge_role_id
         WHERE pa.competition_id = ? AND pa.user_id = ? AND pa.judge_role_id = ?
@@ -55,7 +55,7 @@ exports.getHeadJudgeAssignment = (competitionId, userId) => {
 exports.getAssignmentsForUser = (competitionId, userId) => {
     return db.prepare(`
         SELECT pa.id AS assignment_id, jr.id AS judge_role_id, jr.key, jr.name,
-            jr.granularity, jr.score_min, jr.score_max, jr.is_deduction AS isDeduction
+            jr.granularity, jr.score_min, jr.score_max, jr.is_deduction AS isDeduction, jr.has_landing AS hasLanding
         FROM panel_assignments pa
         JOIN judge_roles jr ON jr.id = pa.judge_role_id
         WHERE pa.competition_id = ? AND pa.user_id = ?
@@ -104,7 +104,7 @@ exports.getOrderedPanelSlotsWithRoleInfo = (panelTemplateId) => {
         SELECT s.judge_role_id AS judgeRoleId, s.judge_count AS judgeCount, s.drop_high AS dropHigh,
             s.drop_low AS dropLow, s.combine, s.multiplier, s.aggregation,
             jr.key AS judgeRoleKey, jr.name AS judgeRoleName, jr.granularity,
-            jr.is_deduction AS isDeduction, jr.max_value AS maxValue
+            jr.is_deduction AS isDeduction, jr.has_landing AS hasLanding, jr.max_value AS maxValue
         FROM panel_template_slots s
         JOIN judge_roles jr ON jr.id = s.judge_role_id
         WHERE s.panel_template_id = ?

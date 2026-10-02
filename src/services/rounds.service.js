@@ -8,6 +8,7 @@ const { getAttemptForId } = require("./db/entries.crud");
 const { loadPanelSlots } = require("./panels.service");
 const { loadAttemptScoreMaps, loadJudgeSubmissionStatus } = require("./attempts.service");
 const { computeAttemptScore } = require("./scoring.service");
+const { scoreStep, maxScoreFor } = require("./helpers/referee.helpers");
 const {
   getHeadJudgeAssignment, getAssignmentsForUser,
 } = require("./db/panels.crud");
@@ -78,21 +79,23 @@ exports.getRefereeRoundInfo = (round, userId) => {
             elements.push({ number: n, value: valueByElement.has(n) ? valueByElement.get(n) : null, kind: 'trick' });
         }
         // 11th line: landing (full 10-skill routines) or bonus for difficulty
-        if (a.isDeduction && attempt.element_count === 10) {
+        if (a.hasLanding && attempt.element_count === 10) {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'landing' });
         } else if (!a.isDeduction && attempt.element_count > 0) {
             elements.push({ number: 11, value: valueByElement.has(11) ? valueByElement.get(11) : null, kind: 'bonus' });
             elements.push({ number: 12, value: valueByElement.has(12) ? valueByElement.get(12) : null, kind: 'missingSkill' });
         }
-        const hasSubmitted = existing.length > 0;
-        return { ...a, elements, contribution: hasSubmitted ? contribution : null };
+        // the judge's own score, not the role's contribution to the attempt, which is shared with the other judges and scaled by the slot multiplier
+        const personal = contribution?.perJudge?.find(pj => pj.assignmentId === a.assignment_id);
+        const ownValue = personal && personal.value !== null ? { value: personal.value, isComplete: personal.isComplete } : null;
+        return { ...a, elements, ownValue };
         }
         // No skills were performed at all
         if (attempt.element_count === 0 && a.key !== 'head_judge') {
         return { ...a, notApplicable: true };
         }
         const existing = getScoreForAttemptAndAssignment(attempt.attempt_id, a.assignment_id);
-        return { ...a, score: existing ? existing.score : null, contribution: existing ? contribution : null };
+        return { ...a, step: scoreStep(a.key), score_max: maxScoreFor(a.key, a.score_max, attempt.element_count), score: existing ? existing.score : null, contribution: existing ? contribution : null };
     });
     return { attempt, inputs };
 };

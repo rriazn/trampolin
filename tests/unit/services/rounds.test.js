@@ -160,6 +160,151 @@ describe('getRefereeRoundInfo', () => {
     expect(execInput.elements).toEqual([]);
   });
 
+  it('adds the landing line for a role with hasLanding on a full routine', () => {
+    const { comp, round, roleIds } = setupInProgressAttempt('test', 10);
+    const execJudge = makeUser('referee');
+    assignJudge(comp.id, roleIds.execution, execJudge.id);
+
+    const { inputs } = getRefereeRoundInfo(round, execJudge.id);
+    const kinds = inputs.find(i => i.key === 'execution').elements.map(e => e.kind);
+    expect(kinds).toEqual([...Array(10).fill('trick'), 'landing']);
+  });
+
+  it('gives a synchro execution judge the landing line but a per-skill synchronisation judge only the tricks', () => {
+    const { comp, round, roleIds } = setupInProgressAttempt('local_synchro', 10);
+    const execJudge = makeUser('referee');
+    const syncJudge = makeUser('referee');
+    assignJudge(comp.id, roleIds.execution_t1, execJudge.id);
+    assignJudge(comp.id, roleIds.synchronisation_skill, syncJudge.id);
+
+    const execKinds = getRefereeRoundInfo(round, execJudge.id).inputs[0].elements.map(e => e.kind);
+    const syncKinds = getRefereeRoundInfo(round, syncJudge.id).inputs[0].elements.map(e => e.kind);
+    expect(execKinds).toHaveLength(11);
+    expect(execKinds[10]).toBe('landing');
+    expect(syncKinds).toEqual(Array(10).fill('trick'));
+  });
+
+  it('gives the synchronisation device mark a hundredth step and other attempt roles a tenth', () => {
+    const { comp, round, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+    const deviceJudge = makeUser('referee');
+    const headJudge = makeUser('head_judge');
+    assignJudge(comp.id, roleIds.synchronisation, deviceJudge.id);
+    assignJudge(comp.id, roleIds.head_judge, headJudge.id);
+
+    expect(getRefereeRoundInfo(round, deviceJudge.id).inputs[0].step).toBe(0.01);
+    expect(getRefereeRoundInfo(round, headJudge.id).inputs[0].step).toBe(0.1);
+  });
+
+  it('limits the synchronisation device mark to the number of valid elements', () => {
+    const shortened = setupInProgressAttempt('fig_synchro', 6);
+    const full = setupInProgressAttempt('fig_synchro', 10);
+    const shortJudge = makeUser('referee');
+    const fullJudge = makeUser('referee');
+    assignJudge(shortened.comp.id, shortened.roleIds.synchronisation, shortJudge.id);
+    assignJudge(full.comp.id, full.roleIds.synchronisation, fullJudge.id);
+
+    expect(getRefereeRoundInfo(shortened.round, shortJudge.id).inputs[0].score_max).toBe(6);
+    expect(getRefereeRoundInfo(full.round, fullJudge.id).inputs[0].score_max).toBe(10);
+  });
+
+  it('limits the horizontal displacement mark to the number of valid elements on an individual panel too', () => {
+    const shortened = setupInProgressAttempt('fig', 6);
+    const full = setupInProgressAttempt('fig', 10);
+    const shortJudge = makeUser('referee');
+    const fullJudge = makeUser('referee');
+    assignJudge(shortened.comp.id, shortened.roleIds.horizontal_displacement, shortJudge.id);
+    assignJudge(full.comp.id, full.roleIds.horizontal_displacement, fullJudge.id);
+
+    expect(getRefereeRoundInfo(shortened.round, shortJudge.id).inputs[0].score_max).toBe(6);
+    expect(getRefereeRoundInfo(full.round, fullJudge.id).inputs[0].score_max).toBe(10);
+  });
+
+  it('keeps the time of flight maximum when the routine is shortened', () => {
+    const { comp, round, roleIds } = setupInProgressAttempt('fig', 6);
+    const tofJudge = makeUser('referee');
+    assignJudge(comp.id, roleIds.time_of_flight, tofJudge.id);
+
+    expect(getRefereeRoundInfo(round, tofJudge.id).inputs[0].score_max).toBe(10);
+  });
+
+  it('keeps the head judge maximum when the routine is shortened', () => {
+    const { comp, round, roleIds } = setupInProgressAttempt('fig_synchro', 6);
+    const headJudge = makeUser('head_judge');
+    assignJudge(comp.id, roleIds.head_judge, headJudge.id);
+
+    expect(getRefereeRoundInfo(round, headJudge.id).inputs[0].score_max).toBe(10);
+  });
+
+  describe("a judge's own value", () => {
+    // deductions per trick plus a landing line, entered by one judge
+    function enterDeductions(attemptId, assignmentId, roleId, perTrick, landing) {
+      for (let n = 1; n <= 10; n++) addElementScore(attemptId, assignmentId, roleId, n, perTrick);
+      if (landing !== undefined) addElementScore(attemptId, assignmentId, roleId, 11, landing);
+    }
+
+    it('is the judge\'s own execution score, not the trampoline share after the 0.5 multiplier', () => {
+      const { comp, round, attempt, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+      const judge = makeUser('referee');
+      const assignment = assignJudge(comp.id, roleIds.execution_t1, judge.id);
+      enterDeductions(attempt.id, assignment, roleIds.execution_t1, 0.1, 0.2);
+
+      const input = getRefereeRoundInfo(round, judge.id).inputs[0];
+
+      expect(input.ownValue.value).toBeCloseTo(10 - 1.2);
+    });
+
+    it('ignores what the other judges on the trampoline entered', () => {
+      const { comp, round, attempt, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+      const judge = makeUser('referee');
+      const colleague = makeUser('referee');
+      const mine = assignJudge(comp.id, roleIds.execution_t1, judge.id);
+      const theirs = assignJudge(comp.id, roleIds.execution_t1, colleague.id);
+      enterDeductions(attempt.id, mine, roleIds.execution_t1, 0.1, 0.2);
+      enterDeductions(attempt.id, theirs, roleIds.execution_t1, 0.5, 0.5);
+
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue.value).toBeCloseTo(10 - 1.2);
+      expect(getRefereeRoundInfo(round, colleague.id).inputs[0].ownValue.value).toBeCloseTo(10 - 5.5);
+    });
+
+    it('is the single judge\'s score on an individual panel, not the sum over the counted judges', () => {
+      const { comp, round, attempt, roleIds } = setupInProgressAttempt('fig', 10);
+      const judge = makeUser('referee');
+      const assignment = assignJudge(comp.id, roleIds.execution, judge.id);
+      enterDeductions(attempt.id, assignment, roleIds.execution, 0.1, 0.2);
+
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue.value).toBeCloseTo(10 - 1.2);
+    });
+
+    it('is the judge\'s own difficulty total', () => {
+      const { comp, round, attempt, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+      const judge = makeUser('referee');
+      const assignment = assignJudge(comp.id, roleIds.difficulty, judge.id);
+      for (let n = 1; n <= 10; n++) addElementScore(attempt.id, assignment, roleIds.difficulty, n, 0.5);
+
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue.value).toBeCloseTo(5);
+    });
+
+    it('is complete once every line is submitted and partial before that', () => {
+      const { comp, round, attempt, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+      const judge = makeUser('referee');
+      const assignment = assignJudge(comp.id, roleIds.execution_t1, judge.id);
+      for (let n = 1; n <= 4; n++) addElementScore(attempt.id, assignment, roleIds.execution_t1, n, 0);
+
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue.isComplete).toBe(false);
+
+      for (let n = 5; n <= 11; n++) addElementScore(attempt.id, assignment, roleIds.execution_t1, n, 0);
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue.isComplete).toBe(true);
+    });
+
+    it('is absent until the judge has submitted something', () => {
+      const { comp, round, roleIds } = setupInProgressAttempt('fig_synchro', 10);
+      const judge = makeUser('referee');
+      assignJudge(comp.id, roleIds.execution_t1, judge.id);
+
+      expect(getRefereeRoundInfo(round, judge.id).inputs[0].ownValue).toBeNull();
+    });
+  });
+
   it('returns an empty inputs list for a user with no assignment on this competition', () => {
     const { round } = setupInProgressAttempt();
     const { inputs } = getRefereeRoundInfo(round, 999999);

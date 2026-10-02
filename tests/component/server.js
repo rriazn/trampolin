@@ -52,6 +52,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || {};
   res.locals.appVersion = getAppVersion(TEST_VERSION_PATH);
   res.locals.currentUrl = req.originalUrl;
+  Object.assign(res.locals, require('../../src/services/helpers/competitor.helpers'));
   delete req.session.flash;
   next();
 });
@@ -253,6 +254,56 @@ app.post('/test/seed/multi-group', (req, res) => {
     roundAId: Number(roundA.lastInsertRowid),
     sportsmanAId: Number(spA.lastInsertRowid),
     sportsmanBId: Number(spB.lastInsertRowid),
+  });
+});
+
+// synchro competition with one pair on the current attempt, for the pair display and form specs, ?elementCount= shortens the routine
+app.post('/test/seed/synchro', (req, res) => {
+  cleanupDb();
+  const elementCount = Number(req.query.elementCount) || 10;
+
+  const localSynchro = db.prepare("SELECT id FROM panel_templates WHERE key='local_synchro'").get();
+  const comp = db.prepare("INSERT INTO competitions (name, status, panel_template_id, type) VALUES (?, 'active', ?, 'synchro')")
+    .run('Pairs Cup', localSynchro.id);
+  const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, 'Pairs A', 'PA');
+  const round = db.prepare('INSERT INTO rounds (group_id, name, round_order, scoring_mode) VALUES (?, ?, ?, ?)').run(group.lastInsertRowid, 'Pairs Final', 1, 'best_attempt');
+  const pair = db.prepare(`
+    INSERT INTO sportsmen (name, club, gender, birth_year, partner_name, partner_club, partner_gender, partner_birth_year, routine, competition_id, group_id)
+    VALUES ('Leon Weber', 'TSV München', 'm', 2008, 'Emma Fischer', 'SV Hamburg', 'f', 2009, 'W11', ?, ?)
+  `).run(comp.lastInsertRowid, group.lastInsertRowid);
+  // a second pair from one shared club, to check the club collapses to a single name
+  db.prepare(`
+    INSERT INTO sportsmen (name, club, partner_name, partner_club, competition_id, group_id)
+    VALUES ('Anna Klein', 'TSV München', 'Mia Braun', 'TSV München', ?, ?)
+  `).run(comp.lastInsertRowid, group.lastInsertRowid);
+  const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, pair.lastInsertRowid, 1);
+  const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, ?, ?)').run(entry.lastInsertRowid, 1, elementCount);
+  db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?").run(attempt.lastInsertRowid, round.lastInsertRowid);
+
+  const hash = bcrypt.hashSync('ref123', 10);
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Sync Execution Judge', 'syncexec@test.com', hash, 'referee');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Sync Skill Judge', 'syncskill@test.com', hash, 'referee');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Sync Device Judge', 'syncdevice@test.com', hash, 'referee');
+  db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)').run('Sync Head Judge', 'synchj@test.com', bcrypt.hashSync('hj123', 10), 'head_judge');
+  const assign = (email, roleKey) => {
+    const user = db.prepare('SELECT id FROM users WHERE email=?').get(email);
+    const role = db.prepare('SELECT id FROM judge_roles WHERE key=?').get(roleKey);
+    db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)').run(comp.lastInsertRowid, role.id, user.id);
+  };
+  assign('syncexec@test.com', 'execution_t1');
+  assign('syncskill@test.com', 'synchronisation_skill');
+  assign('syncdevice@test.com', 'synchronisation');
+  assign('synchj@test.com', 'head_judge');
+
+  const individualComp = db.prepare("INSERT INTO competitions (name, status) VALUES ('Solo Cup', 'active')").run();
+  db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Solo Athlete', individualComp.lastInsertRowid);
+
+  res.json({
+    competitionId: Number(comp.lastInsertRowid),
+    groupId: Number(group.lastInsertRowid),
+    roundId: Number(round.lastInsertRowid),
+    pairId: Number(pair.lastInsertRowid),
+    individualCompetitionId: Number(individualComp.lastInsertRowid),
   });
 });
 

@@ -26,12 +26,21 @@
     <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.date') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
     <input type="date" name="date" class="form-control" value="<%= competition ? (competition.date || '') : '' %>">
   </div>
+  <div class="mb-3">
+    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.type') %></label>
+    <select name="type" id="competition-type" class="form-select" <%= typeLocked ? 'disabled' : '' %>>
+      <% ['individual', 'synchro'].forEach(ct => { %>
+      <option value="<%= ct %>" <%= (competition ? competition.type : 'individual') === ct ? 'selected' : '' %>><%= t('common:competitionTypes.' + ct) %></option>
+      <% }) %>
+    </select>
+    <% if (typeLocked) { %><div class="form-text"><%= t('admin:competitionForm.typeLockedHelp') %></div><% } %>
+  </div>
   <div class="mb-4">
     <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.judgePanel') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-    <select name="panel_template_id" class="form-select">
+    <select name="panel_template_id" id="panel-template" class="form-select">
       <option value=""><%= t('admin:competitionForm.noneSelected') %></option>
       <% panelTemplates.forEach(pt => { %>
-      <option value="<%= pt.id %>" title="<%= t('common:panelTemplates.' + pt.key + '.description') %>" <%= (competition && competition.panel_template_id === pt.id) ? 'selected' : '' %>><%= t('common:panelTemplates.' + pt.key + '.name') %></option>
+      <option value="<%= pt.id %>" data-type="<%= pt.competition_type %>" title="<%= t('common:panelTemplates.' + pt.key + '.description') %>" <%= (competition && competition.panel_template_id === pt.id) ? 'selected' : '' %>><%= t('common:panelTemplates.' + pt.key + '.name') %></option>
       <% }) %>
     </select>
     <div class="form-text"><%= t('admin:competitionForm.panelHelp') %></div>
@@ -45,4 +54,22 @@
 </div>
 </div>
 </div>
+<script>
+  // only panels of the chosen competition type can be picked
+  (function () {
+    var typeSelect = document.getElementById('competition-type');
+    var panelSelect = document.getElementById('panel-template');
+    function filterPanels() {
+      Array.prototype.forEach.call(panelSelect.options, function (opt) {
+        if (!opt.value) return;
+        var match = opt.dataset.type === typeSelect.value;
+        opt.hidden = !match;
+        opt.disabled = !match;
+        if (!match && opt.selected) panelSelect.value = '';
+      });
+    }
+    typeSelect.addEventListener('change', filterPanels);
+    filterPanels();
+  })();
+</script>
 <%- include('../partials/footer') %>

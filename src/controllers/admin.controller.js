@@ -2,11 +2,14 @@ const { getAdminStats } = require("../services/helpers/admin.helpers");
 const { getCompetitionById, getTopCompetitions, getCompetitions, createCompetitionDB, updateCompetitionDB, updateCompetitionStatusDB, deleteCompetitionDB } = require("../services/db/competitions.crud");
 const { getGroupsByCompetition, getGroupsRoundCount, addGroupDB, deleteGroupDB, getGroupById } = require("../services/db/groups.crud");
 const { getPanels, getAssignedCount, addAssignment, getAssignmentById, checkAlreadyAssigned } = require("../services/db/panels.crud");
+const { validateCompetitionInput, canChangeCompetitionType } = require("../services/competitions.service");
 const { getJudgesForCompetition, resolveAssignmentGroup, removeJudgeFromRole } = require("../services/panels.service");
 const { getSportsmenByCompetition, addSportsmanDB, getSportsmenById, updateSportsmanDB, deleteSportsmanDB, getAvailableSportsmen } = require("../services/db/sportsmen.crud");
 const { deleteUserDB, getUsers, getUserById, getUserTokenVersion } = require("../services/db/users.crud");
 const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx } = require("../services/files.service");
 const { createUser, updateUser } = require("../services/users.service");
+const { parseSportsmanInput } = require("../services/sportsmen.service");
+const { competitorName } = require("../services/helpers/competitor.helpers");
 const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries.service");
 const { createAttempts } = require("../services/attempts.service");
 const { getRoundsByGroup, addRoundDB, deleteRoundDB, getRoundByIdWithCompGroupInfo, getPreviousRoundInfo, getRoundById } = require("../services/db/rounds.crud");
@@ -119,20 +122,20 @@ exports.getCompetitions = async (req, res) => {
 
 exports.getNewCompetitionForm = async (req, res) => {
     const panelTemplates = getPanels();
-    res.render('admin/competition-form', { competition: null, action: '/admin/competitions', panelTemplates });
+    res.render('admin/competition-form', { competition: null, action: '/admin/competitions', panelTemplates, typeLocked: false });
 };
 
 exports.addCompetition = async (req, res) => {
-    const { name, date, panel_template_id } = req.body;
-    if (!name || !name.trim()) {
-        const panelTemplates = getPanels();
+    const { name, date, type, panel_template_id } = req.body;
+    const { error, values } = validateCompetitionInput({ name, type, panelTemplateId: panel_template_id });
+    if (error) {
         return res.status(400).render('admin/competition-form', {
-        competition: null, action: '/admin/competitions', panelTemplates,
-        error: req.t('admin:competitionForm.errors.nameRequired'),
+        competition: null, action: '/admin/competitions', panelTemplates: getPanels(), typeLocked: false,
+        error: req.t(`admin:competitionForm.errors.${error}`),
         });
     }
-    createCompetitionDB(name, date, panel_template_id);
-    req.session.flash = { success: req.t('admin:flash.competitions.created', { name }) };
+    createCompetitionDB(values.name, date, values.panelTemplateId, values.type);
+    req.session.flash = { success: req.t('admin:flash.competitions.created', { name: values.name }) };
     res.redirect('/admin/competitions');
 };
 
@@ -141,19 +144,26 @@ exports.getEditCompetitionForm = async (req, res) => {
     if (!competition) 
         return renderNotFound(res, req.t('errors:notFound.generic'));
     const panelTemplates = getPanels();
-    res.render('admin/competition-form', { competition, action: `/admin/competitions/${competition.id}`, panelTemplates });
+    res.render('admin/competition-form', {
+        competition, action: `/admin/competitions/${competition.id}`, panelTemplates,
+        typeLocked: !canChangeCompetitionType(competition.id),
+    });
 };
 
 exports.updateCompetition = async (req, res) => {
-    const { name, date, panel_template_id } = req.body;
-    if (!name || !name.trim()) {
-        const panelTemplates = getPanels();
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.generic'));
+    const { name, date, type, panel_template_id } = req.body;
+    const { error, values } = validateCompetitionInput({ name, type, panelTemplateId: panel_template_id }, competition);
+    if (error) {
         return res.status(400).render('admin/competition-form', {
-        competition: null, action: '/admin/competitions', panelTemplates,
-        error: req.t('admin:competitionForm.errors.nameRequired'),
+        competition, action: `/admin/competitions/${competition.id}`, panelTemplates: getPanels(),
+        typeLocked: !canChangeCompetitionType(competition.id),
+        error: req.t(`admin:competitionForm.errors.${error}`),
         });
     }
-    updateCompetitionDB(req.params.id, name, date, panel_template_id);
+    updateCompetitionDB(competition.id, values.name, date, values.panelTemplateId, values.type);
     req.session.flash = { success: req.t('admin:flash.competitions.updated') };
     res.redirect('/admin/competitions');
 };
@@ -275,18 +285,19 @@ exports.getNewSportsmanForm = async (req, res) => {
 };
 
 exports.addSportsman = async (req, res) => {
-    const { name, club, gender, birth_year, routine, group_id } = req.body;
-    if (!name || !name.trim()) {
-        const competition = getCompetitionById(req.params.id);
-        const groups = getGroupsByCompetition(req.params.id);
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    const { error, values } = parseSportsmanInput(req.body, competition);
+    if (error) {
         return res.status(400).render('admin/sportsman-form', {
-            sportsman: null, competition, groups,
+            sportsman: null, competition, groups: getGroupsByCompetition(req.params.id),
             action: `/admin/competitions/${req.params.id}/sportsmen`,
-            error: req.t('admin:sportsmanForm.errors.nameRequired'),
+            error: req.t(`admin:sportsmanForm.errors.${error}`),
         });
     }
-    addSportsmanDB(name, club, gender, birth_year, routine, req.params.id, group_id);
-    req.session.flash = { success: req.t('admin:flash.sportsmen.added', { name }) };
+    addSportsmanDB(values.name, values.club, values.gender, values.birth_year, values.routine, req.params.id, values.group_id, values.partner);
+    req.session.flash = { success: req.t('admin:flash.sportsmen.added', { name: competitorName(values.name, values.partner.name) }) };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 
@@ -307,18 +318,18 @@ exports.getEditSportsmanForm = async (req, res) => {
 };
 
 exports.updateSportsman = async (req, res) => {
-    const { name, club, gender, birth_year, routine, group_id } = req.body;
-    if (!name || !name.trim()) {
-        const competition = getCompetitionById(req.params.id);
-        const groups = getGroupsByCompetition(req.params.id);
-        const sportsman = getSportsmenById(req.params.sid);
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    const { error, values } = parseSportsmanInput(req.body, competition);
+    if (error) {
         return res.status(400).render('admin/sportsman-form', {
-            sportsman, competition, groups,
+            sportsman: getSportsmenById(req.params.sid), competition, groups: getGroupsByCompetition(req.params.id),
             action: `/admin/competitions/${req.params.id}/sportsmen/${req.params.sid}`,
-            error: req.t('admin:sportsmanForm.errors.nameRequired'),
+            error: req.t(`admin:sportsmanForm.errors.${error}`),
         });
     }
-    updateSportsmanDB(req.params.sid, name, club, gender, birth_year, routine, group_id);
+    updateSportsmanDB(req.params.sid, values.name, values.club, values.gender, values.birth_year, values.routine, values.group_id, values.partner);
     req.session.flash = { success: req.t('admin:flash.sportsmen.updated') };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };

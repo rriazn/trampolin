@@ -5,6 +5,8 @@ const db = require("../db/database");
 const { addSportsmanDB, getSportsmenWithGroup } = require("./db/sportsmen.crud");
 const { createOrIgnoreUserDB } = require("./db/users.crud");
 const { getGroupByCompetitionAbbreviation } = require("./db/groups.crud");
+const { getCompetitionById } = require("./db/competitions.crud");
+const { parseSportsmanInput } = require("./sportsmen.service");
 const { normalizeRole } = require("./users.service");
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -52,24 +54,80 @@ exports.parseUsersXlsx = async (buffer) => {
     return { created, skipped };
 };
 
+const INDIVIDUAL_COLUMNS = ['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group'];
+const SYNCHRO_COLUMNS = ['Name 1', 'Club 1', 'Gender 1', 'Birthyear 1', 'Name 2', 'Club 2', 'Gender 2', 'Birthyear 2', 'Routine', 'Group'];
+
 exports.createSportsmenXlsx = (competitionId) => {
+    const isSynchro = getCompetitionById(competitionId)?.type === 'synchro';
     const sportsmen = getSportsmenWithGroup(competitionId);
-    const ws = XLSX.utils.json_to_sheet(sportsmen.map(s => ({
+    const rows = sportsmen.map(s => isSynchro ? {
+        'Name 1': s.name,
+        'Club 1': s.club || '',
+        'Gender 1': s.gender || '',
+        'Birthyear 1': s.birth_year || '',
+        'Name 2': s.partner_name || '',
+        'Club 2': s.partner_club || '',
+        'Gender 2': s.partner_gender || '',
+        'Birthyear 2': s.partner_birth_year || '',
+        Routine: s.routine || '',
+        Group: s.group_abbreviation || '',
+    } : {
         Name: s.name,
         Club: s.club || '',
         Gender: s.gender || '',
         Birthyear: s.birth_year || '',
         Routine: s.routine || '',
         Group: s.group_abbreviation || '',
-    })));
-    ws['!cols'] = [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }];
+    });
+    const ws = XLSX.utils.json_to_sheet(rows, { header: isSynchro ? SYNCHRO_COLUMNS : INDIVIDUAL_COLUMNS });
+    ws['!cols'] = isSynchro
+        ? [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }]
+        : [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     return buf;
 };
 
+// headers are matched case-insensitively, the first non-empty variant wins
+const readCell = (lowerRow, ...names) => {
+    for (const name of names) {
+        const value = String(lowerRow[name] ?? '').trim();
+        if (value) return value;
+    }
+    return '';
+};
+
+// maps one sheet row onto the same fields the admin form posts, so both paths share one validation
+const rowToSportsmanBody = (row, isSynchro) => {
+    const lower = Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim().toLowerCase(), value]));
+    const body = {
+        routine: readCell(lower, 'routine'),
+    };
+    if (isSynchro) {
+        Object.assign(body, {
+            name: readCell(lower, 'name 1'),
+            club: readCell(lower, 'club 1'),
+            gender: readCell(lower, 'gender 1'),
+            birth_year: readCell(lower, 'birthyear 1', 'birth year 1'),
+            partner_name: readCell(lower, 'name 2'),
+            partner_club: readCell(lower, 'club 2'),
+            partner_gender: readCell(lower, 'gender 2'),
+            partner_birth_year: readCell(lower, 'birthyear 2', 'birth year 2'),
+        });
+    } else {
+        Object.assign(body, {
+            name: readCell(lower, 'name'),
+            club: readCell(lower, 'club'),
+            gender: readCell(lower, 'gender'),
+            birth_year: readCell(lower, 'birthyear', 'birth year', 'birth_year'),
+        });
+    }
+    return { body, abbrev: readCell(lower, 'group') };
+};
+
 exports.parseSportsmenXlsx = (competitionId, buffer) => {
+    const competition = getCompetitionById(competitionId) || { type: 'individual' };
     let rows = [];
     try {
         const wb = XLSX.read(buffer, { type: 'buffer' });
@@ -80,17 +138,12 @@ exports.parseSportsmenXlsx = (competitionId, buffer) => {
     const insertAll = db.transaction(() => {
         let created = 0, skipped = 0, unknownGroup = 0;
         for (const row of rows) {
-        const name = String(row['Name'] || row['name'] || '').trim();
-        if (!name) { skipped++; continue; }
-        const club = String(row['Club'] || row['club'] || '').trim() || null;
-        const gender = String(row['Gender'] || row['gender'] || '').trim() || null;
-        const birth_year_raw = String(row['Birthyear'] || row['Birth Year'] || row['birth_year'] || '').trim();
-        const birth_year = birth_year_raw ? parseInt(birth_year_raw) : null;
-        const routine = String(row['Routine'] || row['routine'] || '').trim() || null;
-        const abbrev = String(row['Group'] || row['group'] || '').trim();
+        const { body, abbrev } = rowToSportsmanBody(row, competition.type === 'synchro');
         const group_id = abbrev ? (getGroupByCompetitionAbbreviation(competitionId, abbrev)?.id || null) : null;
+        const { error, values } = parseSportsmanInput({ ...body, group_id }, competition);
+        if (error) { skipped++; continue; }
         if (abbrev && !group_id) unknownGroup++;
-        addSportsmanDB(name, club, gender, birth_year, routine, competitionId, group_id);
+        addSportsmanDB(values.name, values.club, values.gender, values.birth_year, values.routine, competitionId, values.group_id, values.partner);
         created++;
         }
         return { created, skipped, unknownGroup };

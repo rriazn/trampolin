@@ -22,7 +22,7 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await loginAsAdminInGerman(page);
     await page.goto(`/admin/competitions/${seed.panelCompetitionId}/judges`);
 
-    await expect(page.getByRole('heading', { name: 'Ausführung' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Haltung' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Schwierigkeit' })).toBeVisible();
     // Time of Flight / Horizontal Displacement stay English in the German locale, but still exercise the joined shared-assignment group mechanism
     await expect(page.getByRole('heading', { name: 'Time of Flight & Horizontal Displacement' })).toBeVisible();
@@ -45,19 +45,19 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await loginAsAdminInGerman(page);
     await page.goto(`/admin/competitions/${seed.panelCompetitionId}/judges`);
 
-    const executionCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Ausführung' }) });
+    const executionCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Haltung' }) });
     await executionCard.locator('select[name=user_id]').selectOption({ label: 'Judge Referee A · judgerefa@test.com' });
     await executionCard.getByRole('button', { name: 'Zuweisen' }).click();
     await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
 
-    const updatedCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Ausführung' }) });
+    const updatedCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Haltung' }) });
     let capturedDialog;
     page.once('dialog', dialog => {
       capturedDialog = dialog;
       dialog.dismiss();
     });
     await updatedCard.locator('button.btn-outline-danger').click();
-    await expect.poll(() => capturedDialog?.message()).toBe('Judge Referee A von Ausführung entfernen?');
+    await expect.poll(() => capturedDialog?.message()).toBe('Judge Referee A von Haltung entfernen?');
   });
 
   test('the panel dropdown on the competition form shows translated names and description tooltips', async ({ page }) => {
@@ -70,6 +70,6 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await expect(select.locator('option', { hasText: 'FIG Panel' })).toHaveCount(0);
 
     const figOption = select.locator('option', { hasText: 'FIG-Panel' });
-    await expect(figOption).toHaveAttribute('title', /Ausführung/);
+    await expect(figOption).toHaveAttribute('title', /Haltung/);
   });
 });

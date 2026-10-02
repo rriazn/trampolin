@@ -17,14 +17,14 @@ exports.getCompetitionById = (id) => {
     return db.prepare('SELECT * FROM competitions WHERE id=?').get(id);
 };
 
-exports.createCompetitionDB = (name, date, panel_template_id) => {
-    return db.prepare('INSERT INTO competitions (name,date,panel_template_id) VALUES (?,?,?)')
-        .run(name.trim(), date || null, panel_template_id || null);
+exports.createCompetitionDB = (name, date, panel_template_id, type = 'individual') => {
+    return db.prepare('INSERT INTO competitions (name,date,panel_template_id,type) VALUES (?,?,?,?)')
+        .run(name.trim(), date || null, panel_template_id || null, type);
 };
 
-exports.updateCompetitionDB = (id, name, date, panel_template_id) => {
-    db.prepare('UPDATE competitions SET name=?,date=?,panel_template_id=? WHERE id=?')
-        .run(name, date || null, panel_template_id || null, id);
+exports.updateCompetitionDB = (id, name, date, panel_template_id, type) => {
+    db.prepare('UPDATE competitions SET name=?,date=?,panel_template_id=?,type=COALESCE(?,type) WHERE id=?')
+        .run(name, date || null, panel_template_id || null, type || null, id);
 };
 
 exports.updateCompetitionStatusDB = (id, status) => {

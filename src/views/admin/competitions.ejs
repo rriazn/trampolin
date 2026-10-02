@@ -12,12 +12,21 @@
 <div class="container">
   <div class="table-card card">
     <table class="table mb-0">
-      <thead><tr><th><%= t('admin:competitions.table.name') %></th><th><%= t('admin:competitions.table.date') %></th><th><%= t('admin:competitions.table.status') %></th><th></th></tr></thead>
+      <thead>
+        <tr>
+          <th><%= t('admin:competitions.table.name') %></th>
+          <th><%= t('admin:competitions.table.date') %></th>
+          <th><%= t('admin:competitions.table.type') %></th>
+          <th><%= t('admin:competitions.table.status') %></th>
+          <th></th>
+        </tr>
+      </thead>
       <tbody>
       <% competitions.forEach(c => { %>
       <tr>
         <td class="fw-600"><%= c.name %></td>
         <td class="text-muted"><%= c.date || '–' %></td>
+        <td><span class="badge rounded-pill text-bg-light border px-3 competition-type-<%= c.type %>"><%= t('common:competitionTypes.' + c.type) %></span></td>
         <td><span class="badge rounded-pill status-<%= c.status %> px-3"><%= t('common:status.' + c.status) %></span></td>
         <td class="text-end">
           <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand rounded-pill me-1">

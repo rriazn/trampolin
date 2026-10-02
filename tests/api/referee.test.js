@@ -416,3 +416,190 @@ describe('elementCount 0 (no skills performed for this attempt)', () => {
     expect(rows.n).toBe(0);
   });
 });
+
+describe('synchro scoring', () => {
+  let synchroData;
+  let deviceAgent;
+  let skillAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='local_synchro'").get();
+    const comp = db.prepare("INSERT INTO competitions (name, status, panel_template_id, type) VALUES ('Synchro Score Cup', 'active', ?, 'synchro')").run(panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'SS');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, partner_name, competition_id) VALUES (?, ?, ?)').run('Leon', 'Emma', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 10)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+    synchroData = { attemptId: attempt.lastInsertRowid, roleIds };
+
+    const hash = bcrypt.hashSync('secret', 10);
+    for (const [name, email] of [['Device Judge', 'syncdevice@test.com'], ['Skill Judge', 'syncskill@test.com']]) {
+      db.prepare('INSERT OR IGNORE INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run(name, email, hash, 'referee');
+    }
+    assignJudge(comp.lastInsertRowid, roleIds.synchronisation, getUserIdByEmail('syncdevice@test.com'));
+    assignJudge(comp.lastInsertRowid, roleIds.synchronisation_skill, getUserIdByEmail('syncskill@test.com'));
+    deviceAgent = request.agent(app);
+    await deviceAgent.post('/login').type('form').send({ email: 'syncdevice@test.com', password: 'secret' });
+    skillAgent = request.agent(app);
+    await skillAgent.post('/login').type('form').send({ email: 'syncskill@test.com', password: 'secret' });
+  });
+
+  it('stores the synchronisation device mark to two decimals', async () => {
+    const res = await deviceAgent.post('/referee/score').type('form')
+      .send({ attemptId: synchroData.attemptId, judgeRoleId: synchroData.roleIds.synchronisation, score: '8.55' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND judge_role_id=?').get(synchroData.attemptId, synchroData.roleIds.synchronisation);
+    expect(saved.score).toBe(8.55);
+  });
+
+  it('confirms the device mark with both decimals', async () => {
+    const res = await deviceAgent.post('/referee/score').type('form')
+      .send({ attemptId: synchroData.attemptId, judgeRoleId: synchroData.roleIds.synchronisation, score: '9.25' }).redirects(1);
+    expect(res.text).toContain('Score 9.25 saved.');
+  });
+
+  it('rejects a device mark above 10', async () => {
+    const res = await deviceAgent.post('/referee/score').type('form')
+      .send({ attemptId: synchroData.attemptId, judgeRoleId: synchroData.roleIds.synchronisation, score: '10.5' });
+    expect(res.status).toBe(400);
+  });
+
+  it('ignores element_11 from a per-skill synchronisation judge, who has no landing line', async () => {
+    const payload = { attemptId: synchroData.attemptId, judgeRoleId: synchroData.roleIds.synchronisation_skill, element_11: '0.3' };
+    for (let n = 1; n <= 10; n++) payload[`element_${n}`] = '0.1';
+    const res = await skillAgent.post('/referee/score/elements').type('form').send(payload);
+    expect(res.status).toBe(302);
+    const rows = db.prepare('SELECT element_number FROM element_scores WHERE attempt_id=? AND judge_role_id=? ORDER BY element_number')
+      .all(synchroData.attemptId, synchroData.roleIds.synchronisation_skill).map(r => r.element_number);
+    expect(rows).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('does not require element_11 from a per-skill synchronisation judge', async () => {
+    const payload = { attemptId: synchroData.attemptId, judgeRoleId: synchroData.roleIds.synchronisation_skill };
+    for (let n = 1; n <= 10; n++) payload[`element_${n}`] = '0.2';
+    const res = await skillAgent.post('/referee/score/elements').type('form').send(payload);
+    expect(res.status).toBe(302);
+  });
+});
+
+describe('synchronisation device mark on a shortened routine', () => {
+  let shortData;
+  let shortAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig_synchro'").get();
+    const comp = db.prepare("INSERT INTO competitions (name, status, panel_template_id, type) VALUES ('Short Synchro Cup', 'active', ?, 'synchro')").run(panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'SH');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, partner_name, competition_id) VALUES (?, ?, ?)').run('Leon', 'Emma', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const shortAttempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 6)').run(entry.lastInsertRowid);
+    const fullAttempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 2, 10)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+    shortData = { shortAttemptId: shortAttempt.lastInsertRowid, fullAttemptId: fullAttempt.lastInsertRowid, roleIds };
+
+    const hash = bcrypt.hashSync('secret', 10);
+    db.prepare('INSERT OR IGNORE INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('Short Device Judge', 'shortdevice@test.com', hash, 'referee');
+    assignJudge(comp.lastInsertRowid, roleIds.synchronisation, getUserIdByEmail('shortdevice@test.com'));
+    assignJudge(comp.lastInsertRowid, roleIds.head_judge, getUserIdByEmail('shortdevice@test.com'));
+    shortAgent = request.agent(app);
+    await shortAgent.post('/login').type('form').send({ email: 'shortdevice@test.com', password: 'secret' });
+  });
+
+  const post = (attemptId, roleKey, score) => shortAgent.post('/referee/score').type('form')
+    .send({ attemptId, judgeRoleId: shortData.roleIds[roleKey], score });
+  const savedScore = (attemptId, roleKey) => db.prepare('SELECT score FROM scores WHERE attempt_id=? AND judge_role_id=?')
+    .get(attemptId, shortData.roleIds[roleKey]);
+
+  it('rejects a device mark above the number of valid elements', async () => {
+    const res = await post(shortData.shortAttemptId, 'synchronisation', '7');
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('between 0 and 6');
+    expect(savedScore(shortData.shortAttemptId, 'synchronisation')).toBeUndefined();
+  });
+
+  it('rejects a fractional mark just above the number of valid elements', async () => {
+    const res = await post(shortData.shortAttemptId, 'synchronisation', '6.01');
+    expect(res.status).toBe(400);
+  });
+
+  it('accepts a device mark equal to the number of valid elements', async () => {
+    const res = await post(shortData.shortAttemptId, 'synchronisation', '6');
+    expect(res.status).toBe(302);
+    expect(savedScore(shortData.shortAttemptId, 'synchronisation').score).toBe(6);
+  });
+
+  it('accepts a device mark below the number of valid elements', async () => {
+    const res = await post(shortData.shortAttemptId, 'synchronisation', '4.35');
+    expect(res.status).toBe(302);
+    expect(savedScore(shortData.shortAttemptId, 'synchronisation').score).toBe(4.35);
+  });
+
+  it('still accepts a device mark of 10 on a full routine', async () => {
+    const res = await post(shortData.fullAttemptId, 'synchronisation', '10');
+    expect(res.status).toBe(302);
+    expect(savedScore(shortData.fullAttemptId, 'synchronisation').score).toBe(10);
+  });
+
+  it('does not limit the head judge penalty to the number of valid elements', async () => {
+    const res = await post(shortData.shortAttemptId, 'head_judge', '7');
+    expect(res.status).toBe(302);
+  });
+});
+
+describe('horizontal displacement mark on a shortened routine', () => {
+  let hdData;
+  let hdAgent;
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare("INSERT INTO competitions (name, status, panel_template_id) VALUES ('Short HD Cup', 'active', ?)").run(panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'HD');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run('Alice', comp.lastInsertRowid);
+    const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, 1)').run(round.lastInsertRowid, sp.lastInsertRowid);
+    const shortAttempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 6)').run(entry.lastInsertRowid);
+    const fullAttempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 2, 10)').run(entry.lastInsertRowid);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+    hdData = { shortAttemptId: shortAttempt.lastInsertRowid, fullAttemptId: fullAttempt.lastInsertRowid, roleIds };
+
+    const hash = bcrypt.hashSync('secret', 10);
+    db.prepare('INSERT OR IGNORE INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('HD Judge', 'shorthd@test.com', hash, 'referee');
+    assignJudge(comp.lastInsertRowid, roleIds.horizontal_displacement, getUserIdByEmail('shorthd@test.com'));
+    assignJudge(comp.lastInsertRowid, roleIds.time_of_flight, getUserIdByEmail('shorthd@test.com'));
+    hdAgent = request.agent(app);
+    await hdAgent.post('/login').type('form').send({ email: 'shorthd@test.com', password: 'secret' });
+  });
+
+  const post = (attemptId, roleKey, score) => hdAgent.post('/referee/score').type('form')
+    .send({ attemptId, judgeRoleId: hdData.roleIds[roleKey], score });
+  const savedScore = (attemptId, roleKey) => db.prepare('SELECT score FROM scores WHERE attempt_id=? AND judge_role_id=?')
+    .get(attemptId, hdData.roleIds[roleKey]);
+
+  it('rejects an H mark above the number of valid elements', async () => {
+    const res = await post(hdData.shortAttemptId, 'horizontal_displacement', '7.5');
+    expect(res.status).toBe(400);
+    expect(res.text).toContain('between 0 and 6');
+    expect(savedScore(hdData.shortAttemptId, 'horizontal_displacement')).toBeUndefined();
+  });
+
+  it('accepts an H mark up to the number of valid elements', async () => {
+    const res = await post(hdData.shortAttemptId, 'horizontal_displacement', '5.8');
+    expect(res.status).toBe(302);
+    expect(savedScore(hdData.shortAttemptId, 'horizontal_displacement').score).toBe(5.8);
+  });
+
+  it('still accepts an H mark of 10 on a full routine', async () => {
+    const res = await post(hdData.fullAttemptId, 'horizontal_displacement', '10');
+    expect(res.status).toBe(302);
+    expect(savedScore(hdData.fullAttemptId, 'horizontal_displacement').score).toBe(10);
+  });
+
+  it('does not limit the time of flight, which has no such cap', async () => {
+    const res = await post(hdData.shortAttemptId, 'time_of_flight', '9.5');
+    expect(res.status).toBe(302);
+    expect(savedScore(hdData.shortAttemptId, 'time_of_flight').score).toBe(9.5);
+  });
+});
+
