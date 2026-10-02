@@ -4,20 +4,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt, makeUser, assignJudge,
-  addScore, addElementScore, getJudgeRoleIds, db, require,
+  addScore, addElementScore, getJudgeRoleIds, makeT, db, require,
 } from './testHelpers.js';
 const { formatScore, buildJudgeIndex, buildResultsData, ROLE_LETTERS } = require('../../../src/services/results.service.js');
-
-const localesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../src/locales');
-
-// translator backed by the real locale files, so tests see the actual labels
-function makeT(lng) {
-  return (key) => {
-    const [ns, keyPath] = key.split(':');
-    const file = JSON.parse(fs.readFileSync(path.join(localesDir, lng, `${ns}.json`), 'utf8'));
-    return keyPath.split('.').reduce((node, part) => node?.[part], file);
-  };
-}
 
 function assignMany(comp, roleKey, names) {
   const roleId = getJudgeRoleIds()[roleKey];
@@ -127,9 +116,9 @@ describe('buildResultsData', () => {
 
   it('builds a per judge execution row with dropped values, a difficulty row and the summary line', () => {
     const comp = makeCompetition({ panelKey: 'local', name: 'Local Cup' });
-    const group = makeGroup(comp.id, 'P3 mixed');
+    const group = makeGroup(comp.id, 'Group A');
     const round = makeRound(group.id, { name: 'Compulsory', scoringMode: 'sum' });
-    const sportsman = makeSportsman(comp.id, group.id, 'Fee Feuerstein');
+    const sportsman = makeSportsman(comp.id, group.id, 'Athlete A');
     const entry = makeEntry(round.id, sportsman.id, 1);
     const roleIds = getJudgeRoleIds();
     const [anna, berta, clara, dora] = ['Anna', 'Berta', 'Clara', 'Dora']
@@ -147,9 +136,9 @@ describe('buildResultsData', () => {
     const data = buildResultsData(comp, makeT('en'), 'en', NOW);
 
     expect(data.groups).toHaveLength(1);
-    expect(data.groups[0]).toMatchObject({ name: 'P3 mixed' });
+    expect(data.groups[0]).toMatchObject({ name: 'Group A' });
     const [competitor] = data.groups[0].competitors;
-    expect(competitor).toMatchObject({ place: 1, name: 'Fee Feuerstein', club: null });
+    expect(competitor).toMatchObject({ place: 1, name: 'Athlete A', club: null });
     const [r] = competitor.rounds;
     expect(r).toMatchObject({ name: 'Compulsory', scoringMode: 'sum', total: '4.3', rank: 1 });
     expect(r.attempts[0]).toEqual({
@@ -335,5 +324,54 @@ describe('buildResultsData rows per panel', () => {
     expect(attempts.map(x => [x.number, x.status, x.rows.length, x.summary.length, x.final])).toEqual([
       [1, 'scored', 2, 3, '-0.2'], [2, 'skipped', 0, 0, null], [3, 'pending', 0, 0, null],
     ]);
+  });
+});
+
+describe('sample-results.json', () => {
+  // every key path of a document, arrays are flattened to [] and null values still count as a path
+  function pathsOf(value, prefix = '', out = new Set()) {
+    if (Array.isArray(value)) value.forEach(item => pathsOf(item, `${prefix}[]`, out));
+    else if (value !== null && typeof value === 'object') Object.entries(value).forEach(([key, item]) => pathsOf(item, `${prefix}.${key}`, out));
+    else out.add(prefix);
+    return out;
+  }
+
+  function figStyleDocument() {
+    const comp = makeCompetition({ panelKey: 'test' });
+    const group = makeGroup(comp.id);
+    const entry = makeEntry(makeRound(group.id).id, makeSportsman(comp.id, group.id, 'Solo').id, 1);
+    const roleIds = getJudgeRoleIds();
+    const exec = assignJudge(comp.id, roleIds.execution, makeUser('referee').id);
+    const diff = assignJudge(comp.id, roleIds.difficulty, makeUser('referee').id);
+    const head = assignJudge(comp.id, roleIds.head_judge, makeUser('head_judge').id);
+    const roleOf = { [exec]: roleIds.execution, [diff]: roleIds.difficulty };
+    scoreAttempt(entry.id, 1, {
+      elementCount: 10,
+      roleId: (id) => roleOf[id],
+      elementValues: { [exec]: [...Array(10).fill(0.1), 0.2], [diff]: [...Array(10).fill(0.5), 0.3, 2] },
+      headJudge: [head, 0],
+    });
+    const skipped = makeAttempt(entry.id, 2, 10);
+    db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(skipped.id);
+    return buildResultsData(comp, makeT('en'), 'en');
+  }
+
+  function localStyleDocument() {
+    const comp = makeCompetition({ panelKey: 'local' });
+    const group = makeGroup(comp.id);
+    const entry = makeEntry(makeRound(group.id).id, makeSportsman(comp.id, group.id, 'Solo').id, 1);
+    const roleIds = getJudgeRoleIds();
+    const exec = assignJudge(comp.id, roleIds.execution, makeUser('referee').id);
+    const head = assignJudge(comp.id, roleIds.head_judge, makeUser('head_judge').id);
+    scoreAttempt(entry.id, 1, { elementCount: 2, roleId: () => roleIds.execution, elementValues: { [exec]: [0.1, 0.2] }, headJudge: [head, 0] });
+    return buildResultsData(comp, makeT('en'), 'en');
+  }
+
+  it('has exactly the fields the builder produces', () => {
+    const sample = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../src/templates/results/sample-results.json'), 'utf8'));
+    const built = new Set([...pathsOf(figStyleDocument()), ...pathsOf(localStyleDocument())]);
+    const sampled = pathsOf(sample);
+    expect([...built].filter(p => !sampled.has(p)), 'missing from the sample').toEqual([]);
+    expect([...sampled].filter(p => !built.has(p)), 'not produced by the builder').toEqual([]);
   });
 });

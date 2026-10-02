@@ -17,5 +17,14 @@
     "skipped": "Übersprungen",
     "pending": "Nicht bewertet",
     "judges": "Kampfrichter"
+  },
+  "errors": {
+    "noFile": "Wähle zuerst eine .typ-Vorlage aus",
+    "notTyp": "Die Vorlage muss eine .typ-Datei sein",
+    "tooLarge": "Die Vorlage ist größer als 256 KB",
+    "notUtf8": "Die Vorlage ist kein gültiger UTF-8-Text",
+    "packages": "Vorlagen dürfen keine Pakete importieren",
+    "timeout": "Das Kompilieren der Vorlage hat zu lange gedauert und wurde abgebrochen",
+    "compileFailed": "Die Vorlage konnte nicht kompiliert werden"
   }
 }

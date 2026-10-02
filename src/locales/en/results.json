@@ -17,5 +17,14 @@
     "skipped": "Skipped",
     "pending": "Not scored",
     "judges": "Judges"
+  },
+  "errors": {
+    "noFile": "Choose a .typ template file first",
+    "notTyp": "The template must be a .typ file",
+    "tooLarge": "The template is larger than 256 KB",
+    "notUtf8": "The template is not valid UTF-8 text",
+    "packages": "Templates cannot import packages",
+    "timeout": "Compiling the template took too long and was stopped",
+    "compileFailed": "The template could not be compiled"
   }
 }

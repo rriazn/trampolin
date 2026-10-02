@@ -1,0 +1,94 @@
+import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import os from 'os';
+import { makeT, require } from './testHelpers.js';
+const { compileResultsPdf, readUploadedTemplate, readDefaultTemplate, readSampleData } = require('../../../src/services/pdf.service.js');
+
+const t = makeT('en');
+const data = { name: 'Anna' };
+const compile = (source, options) => compileResultsPdf(source, data, t, options);
+const resultsDirs = () => fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('trampolin-results-'));
+
+describe('compileResultsPdf', { timeout: 20000 }, () => {
+  it('compiles the default template with the sample data into a PDF', async () => {
+    const pdf = await compileResultsPdf(readDefaultTemplate(), readSampleData(), t);
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('embeds the shipped Lato font in the default template', async () => {
+    const pdf = await compileResultsPdf(readDefaultTemplate(), readSampleData(), t);
+    expect(pdf.includes('Lato')).toBe(true);
+  });
+
+  it('gives the template the data as results.json', async () => {
+    const pdf = await compile('#let d = json("results.json")\n#assert.eq(d.name, "Anna")\nHello');
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('reports a compile error with its message, line and column', async () => {
+    await expect(compile('= Title\n#let x = ')).rejects.toMatchObject({
+      name: 'TemplateError', message: 'expected expression', line: 2, column: 8,
+    });
+  });
+
+  it('stops a runaway template at the timeout', async () => {
+    const started = Date.now();
+    await expect(compile('#for i in range(100000) { for j in range(100000) { let x = i * j } }', { timeoutMs: 1500 }))
+      .rejects.toMatchObject({ name: 'TemplateError', message: t('results:errors.timeout') });
+    expect(Date.now() - started).toBeLessThan(6000);
+  });
+
+  it('fails a template that allocates far too much memory', async () => {
+    await expect(compile('#let a = range(100000000).map(x => x)\n#a.len()'))
+      .rejects.toMatchObject({ name: 'TemplateError', message: t('results:errors.compileFailed') });
+  });
+
+  it('does not read files outside the compile root', async () => {
+    await expect(compile('#read("../../../../../../etc/hostname")')).rejects.toMatchObject({ name: 'TemplateError' });
+    await expect(compile('#read("/etc/hostname")')).rejects.toMatchObject({ name: 'TemplateError' });
+  });
+
+  it('does not load packages, also when the import path is built at runtime', async () => {
+    await expect(compile('#import "@preview/cetz:0.2.2": canvas')).rejects.toMatchObject({ name: 'TemplateError' });
+    await expect(compile('#let p = "@pre" + "view/cetz:0.2.2"\n#import p: canvas')).rejects.toMatchObject({ name: 'TemplateError' });
+  });
+
+  it('removes its temporary files after success and after failure', async () => {
+    const before = resultsDirs().length;
+    await compile('Hello');
+    await compile('#let x = ').catch(() => {});
+    expect(resultsDirs().length).toBe(before);
+  });
+});
+
+describe('readUploadedTemplate', () => {
+  const upload = (name, content) => ({ originalname: name, buffer: Buffer.from(content), size: Buffer.byteLength(content) });
+  const reason = (key) => ({ name: 'TemplateError', message: t(`results:errors.${key}`) });
+
+  it('returns the source of a valid .typ file', () => {
+    expect(readUploadedTemplate(upload('mine.typ', '= Hello'), t)).toBe('= Hello');
+    expect(readUploadedTemplate(upload('MINE.TYP', '= Hello'), t)).toBe('= Hello');
+  });
+
+  it('rejects a missing file', () => {
+    expect(() => readUploadedTemplate(undefined, t)).toThrow(expect.objectContaining(reason('noFile')));
+  });
+
+  it('rejects a file that is not a .typ file', () => {
+    expect(() => readUploadedTemplate(upload('mine.txt', '= Hello'), t)).toThrow(expect.objectContaining(reason('notTyp')));
+  });
+
+  it('rejects a file over 256 KB', () => {
+    expect(() => readUploadedTemplate(upload('big.typ', 'a'.repeat(256 * 1024 + 1)), t)).toThrow(expect.objectContaining(reason('tooLarge')));
+  });
+
+  it('rejects a file that is not valid UTF-8', () => {
+    const file = { originalname: 'bad.typ', buffer: Buffer.from([0xff, 0xfe, 0x41]), size: 3 };
+    expect(() => readUploadedTemplate(file, t)).toThrow(expect.objectContaining(reason('notUtf8')));
+  });
+
+  it('rejects a package import', () => {
+    expect(() => readUploadedTemplate(upload('pkg.typ', '#import "@preview/cetz:0.2.2": canvas'), t)).toThrow(expect.objectContaining(reason('packages')));
+    expect(() => readUploadedTemplate(upload('pkg.typ', "#import '@local/mine:0.1.0': x"), t)).toThrow(expect.objectContaining(reason('packages')));
+  });
+});

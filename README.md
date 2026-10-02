@@ -113,6 +113,14 @@ npx playwright test tests/integration --config playwright.integration.config.js
 ./scripts/run-integration-tests.sh --local --production-image trampolin-test:1
 ```
 
+Test result list generation based on the provided template and sample data as follows:
+```bash
+D=$(mktemp -d) && \
+cp src/templates/results/default.typ $D/main.typ && \
+cp src/templates/results/sample-results.json $D/results.json && \
+typst compile --root $D --ignore-system-fonts --font-path src/templates/results/fonts $D/main.typ sample-results.pdf && rm -rf "$D"
+```
+
 ## Secret scanning
 
 [gitleaks](https://github.com/gitleaks/gitleaks) scans for committed secrets. It runs as a pre-commit
