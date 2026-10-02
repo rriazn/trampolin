@@ -13,8 +13,16 @@ A competition is organized into **groups** (e.g. age or skill categories), each 
 Each round is judged by a **panel**: a set of judges, each responsible for one aspect of the
 routine - Execution, Difficulty, Time of Flight, Horizontal Displacement, or Head Judge
 (penalties) - following the official FIG Code of Points. The app ships with ready-made panel
-templates (a full FIG panel, a smaller local-competition panel, and a minimal test panel), so
-organizers don't have to configure judge roles by hand for a standard event.
+templates (a full FIG panel, a smaller local-competition panel, and a minimal test panel, each with
+a synchronised counterpart), so organizers don't have to configure judge roles by hand for a standard
+event.
+
+A competition is either **individual** or **synchro**, chosen when it is created. In a synchro
+competition a competitor is a pair of athletes on two trampolines: pairs are managed (and imported
+from / exported to Excel, one row per pair) like athletes, shown as "A / B" everywhere, and scored
+with the synchronised rules of the Code of Points - execution judged per trampoline and averaged,
+no time of flight, plus a synchronisation (S) mark. The type cannot be changed once a competition has
+athletes or judges.
 
 During competition, each judge scores attempts from their own device as they happen. A **head
 judge** oversees the round: they see which judges have submitted their scores for the current
@@ -53,7 +61,7 @@ Express 5 + better-sqlite3 + EJS templates + express-session (sessions stored in
 
 ```bash
 npm install
-npm run seed    # creates src/data/trampolin.db with sample data and users
+npm run seed    # creates src/data/trampolin.db with sample data and users (an individual and a synchro competition)
 npm start       # http://localhost:3000
 ```
 
@@ -66,7 +74,7 @@ Use `npm run dev` instead of `npm start` for auto-restart on file changes.
 | `PORT` | `3000` | HTTP port |
 | `SESSION_SECRET` | `dev-secret-change-in-prod` | express-session signing secret - set a real value in production |
 | `DB_PATH` | `src/data/trampolin.db` | SQLite database file |
-| `ENABLE_TEST_SEED` | unset | when `"true"`, exposes a `/test/seed` endpoint that resets the DB with fixed test data (used by tests, never enable in production) |
+| `ENABLE_TEST_SEED` | unset | when `"true"`, exposes a `/test/seed` endpoint that resets the DB with fixed test data, `{ "type": "synchro" }` as JSON body seeds a synchro competition instead (used by tests, never enable in production) |
 
 ## Roles
 
@@ -81,7 +89,7 @@ Use `npm run dev` instead of `npm start` for auto-restart on file changes.
 
 ```
 competitions -> groups -> rounds -> entries -> attempts -> scores
-sportsmen (competition_id, group_id) -> entries
+sportsmen (competition_id, group_id) -> entries    (a synchro pair is one sportsmen row)
 users (referee_id) -> scores
 ```
 
