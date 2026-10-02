@@ -21,6 +21,7 @@ class TemplateError extends Error {
     }
 }
 exports.TemplateError = TemplateError;
+exports.MAX_TEMPLATE_BYTES = MAX_TEMPLATE_BYTES;
 
 exports.readDefaultTemplate = () => fs.readFileSync(path.join(TEMPLATE_DIR, 'default.typ'), 'utf8');
 

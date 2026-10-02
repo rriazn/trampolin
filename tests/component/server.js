@@ -25,7 +25,7 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' },
 }));
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors', 'results'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`../../src/locales/${lng}/${ns}.json`)])
 );

@@ -152,6 +152,9 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
     return { name: group.name, abbreviation: group.abbreviation, competitors: competitorsWithPlace };
 }
 
+// every fixed text of the document in the language of t
+exports.buildLabels = (t) => Object.fromEntries(LABEL_KEYS.map(key => [key, t(`results:labels.${key}`)]));
+
 // everything a results template needs as one JSON object, every score already formatted for the language
 exports.buildResultsData = (competition, t, lng, now = new Date()) => {
     const { labelByAssignment, judges } = exports.buildJudgeIndex(competition, t);
@@ -162,7 +165,7 @@ exports.buildResultsData = (competition, t, lng, now = new Date()) => {
     return {
         version: RESULTS_VERSION,
         generatedAt: formatTimestamp(now, lng),
-        labels: Object.fromEntries(LABEL_KEYS.map(key => [key, t(`results:labels.${key}`)])),
+        labels: exports.buildLabels(t),
         competition: { name: competition.name, date: competition.date, type: competition.type },
         groups,
         judges,

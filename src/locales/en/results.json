@@ -25,6 +25,17 @@
     "notUtf8": "The template is not valid UTF-8 text",
     "packages": "Templates cannot import packages",
     "timeout": "Compiling the template took too long and was stopped",
-    "compileFailed": "The template could not be compiled"
+    "compileFailed": "The template could not be compiled",
+    "notClosed": "The results PDF is only available for closed competitions",
+    "compileError": "Template error at line {{line}}, column {{column}}: {{message}}",
+    "uploadFailed": "The template could not be uploaded"
+  },
+  "ui": {
+    "summary": "Results PDF",
+    "templateLabel": "Custom template (.typ, optional)",
+    "download": "Download PDF",
+    "preview": "Preview template",
+    "defaultTemplate": "Default template",
+    "sampleData": "Sample data"
   }
 }

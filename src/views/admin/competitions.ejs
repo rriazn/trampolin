@@ -48,6 +48,21 @@
             <input type="hidden" name="status" value="closed">
             <button class="btn btn-sm btn-outline-secondary rounded-pill me-1"><i class="bi bi-stop-fill me-1"></i><%= t('admin:competitions.close') %></button>
           </form>
+          <% } else if (c.status === 'closed') { %>
+          <details class="d-inline-block align-middle text-start me-1 results-pdf">
+            <summary class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-file-earmark-pdf me-1"></i><%= t('results:ui.summary') %></summary>
+            <form method="POST" action="/admin/competitions/<%= c.id %>/results" enctype="multipart/form-data" class="results-form border rounded bg-white p-3 mt-2">
+              <label class="form-label small" for="results-template-<%= c.id %>"><%= t('results:ui.templateLabel') %></label>
+              <input type="file" id="results-template-<%= c.id %>" name="template" accept=".typ" class="form-control form-control-sm mb-2">
+              <button type="submit" class="btn btn-sm btn-brand rounded-pill me-1"><i class="bi bi-download me-1"></i><%= t('results:ui.download') %></button>
+              <button type="submit" formaction="/admin/results/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary rounded-pill" disabled><i class="bi bi-eye me-1"></i><%= t('results:ui.preview') %></button>
+              <div class="small mt-2">
+                <a href="/admin/results/default-template"><%= t('results:ui.defaultTemplate') %></a>
+                <span class="text-muted mx-1">&middot;</span>
+                <a href="/admin/results/sample-data"><%= t('results:ui.sampleData') %></a>
+              </div>
+            </form>
+          </details>
           <% } %>
           <form method="POST" action="/admin/competitions/<%= c.id %>/delete" class="d-inline"
                 onsubmit="return confirm(<%= JSON.stringify(t('admin:competitions.confirmDelete')) %>)">
@@ -60,4 +75,12 @@
     </table>
   </div>
 </div>
+<script>
+  // the preview only runs when a template file is chosen
+  document.querySelectorAll('.results-form').forEach((form) => {
+    const file = form.querySelector('input[type=file]');
+    const preview = form.querySelector('button[formaction]');
+    file.addEventListener('change', () => { preview.disabled = file.files.length === 0; });
+  });
+</script>
 <%- include('../partials/footer') %>

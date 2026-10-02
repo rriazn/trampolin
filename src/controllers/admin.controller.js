@@ -1,4 +1,4 @@
-const { getAdminStats } = require("../services/helpers/admin.helpers");
+const { getAdminStats, fileNameSlug } = require("../services/helpers/admin.helpers");
 const { getCompetitionById, getTopCompetitions, getCompetitions, createCompetitionDB, updateCompetitionDB, updateCompetitionStatusDB, deleteCompetitionDB } = require("../services/db/competitions.crud");
 const { getGroupsByCompetition, getGroupsRoundCount, addGroupDB, deleteGroupDB, getGroupById } = require("../services/db/groups.crud");
 const { getPanels, getAssignedCount, addAssignment, getAssignmentById, checkAlreadyAssigned } = require("../services/db/panels.crud");
@@ -258,15 +258,8 @@ exports.exportSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
         return renderNotFound(res, req.t('errors:notFound.competition'));
-    const clean_comp_name = competition.name
-        .toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .replace(/[<>:"/\\|?*\x00-\x1f]/g, '') // eslint-disable-line no-control-regex
-        .replace(/\s+/g, '-')
-        .replace(/\.+$/, '')
-        .trim();
     const buf = createSportsmenXlsx(competition.id);
-    res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${clean_comp_name}.xlsx"`);
+    res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${fileNameSlug(competition.name)}.xlsx"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buf);
 };

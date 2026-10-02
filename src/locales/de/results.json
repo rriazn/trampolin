@@ -25,6 +25,17 @@
     "notUtf8": "Die Vorlage ist kein gültiger UTF-8-Text",
     "packages": "Vorlagen dürfen keine Pakete importieren",
     "timeout": "Das Kompilieren der Vorlage hat zu lange gedauert und wurde abgebrochen",
-    "compileFailed": "Die Vorlage konnte nicht kompiliert werden"
+    "compileFailed": "Die Vorlage konnte nicht kompiliert werden",
+    "notClosed": "Das Ergebnis-PDF ist nur für abgeschlossene Wettkämpfe verfügbar",
+    "compileError": "Fehler in der Vorlage, Zeile {{line}}, Spalte {{column}}: {{message}}",
+    "uploadFailed": "Die Vorlage konnte nicht hochgeladen werden"
+  },
+  "ui": {
+    "summary": "Ergebnis-PDF",
+    "templateLabel": "Eigene Vorlage (.typ, optional)",
+    "download": "PDF herunterladen",
+    "preview": "Vorlage testen",
+    "defaultTemplate": "Standardvorlage",
+    "sampleData": "Beispieldaten"
   }
 }

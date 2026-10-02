@@ -6,7 +6,7 @@ import {
   makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt, makeUser, assignJudge,
   addScore, addElementScore, getJudgeRoleIds, makeT, db, require,
 } from './testHelpers.js';
-const { formatScore, buildJudgeIndex, buildResultsData, ROLE_LETTERS } = require('../../../src/services/results.service.js');
+const { formatScore, buildLabels, buildJudgeIndex, buildResultsData, ROLE_LETTERS } = require('../../../src/services/results.service.js');
 
 function assignMany(comp, roleKey, names) {
   const roleId = getJudgeRoleIds()[roleKey];
@@ -38,6 +38,13 @@ describe('formatScore', () => {
   it('returns null for a missing value', () => {
     expect(formatScore(null, 'en')).toBeNull();
     expect(formatScore(undefined, 'en')).toBeNull();
+  });
+});
+
+describe('buildLabels', () => {
+  it('translates every fixed text of the document', () => {
+    expect(buildLabels(makeT('de'))).toMatchObject({ title: 'Ergebnisliste', place: 'Platz', skipped: 'Übersprungen' });
+    expect(Object.values(buildLabels(makeT('en'))).every(Boolean)).toBe(true);
   });
 });
 

@@ -3,6 +3,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const { requireAdmin } = require('../middleware/auth');
 const adminController = require('../controllers/admin.controller');
+const resultsController = require('../controllers/results.controller');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -45,6 +46,17 @@ router.post('/competitions/:id', adminController.updateCompetition);
 router.post('/competitions/:id/status', adminController.updateCompetitionStatus);
 
 router.post('/competitions/:id/delete', adminController.deleteCompetition);
+
+
+// Results PDF
+
+router.post('/competitions/:id/results', resultsController.receiveTemplate, resultsController.downloadResults);
+
+router.post('/results/preview', resultsController.receiveTemplate, resultsController.previewTemplate);
+
+router.get('/results/default-template', resultsController.downloadDefaultTemplate);
+
+router.get('/results/sample-data', resultsController.downloadSampleData);
 
 
 // Judges
