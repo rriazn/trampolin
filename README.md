@@ -99,7 +99,7 @@ Four layers, each runnable independently:
 
 ```bash
 npm test                                    # unit + API tests (vitest)
-npx vitest run tests/unit/leaderboard.test.js   # a single test file
+npx vitest run tests/unit/services/leaderboard.test.js   # a single test file
 
 # component tests (Playwright, isolated UI fragments)
 npx playwright test tests/component --config playwright.config.js
@@ -130,5 +130,5 @@ auth middleware; controllers handle request/response; services hold business log
 goes through `services/db/*.crud.js`. Auth is enforced per-router (`requireAdmin`, `requireReferee`,
 `requireAuth`), applied at the top of each route file.
 
-Leaderboard scores are computed in `src/services/leaderboard.services.js`, driven by each round's
+Leaderboard scores are computed in `src/services/leaderboard.service.js`, driven by each round's
 `scoring_mode`: `sum` totals every attempt, `best_attempt` takes the best one.
