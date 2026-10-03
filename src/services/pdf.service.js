@@ -2,6 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+const { createSlots } = require('./slots');
 
 const TYPST_BIN = process.env.TYPST_BIN || 'typst';
 const MAX_TEMPLATE_BYTES = 256 * 1024;
@@ -16,7 +17,7 @@ const MAX_PARALLEL_COMPILES = 2;
 const QUEUE_WAIT_MS = 30000;
 // typst downloads a package before it fails to store it, a proxy that refuses connections keeps that request off the network
 const DEAD_PROXY = 'http://127.0.0.1:1';
-const TEMPLATE_DIR = path.join(__dirname, '../templates/results');
+const TEMPLATE_ROOT = path.join(__dirname, '../templates');
 // fonts shipped with the app (Lato) and shared by all documents, system fonts are ignored so every server renders the same
 const FONT_DIR = path.join(__dirname, '../templates/fonts');
 
@@ -31,39 +32,12 @@ class TemplateError extends Error {
 exports.TemplateError = TemplateError;
 exports.MAX_TEMPLATE_BYTES = MAX_TEMPLATE_BYTES;
 
-let runningCompiles = 0;
-const waitingCompiles = [];
+const compileSlots = createSlots(MAX_PARALLEL_COMPILES);
 
-// resolves when a compile slot is free, rejects when none frees up in time
-function acquireSlot(t, queueWaitMs) {
-    if (runningCompiles < MAX_PARALLEL_COMPILES) {
-        runningCompiles++;
-        return Promise.resolve();
-    }
-    return new Promise((resolve, reject) => {
-        const waiter = { resolve };
-        waiter.timer = setTimeout(() => {
-            waitingCompiles.splice(waitingCompiles.indexOf(waiter), 1);
-            reject(new TemplateError(t('results:errors.busy')));
-        }, queueWaitMs);
-        waitingCompiles.push(waiter);
-    });
-}
+// default template and sample data of a document, both live in src/templates/<doc>/
+exports.readDefaultTemplate = (doc = 'results') => fs.readFileSync(path.join(TEMPLATE_ROOT, doc, 'default.typ'), 'utf8');
 
-// hands the slot to the next waiting compile, or frees it
-function releaseSlot() {
-    const next = waitingCompiles.shift();
-    if (!next) {
-        runningCompiles--;
-        return;
-    }
-    clearTimeout(next.timer);
-    next.resolve();
-}
-
-exports.readDefaultTemplate = () => fs.readFileSync(path.join(TEMPLATE_DIR, 'default.typ'), 'utf8');
-
-exports.readSampleData = () => JSON.parse(fs.readFileSync(path.join(TEMPLATE_DIR, 'sample-results.json'), 'utf8'));
+exports.readSampleData = (doc = 'results') => JSON.parse(fs.readFileSync(path.join(TEMPLATE_ROOT, doc, `sample-${doc}.json`), 'utf8'));
 
 // first error of the short diagnostics, e.g. "main.typ:2:10: error: expected expression"
 function parseDiagnostic(stderr) {
@@ -81,17 +55,19 @@ function createPackageGuard(workDir) {
 }
 exports.createPackageGuard = createPackageGuard;
 
-// runs typst on main.typ and results.json in a throwaway directory and resolves with the PDF buffer
-exports.compilePdf = async (templateSource, data, t, { timeoutMs = COMPILE_TIMEOUT_MS, queueWaitMs = QUEUE_WAIT_MS, outputBlocks = COMPILE_OUTPUT_BLOCKS } = {}) => {
-    await acquireSlot(t, queueWaitMs);
+// runs typst on main.typ, the data file and the extra files in a throwaway directory and resolves with the PDF buffer
+exports.compilePdf = async (templateSource, data, t, {
+    dataFile = 'results.json', files = [], timeoutMs = COMPILE_TIMEOUT_MS, queueWaitMs = QUEUE_WAIT_MS, outputBlocks = COMPILE_OUTPUT_BLOCKS,
+} = {}) => {
+    await compileSlots.acquire(queueWaitMs, () => new TemplateError(t('results:errors.busy')));
     try {
-        return await compileInTempDir(templateSource, data, t, timeoutMs, outputBlocks);
+        return await compileInTempDir(templateSource, data, dataFile, files, t, timeoutMs, outputBlocks);
     } finally {
-        releaseSlot();
+        compileSlots.release();
     }
 };
 
-async function compileInTempDir(templateSource, data, t, timeoutMs, outputBlocks) {
+async function compileInTempDir(templateSource, data, dataFile, files, t, timeoutMs, outputBlocks) {
     const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trampolin-results-'));
     const rootDir = path.join(workDir, 'root');
     const outFile = path.join(workDir, 'out.pdf');
@@ -99,7 +75,8 @@ async function compileInTempDir(templateSource, data, t, timeoutMs, outputBlocks
         fs.mkdirSync(rootDir);
         const packageGuard = createPackageGuard(workDir);
         fs.writeFileSync(path.join(rootDir, 'main.typ'), templateSource);
-        fs.writeFileSync(path.join(rootDir, 'results.json'), JSON.stringify(data));
+        fs.writeFileSync(path.join(rootDir, dataFile), JSON.stringify(data));
+        for (const file of files) fs.writeFileSync(path.join(rootDir, file.name), file.buffer);
 
         const { code, signal, stderr, timedOut } = await runTypst(rootDir, outFile, packageGuard, timeoutMs, outputBlocks);
         if (timedOut) throw new TemplateError(t('results:errors.timeout'));

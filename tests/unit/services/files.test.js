@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import XLSX from 'xlsx';
 import { db, require, makeCompetition, makeGroup } from './testHelpers.js';
 const {
-  isXlsxBuffer, createUsersXlsx, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx, MAX_IMPORT_ROWS,
+  isXlsxBuffer, createUsersXlsx, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx, buildZip, MAX_IMPORT_ROWS,
 } = require('../../../src/services/files.service.js');
 
 function xlsxBufferFromRows(rows) {
@@ -269,6 +269,41 @@ describe('synchro sportsmen xlsx layout', () => {
     expect(pairByName(target.id, 'Round A')).toMatchObject({
       club: 'TSV', gender: 'm', birth_year: 2008, routine: 'W11',
       partner_name: 'Round B', partner_club: 'SV', partner_gender: 'f', partner_birth_year: 2009,
+    });
+  });
+});
+
+describe('buildZip', () => {
+  const entries = [
+    { name: 'certificates-cup-group-a.pdf', buffer: Buffer.from('%PDF-first') },
+    { name: 'certificates-cup-group-b.pdf', buffer: Buffer.from('%PDF-second') },
+  ];
+
+  // entry names from the central directory, which is what an unzip tool lists (CFB.read adds its own placeholder entry)
+  function zipEntryNames(zip) {
+    const eocd = zip.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    const count = zip.readUInt16LE(eocd + 10);
+    let offset = zip.readUInt32LE(eocd + 16);
+    const names = [];
+    for (let i = 0; i < count; i++) {
+      const nameLength = zip.readUInt16LE(offset + 28);
+      names.push(zip.subarray(offset + 46, offset + 46 + nameLength).toString('utf8'));
+      offset += 46 + nameLength + zip.readUInt16LE(offset + 30) + zip.readUInt16LE(offset + 32);
+    }
+    return names;
+  }
+
+  it('lists exactly the given entries, without the placeholder entry of the writer', () => {
+    const zip = buildZip(entries);
+    expect(zip.subarray(0, 2).toString()).toBe('PK');
+    expect(zipEntryNames(zip)).toEqual(entries.map(e => e.name));
+  });
+
+  it('round trips the contents', () => {
+    const cfb = XLSX.CFB.read(buildZip(entries), { type: 'buffer' });
+    entries.forEach((entry) => {
+      const content = cfb.FileIndex[cfb.FullPaths.indexOf(`Root Entry/${entry.name}`)].content;
+      expect(Buffer.from(content).equals(entry.buffer)).toBe(true);
     });
   });
 });

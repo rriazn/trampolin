@@ -1,0 +1,44 @@
+{
+  "labels": {
+    "title": "Urkunde",
+    "participation": "für die Teilnahme an",
+    "group": "Gruppe",
+    "score": "Punkte",
+    "round": "Durchgang",
+    "place_ordinal_one": "{{count}}. Platz",
+    "place_ordinal_two": "{{count}}. Platz",
+    "place_ordinal_few": "{{count}}. Platz",
+    "place_ordinal_other": "{{count}}. Platz",
+    "with": "gemeinsam mit",
+    "date": "Datum"
+  },
+  "errors": {
+    "notReady": "Die Durchgänge dieser Gruppe sind noch nicht abgeschlossen",
+    "noReadyGroups": "Noch keine Gruppe ist bereit für Urkunden",
+    "noParticipants": "Diese Gruppe hat keine Teilnehmer",
+    "uploadFailed": "Die Dateien konnten nicht hochgeladen werden",
+    "noPdf": "Wähle zuerst eine PDF-Vorlage",
+    "notPdf": "Die Vorlage muss eine PDF-Datei sein",
+    "pdfTooLarge": "Die PDF-Vorlage ist größer als 5 MB",
+    "pdfUnreadable": "Die PDF-Vorlage konnte nicht gelesen werden, sie ist vielleicht beschädigt oder geschützt",
+    "pdfPages": "Die PDF-Vorlage muss genau eine Seite haben",
+    "pdfRotated": "Die Seite der PDF-Vorlage darf nicht gedreht sein",
+    "unknownMarker": "Unbekannter Platzhalter in der PDF-Vorlage: {{names}}",
+    "noNameMarker": "Die PDF-Vorlage braucht einen {{marker}}-Platzhalter",
+    "tooManyMarkers": "Die PDF-Vorlage hat zu viele Platzhalter",
+    "pdfNotUsable": "Die PDF-Vorlage kann nicht verwendet werden: {{message}}"
+  },
+  "ui": {
+    "templateLabel": "PDF-Vorlage (optional)",
+    "download": "Herunterladen",
+    "downloadAll": "Alle herunterladen (ZIP)",
+    "preview": "Vorschau",
+    "statusReady": "Bereit",
+    "statusRunning": "Durchgänge laufen noch",
+    "statusEmpty": "Keine Teilnehmer",
+    "participants": "{{count}} Teilnehmer",
+    "exampleTemplate": "Beispielvorlage (PDF)",
+    "markersHelp": "Schreibe diese Platzhalter in dein Design und exportiere es als PDF: {{list}}",
+    "statusNoRounds": "Noch keine Durchgänge"
+  }
+}

@@ -61,6 +61,14 @@ router.post('/competitions/:id/documents/results/preview', documentsController.r
 
 router.get('/competitions/:id/documents/results/template', documentsController.downloadResultsTemplate);
 
+router.post('/competitions/:id/groups/:gid/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadGroupCertificates);
+
+router.post('/competitions/:id/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadAllCertificates);
+
+router.post('/competitions/:id/documents/certificates/preview', documentsController.receiveCertificateTemplate, documentsController.previewCertificates);
+
+router.get('/competitions/:id/documents/certificates/template', documentsController.downloadCertificatesTemplate);
+
 
 // Judges
 

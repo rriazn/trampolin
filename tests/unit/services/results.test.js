@@ -6,7 +6,7 @@ import {
   makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt, makeUser, assignJudge,
   addScore, addElementScore, getJudgeRoleIds, makeT, db, require,
 } from './testHelpers.js';
-const { formatScore, buildLabels, buildJudgeIndex, buildResultsData, ROLE_LETTERS } = require('../../../src/services/results.service.js');
+const { formatScore, buildLabels, buildJudgeIndex, buildResultsData, rankGroupCompetitors, ROLE_LETTERS } = require('../../../src/services/results.service.js');
 
 function assignMany(comp, roleKey, names) {
   const roleId = getJudgeRoleIds()[roleKey];
@@ -219,6 +219,32 @@ describe('buildResultsData placement', () => {
     compete(round, c, 3, 0.5);
 
     expect(placesOf(buildResultsData(comp, makeT('en'), 'en'))).toEqual([[1, 'Anna'], [1, 'Berta'], [3, 'Clara']]);
+  });
+
+  it('ranks the competitors of a group with raw leaderboard rows per round', () => {
+    const { comp, group, compete } = setupHeadOnly();
+    const qualifying = makeRound(group.id, { name: 'Qualifying', order: 1 });
+    const final = makeRound(group.id, { name: 'Final', order: 2 });
+    const [a, b, c] = ['Anna', 'Berta', 'Clara'].map(name => makeSportsman(comp.id, group.id, name));
+    compete(qualifying, a, 1, 0.1);
+    compete(qualifying, b, 2, 0.2);
+    compete(qualifying, c, 3, 0.2);
+    compete(final, b, 1, 0.2);
+    compete(final, c, 2, 0.2);
+
+    const ranked = rankGroupCompetitors(comp, group);
+    expect(ranked.map(r => [r.sportsmanId, r.place])).toEqual([[b.id, 1], [c.id, 1], [a.id, 3]]);
+    expect(ranked[0].rounds.map(r => r.round.name)).toEqual(['Qualifying', 'Final']);
+    expect(ranked[0].rounds[1].row).toMatchObject({ sportsmanId: b.id, total: -0.2, rank: 1 });
+    expect(Array.isArray(ranked[0].rounds[1].panelSlots)).toBe(true);
+  });
+
+  it('gives a competitor without a total no place', () => {
+    const { comp, group } = setupHeadOnly();
+    const round = makeRound(group.id);
+    const a = makeSportsman(comp.id, group.id, 'Anna');
+    makeAttempt(makeEntry(round.id, a.id, 1).id, 1);
+    expect(rankGroupCompetitors(comp, group).map(r => [r.sportsmanId, r.place])).toEqual([[a.id, null]]);
   });
 
   it('shows empty trick cells for an attempt without skills', () => {

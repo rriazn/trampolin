@@ -171,3 +171,11 @@ exports.parseSportsmenXlsx = (competitionId, buffer) => {
     });
     return { ...insertAll(), truncated };
 };
+
+// zip of { name, buffer } entries with the SheetJS CFB writer, stored without compression because PDFs are compressed already
+exports.buildZip = (entries) => {
+    const { CFB } = XLSX;
+    const container = CFB.utils.cfb_new();
+    for (const entry of entries) CFB.utils.cfb_add(container, entry.name, entry.buffer);
+    return CFB.write(container, { fileType: 'zip', type: 'buffer', compression: false });
+};

@@ -71,11 +71,11 @@ exports.buildJudgeIndex = (competition, t) => {
 
 const pad = (n) => String(n).padStart(2, '0');
 
-function formatTimestamp(now, lng) {
+exports.formatTimestamp = (now, lng) => {
     const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const day = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
     return lng === 'de' ? `${day} ${time}` : `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${time}`;
-}
+};
 
 // one row per element role: a deduction per trick, or each judge's own total
 function buildRow(slot, entry, letter, labelByAssignment, lng) {
@@ -123,21 +123,43 @@ function buildAttempt(attempt, panelSlots, labelByAssignment, t, lng) {
     return base;
 }
 
-function buildGroup(competition, group, labelByAssignment, t, lng) {
+// competitors of a group in result order with their raw leaderboard rows per round, a place of null means no total
+exports.rankGroupCompetitors = (competition, group) => {
     const competitors = new Map();
     getRoundsByGroup(group.id).forEach((round, roundIndex) => {
         const { leaderboard, panelSlots } = buildLeaderboard(competition, round);
         for (const row of leaderboard) {
             if (!competitors.has(row.sportsmanId)) {
-                competitors.set(row.sportsmanId, { name: row.name, club: row.club, rounds: [] });
+                competitors.set(row.sportsmanId, { sportsmanId: row.sportsmanId, name: row.name, club: row.club, rounds: [] });
             }
             const competitor = competitors.get(row.sportsmanId);
-            // the first attempt that reaches the round total is the one counting in a best attempt round
-            const bestIndex = row.attempts.findIndex(a => a.finalScore !== null && a.finalScore === row.total);
             competitor.lastRoundIndex = roundIndex;
             competitor.lastRank = typeof row.rank === 'number' ? row.rank : Infinity;
             competitor.startOrder = row.startOrder;
-            competitor.rounds.push({
+            competitor.rounds.push({ round, row, panelSlots });
+        }
+    });
+
+    const ordered = [...competitors.values()].sort((a, b) =>
+        b.lastRoundIndex - a.lastRoundIndex || a.lastRank - b.lastRank || a.startOrder - b.startOrder);
+    // same last round and same rank share a place, like the leaderboard, and the next place is skipped
+    let place = 1;
+    return ordered.map((c, i) => {
+        const previous = ordered[i - 1];
+        if (previous && (previous.lastRoundIndex !== c.lastRoundIndex || previous.lastRank !== c.lastRank)) place = i + 1;
+        return { sportsmanId: c.sportsmanId, name: c.name, club: c.club, place: c.lastRank === Infinity ? null : place, rounds: c.rounds };
+    });
+};
+
+function buildGroup(competition, group, labelByAssignment, t, lng) {
+    const competitors = exports.rankGroupCompetitors(competition, group).map(c => ({
+        place: c.place === null ? '–' : c.place,
+        name: c.name,
+        club: c.club,
+        rounds: c.rounds.map(({ round, row, panelSlots }) => {
+            // the first attempt that reaches the round total is the one counting in a best attempt round
+            const bestIndex = row.attempts.findIndex(a => a.finalScore !== null && a.finalScore === row.total);
+            return {
                 name: round.name,
                 scoringMode: round.scoring_mode,
                 total: exports.formatScore(row.total, lng),
@@ -147,20 +169,10 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
                     // only a fully scored attempt has a total cell the template can mark
                     counted: a.status === 'scored' && a.finalScore !== null && (round.scoring_mode !== 'best_attempt' || i === bestIndex),
                 })),
-            });
-        }
-    });
-
-    const ordered = [...competitors.values()].sort((a, b) =>
-        b.lastRoundIndex - a.lastRoundIndex || a.lastRank - b.lastRank || a.startOrder - b.startOrder);
-    // same last round and same rank share a place, like the leaderboard, and the next place is skipped
-    let place = 1;
-    const competitorsWithPlace = ordered.map((c, i) => {
-        const previous = ordered[i - 1];
-        if (previous && (previous.lastRoundIndex !== c.lastRoundIndex || previous.lastRank !== c.lastRank)) place = i + 1;
-        return { place: c.lastRank === Infinity ? '–' : place, name: c.name, club: c.club, rounds: c.rounds };
-    });
-    return { name: group.name, abbreviation: group.abbreviation, competitors: competitorsWithPlace };
+            };
+        }),
+    }));
+    return { name: group.name, abbreviation: group.abbreviation, competitors };
 }
 
 // every fixed text of the document in the language of t
@@ -175,7 +187,7 @@ exports.buildResultsData = (competition, t, lng, now = new Date()) => {
 
     return {
         version: RESULTS_VERSION,
-        generatedAt: formatTimestamp(now, lng),
+        generatedAt: exports.formatTimestamp(now, lng),
         labels: exports.buildLabels(t),
         competition: { name: competition.name, date: competition.date, type: competition.type },
         groups,

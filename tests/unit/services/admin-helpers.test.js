@@ -38,4 +38,19 @@ describe('fileNameSlug', () => {
   it('removes characters that are not allowed in file names and trailing dots', () => {
     expect(fileNameSlug('A/B: "Cup"?*.')).toBe('ab-cup');
   });
+
+  it('keeps only ASCII, so the name is safe in a header and a zip entry', () => {
+    expect(fileNameSlug('Straße ★ Cup')).toBe('strasse-cup');
+  });
+
+  it('transliterates common letters that have no accent form', () => {
+    expect(fileNameSlug('Søren Cup')).toBe('soren-cup');
+    expect(fileNameSlug('Łódź Æble Đorđe')).toBe('lodz-aeble-dorde');
+  });
+
+  it('uses the fallback when nothing is left, such as for Cyrillic or CJK names', () => {
+    expect(fileNameSlug('Кубок', 'competition')).toBe('competition');
+    expect(fileNameSlug('東京')).toBe('file');
+    expect(fileNameSlug('???')).toBe('file');
+  });
 });

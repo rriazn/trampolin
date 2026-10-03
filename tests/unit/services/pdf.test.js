@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -8,7 +8,13 @@ const { compilePdf, createPackageGuard, readUploadedTemplate, readDefaultTemplat
 const t = makeT('en');
 const data = { name: 'Anna' };
 const compile = (source, options) => compilePdf(source, data, t, options);
-const resultsDirs = () => fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('trampolin-results-'));
+// smallest valid PNG, one transparent pixel
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+// own temp directory for this file, so compiles of other test files running at the same time are not counted
+const privateTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pdf-test-'));
+process.env.TMPDIR = privateTmp;
+afterAll(() => fs.rmSync(privateTmp, { recursive: true, force: true }));
+const resultsDirs = () => fs.readdirSync(privateTmp).filter(name => name.startsWith('trampolin-results-'));
 
 describe('compilePdf', { timeout: 20000 }, () => {
   it('compiles the default template with the sample data into a PDF', async () => {
@@ -23,6 +29,12 @@ describe('compilePdf', { timeout: 20000 }, () => {
 
   it('gives the template the data as results.json', async () => {
     const pdf = await compile('#let d = json("results.json")\n#assert.eq(d.name, "Anna")\nHello');
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+  });
+
+  it('writes the data under the given file name and copies extra files next to the template', async () => {
+    const source = '#assert.eq(json("certificates.json").name, "Anna")\n#image("image.png", width: 1cm)';
+    const pdf = await compilePdf(source, data, t, { dataFile: 'certificates.json', files: [{ name: 'image.png', buffer: PNG }] });
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
   });
 
@@ -133,5 +145,25 @@ describe('readUploadedTemplate', () => {
   it('rejects a package import', () => {
     expect(() => readUploadedTemplate(upload('pkg.typ', '#import "@preview/cetz:0.2.2": canvas'), t)).toThrow(expect.objectContaining(reason('packages')));
     expect(() => readUploadedTemplate(upload('pkg.typ', "#import '@local/mine:0.1.0': x"), t)).toThrow(expect.objectContaining(reason('packages')));
+  });
+});
+
+describe('default certificates template', { timeout: 20000 }, () => {
+  const compileCertificates = (sample, files = []) =>
+    compilePdf(readDefaultTemplate('certificates'), sample, t, { dataFile: 'certificates.json', files });
+
+  it('compiles with the sample data into one page per certificate', async () => {
+    const sample = readSampleData('certificates');
+    const pdf = await compileCertificates(sample);
+    expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+    expect((pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length).toBe(sample.certificates.length);
+  });
+});
+
+describe('default templates and sample data per document', () => {
+  it('reads the results ones by default and the ones of another document by name', () => {
+    expect(readDefaultTemplate()).toBe(readDefaultTemplate('results'));
+    expect(readSampleData()).toEqual(readSampleData('results'));
+    expect(() => readDefaultTemplate('nothing')).toThrow();
   });
 });

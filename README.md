@@ -42,7 +42,8 @@ how a score was built up, not just the final number.
 Once a competition is closed, an admin can download the **results list** as a PDF: a title page, one
 section per group with a table per athlete covering all of their rounds, and a page with the judges.
 The layout comes from a [Typst](https://typst.app) template, the built-in default or a custom one
-(see [Results PDF](#results-pdf)).
+(see [Results PDF](#results-pdf)). From the same page an admin can also generate **certificates**
+of participation, one page per athlete (see [Certificates](#certificates)).
 
 ## Who uses it
 
@@ -272,3 +273,58 @@ Roles and what ends up where, as defined by the panel (`src/db/seedDefaults.js`)
 | `synchronisation_skill` (per skill) | `tricks` | S |
 | time of flight, horizontal displacement, `synchronisation` (device), head judge | none, `summary` only | T, H, S, P |
 
+## Certificates
+
+The **Certificates** card on the Documents page makes one PDF per group with one certificate page per
+athlete. **Download** next to a group downloads that group's PDF, **Download all (ZIP)** puts the PDF of
+every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
+`certificates-<competition>-<group>.pdf`).
+
+- A group is **ready** when it has at least one round and all its rounds are completed, or when the
+  competition is closed. A ready group without athletes cannot be downloaded and is left out of the ZIP.
+- Everyone in the group gets a page, also athletes without a score (no place and no score on the page).
+  A page shows the place (`1st place` or `1. Platz`), the total of the last round the athlete is entered
+  in and the name of that round. An athlete without a total in that round gets no place and no score, even
+  with a score in an earlier round, like in the results list, whose order and places are used.
+- Synchro: every athlete of a pair gets a page. It names the athlete and the club first and the partner
+  second, both pages show the same place and score.
+- **Own design as a PDF.** Design the page in Word, Canva, Google Docs or any tool, type a marker such as
+  `{{name}}` where the data belongs, export a PDF and choose it in the card. For every athlete the app
+  prints the data centred on each marker, on the baseline of the marker, in the size of the marker text
+  (shrunk when it would not fit the page). **Example template (PDF)** downloads a design with every
+  marker to start from, **Preview** renders the chosen PDF with sample data in a new tab (enabled when a
+  PDF is chosen). The PDF is used for that one download only and is never stored.
+- Markers: `{{name}}`, `{{club}}`, `{{partner}}`, `{{partnerClub}}`, `{{partnerLine}}` ("together with ...",
+  empty for single athletes), `{{place}}` (`1st place`, empty without a score), `{{score}}`, `{{round}}`,
+  `{{group}}`, `{{competition}}`, `{{date}}`. `{{name}}` is required, an unknown marker is rejected and
+  named in the error.
+- Rules for the PDF (checked by the app): at most 5 MB, exactly one page that is not rotated, readable
+  (no password), at most 100 markers, made as PDF 1.7 or older. The page size of the PDF is the page size
+  of the certificate. The PDF is read in a separate thread with a memory limit and a 10 second timeout,
+  and drawn with the same Typst sandbox as the other documents (see
+  [Custom templates](#custom-templates)).
+- Limits of the approach: the marker text of the design is covered with a white box, so put markers on
+  plain areas (the covered marker text stays in the PDF's text layer, invisible but selectable). The printed text is always Lato in regular weight, the font of the design cannot be used.
+  One design serves single athletes and pairs, so use `{{partnerLine}}` instead of fixed text such as
+  "together with". Text around markers stays, a marker that is empty (no partner, no score) only prints
+  nothing, so avoid fixed punctuation next to markers.
+
+### Data contract (`certificates.json`, version 1)
+
+Scores are strings in the language of the document. `null` means "nothing to show". The file
+`src/templates/certificates/sample-certificates.json` follows this contract exactly (a unit test keeps
+it in sync with the builder). Uploaded PDF designs do not read this file, the fixed template
+`overlay.typ` does, together with the marker positions it finds in the PDF.
+
+```text
+version          1
+generatedAt      "03.10.2026 09:05" (de) or "2026-10-03 09:05"
+labels           title, participation, group, score, round, with, date
+competition      { name, date (02.10.2026 in de, as entered otherwise, or null) }
+group            { name, abbreviation }
+certificates[]   { name, club, partner, place, placeText, score, round }
+  partner        { name, club } or null                      synchro only, the other athlete of the pair
+  place          number or null                              shared ties 1, 1, 3, null without a score
+  placeText      "1st place" | "1. Platz" | null
+  score, round   total and name of the last round the athlete has a score in, or null
+```

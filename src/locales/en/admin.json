@@ -86,6 +86,12 @@
       "title": "Results list (PDF)",
       "description": "All rounds of every competitor, group by group, with a judges page at the end.",
       "availableWhenClosed": "Available once the competition is closed."
+    },
+    "certificates": {
+      "title": "Certificates (PDF)",
+      "description": "One certificate page per participant, as a PDF per group or as a ZIP of all groups. A group is ready once all its rounds are completed. Design the page in Word, Canva or similar, mark where the data belongs and upload it as a PDF.",
+      "groupsHeading": "Groups",
+      "noGroups": "This competition has no groups yet."
     }
   },
   "judges": {
