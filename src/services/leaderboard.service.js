@@ -90,6 +90,8 @@ function buildSportsmenAttempts(entryRows, panelSlots, scoresByAttempt, elementS
 
         sp.attempts.push({
             number: row.attempt_number,
+            status: row.attempt_status,
+            elementCount: row.element_count,
             finalScore: hasAnyScore ? result.total : null,
             breakdown: result.breakdown,
             isComplete: result.isComplete,

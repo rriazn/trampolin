@@ -54,4 +54,10 @@ describe('POST /language/:lng', () => {
     expect(first.text).toContain('Einloggen');
     expect(second.text).toContain('Einloggen');
   });
+
+  it('returns 400 when the request body is missing', async () => {
+    const res = await request(app).post('/language/de').send();
+    expect(res.status).toBe(400);
+    expect(res.text).toBe('Missing request body');
+  });
 });

@@ -1,10 +1,14 @@
 'use strict';
 const router = require('express').Router();
-const multer = require('multer');
 const { requireAdmin } = require('../middleware/auth');
 const adminController = require('../controllers/admin.controller');
+const documentsController = require('../controllers/documents.controller');
+const { receiveUpload } = require('../middleware/upload');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+const importFile = (redirectTo) => receiveUpload('file', MAX_IMPORT_BYTES, {
+    redirectTo, tooLargeKey: 'admin:users.errors.tooLarge', failedKey: 'admin:users.errors.uploadFailed',
+});
 
 router.use(requireAdmin);
 
@@ -23,7 +27,7 @@ router.post('/users', adminController.addUser);
 
 router.get('/users/:id/edit', adminController.getEditUserForm);
 
-router.post('/users/upload', upload.single('file'), adminController.uploadUsers);
+router.post('/users/upload', importFile(() => '/admin/users'), adminController.uploadUsers);
 
 router.post('/users/:id/delete', adminController.deleteUser);
 
@@ -45,6 +49,25 @@ router.post('/competitions/:id', adminController.updateCompetition);
 router.post('/competitions/:id/status', adminController.updateCompetitionStatus);
 
 router.post('/competitions/:id/delete', adminController.deleteCompetition);
+
+
+// Documents
+
+router.get('/competitions/:id/documents', documentsController.getDocuments);
+
+router.post('/competitions/:id/documents/results', documentsController.receiveTemplate, documentsController.downloadResults);
+
+router.post('/competitions/:id/documents/results/preview', documentsController.receiveTemplate, documentsController.previewResultsTemplate);
+
+router.get('/competitions/:id/documents/results/template', documentsController.downloadResultsTemplate);
+
+router.post('/competitions/:id/groups/:gid/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadGroupCertificates);
+
+router.post('/competitions/:id/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadAllCertificates);
+
+router.post('/competitions/:id/documents/certificates/preview', documentsController.receiveCertificateTemplate, documentsController.previewCertificates);
+
+router.get('/competitions/:id/documents/certificates/template', documentsController.downloadCertificatesTemplate);
 
 
 // Judges
@@ -70,7 +93,7 @@ router.get('/competitions/:id/sportsmen/:sid/edit', adminController.getEditSport
 
 router.post('/competitions/:id/sportsmen/:sid/delete', adminController.deleteSportsman);
 
-router.post('/competitions/:id/sportsmen/upload', upload.single('file'), adminController.uploadSportsmen);
+router.post('/competitions/:id/sportsmen/upload', importFile(req => `/admin/competitions/${req.params.id}/sportsmen`), adminController.uploadSportsmen);
 
 router.post('/competitions/:id/sportsmen/:sid', adminController.updateSportsman);
 

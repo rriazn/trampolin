@@ -1,6 +1,9 @@
 const SUPPORTED_LANGUAGES = ['en', 'de'];
 
 exports.setLanguage = (req, res) => {
+    if (!req.body) {
+        return res.status(400).send('Missing request body');
+    }
     if (SUPPORTED_LANGUAGES.includes(req.params.lng)) {
         req.session.lng = req.params.lng;
     }

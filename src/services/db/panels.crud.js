@@ -76,7 +76,7 @@ exports.getAssignedCount = (competitionId, judgeRoleIds) => {
 
 exports.getAssignmentForCompetition = (competitionId, panelTemplateId) => {
     return db.prepare(`
-        SELECT pa.id AS assignment_id, u.name AS judge_name, jr.key AS role_key,
+        SELECT pa.id AS assignment_id, u.id AS user_id, u.name AS judge_name, jr.key AS role_key,
             jr.name AS role_name, jr.granularity, jr.is_deduction AS isDeduction,
             s.sort_order
         FROM panel_template_slots s

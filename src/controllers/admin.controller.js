@@ -1,4 +1,4 @@
-const { getAdminStats } = require("../services/helpers/admin.helpers");
+const { getAdminStats, fileNameSlug } = require("../services/helpers/admin.helpers");
 const { getCompetitionById, getTopCompetitions, getCompetitions, createCompetitionDB, updateCompetitionDB, updateCompetitionStatusDB, deleteCompetitionDB } = require("../services/db/competitions.crud");
 const { getGroupsByCompetition, getGroupsRoundCount, addGroupDB, deleteGroupDB, getGroupById } = require("../services/db/groups.crud");
 const { getPanels, getAssignedCount, addAssignment, getAssignmentById, checkAlreadyAssigned } = require("../services/db/panels.crud");
@@ -6,7 +6,7 @@ const { validateCompetitionInput, canChangeCompetitionType } = require("../servi
 const { getJudgesForCompetition, resolveAssignmentGroup, removeJudgeFromRole } = require("../services/panels.service");
 const { getSportsmenByCompetition, addSportsmanDB, getSportsmenById, updateSportsmanDB, deleteSportsmanDB, getAvailableSportsmen } = require("../services/db/sportsmen.crud");
 const { deleteUserDB, getUsers, getUserById, getUserTokenVersion } = require("../services/db/users.crud");
-const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx } = require("../services/files.service");
+const { createUsersXlsx, isXlsxBuffer, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx, MAX_IMPORT_ROWS } = require("../services/files.service");
 const { createUser, updateUser } = require("../services/users.service");
 const { parseSportsmanInput } = require("../services/sportsmen.service");
 const { competitorName } = require("../services/helpers/competitor.helpers");
@@ -103,8 +103,9 @@ exports.uploadUsers = async (req, res) => {
         req.session.flash = { error: req.t('admin:users.errors.invalidFileType') };
         return res.redirect('/admin/users');
     }
-    const { created, skipped } = await parseUsersXlsx(req.file.buffer);
-    req.session.flash = { success: req.t('admin:flash.users.importComplete', { created, skipped }) };
+    const { created, skipped, truncated } = await parseUsersXlsx(req.file.buffer);
+    const message = req.t('admin:flash.users.importComplete', { created, skipped });
+    req.session.flash = { success: truncated ? `${message} ${req.t('admin:flash.importTruncated', { count: MAX_IMPORT_ROWS })}` : message };
     res.redirect('/admin/users');
 };
 
@@ -258,15 +259,8 @@ exports.exportSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
         return renderNotFound(res, req.t('errors:notFound.competition'));
-    const clean_comp_name = competition.name
-        .toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .replace(/[<>:"/\\|?*\x00-\x1f]/g, '') // eslint-disable-line no-control-regex
-        .replace(/\s+/g, '-')
-        .replace(/\.+$/, '')
-        .trim();
     const buf = createSportsmenXlsx(competition.id);
-    res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${clean_comp_name}.xlsx"`);
+    res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${fileNameSlug(competition.name, 'competition')}.xlsx"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buf);
 };
@@ -350,13 +344,14 @@ exports.uploadSportsmen = async (req, res) => {
         return res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
     }
 
-    const { created, skipped, unknownGroup } = parseSportsmenXlsx(req.params.id, req.file.buffer);
+    const { created, skipped, unknownGroup, truncated } = parseSportsmenXlsx(req.params.id, req.file.buffer);
     const parts = [
         req.t('admin:flash.sportsmen.importAdded', { count: created }),
         req.t('admin:flash.sportsmen.importSkipped', { count: skipped }),
     ];
     if (unknownGroup > 0) parts.push(req.t('admin:flash.sportsmen.importUnknownGroup', { count: unknownGroup }));
-    req.session.flash = { success: req.t('admin:flash.sportsmen.importComplete', { parts: parts.join(', ') }) };
+    const message = req.t('admin:flash.sportsmen.importComplete', { parts: parts.join(', ') });
+    req.session.flash = { success: truncated ? `${message} ${req.t('admin:flash.importTruncated', { count: MAX_IMPORT_ROWS })}` : message };
     res.redirect(`/admin/competitions/${req.params.id}/sportsmen`);
 };
 

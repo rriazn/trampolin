@@ -1,5 +1,8 @@
 // bridges into the app's CommonJS require graph so every helper here shares the same in-memory db instance the services under test use
 import { createRequire } from 'module';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 const require = createRequire(import.meta.url);
 const db = require('../../../src/db/database.js');
@@ -86,6 +89,17 @@ export function addScore(attemptId, assignmentId, judgeRoleId, score) {
 export function addElementScore(attemptId, assignmentId, judgeRoleId, elementNumber, value) {
   db.prepare('INSERT OR REPLACE INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,?,?)')
     .run(attemptId, assignmentId, judgeRoleId, elementNumber, value);
+}
+
+const localesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../src/locales');
+
+// translator backed by the real locale files, so tests see the actual texts
+export function makeT(lng) {
+  return (key) => {
+    const [ns, keyPath] = key.split(':');
+    const file = JSON.parse(fs.readFileSync(path.join(localesDir, lng, `${ns}.json`), 'utf8'));
+    return keyPath.split('.').reduce((node, part) => node?.[part], file);
+  };
 }
 
 export { db, require };

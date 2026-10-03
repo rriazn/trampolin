@@ -1,8 +1,10 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { test, expect } = require('@playwright/test');
 
-const VERSION_FILE = path.join(__dirname, 'VERSION');
+// same scratch path as tests/component/server.js
+const VERSION_FILE = path.join(os.tmpdir(), 'trampolin-component-VERSION');
 
 test.beforeAll(async ({ request }) => {
   await request.post('/test/seed');
