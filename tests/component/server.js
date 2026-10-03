@@ -6,12 +6,13 @@ const session = require('express-session');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const path = require('path');
+const os = require('os');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
 const { getAppVersion } = require('../../src/services/version.service');
 
-// a scratch path so footer.spec.js can create/delete a VERSION file without touching the real one
-const TEST_VERSION_PATH = path.join(__dirname, 'VERSION');
+// a scratch path in the temp dir, the mounted tests folder is not writable for the container user
+const TEST_VERSION_PATH = path.join(os.tmpdir(), 'trampolin-component-VERSION');
 
 const app = express();
 app.set('view engine', 'ejs');
