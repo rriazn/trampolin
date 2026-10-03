@@ -8,6 +8,8 @@ const MAX_TEMPLATE_BYTES = 256 * 1024;
 const COMPILE_TIMEOUT_MS = 10000;
 // virtual memory cap in KB for one compile
 const COMPILE_MEMORY_KB = 1048576;
+// typst downloads a package before it fails to store it, a proxy that refuses connections keeps that request off the network
+const DEAD_PROXY = 'http://127.0.0.1:1';
 const TEMPLATE_DIR = path.join(__dirname, '../templates/results');
 // fonts shipped with the app (Liberation Sans), system fonts are ignored so every server renders the same
 const FONT_DIR = path.join(TEMPLATE_DIR, 'fonts');
@@ -75,7 +77,15 @@ function runTypst(rootDir, outFile, packageGuard, timeoutMs) {
         ], {
             cwd: rootDir,
             stdio: ['ignore', 'ignore', 'pipe'],
-            env: { PATH: process.env.PATH, HOME: rootDir, TYPST_PACKAGE_PATH: packageGuard, TYPST_PACKAGE_CACHE_PATH: packageGuard },
+            env: {
+                PATH: process.env.PATH,
+                HOME: rootDir,
+                TYPST_PACKAGE_PATH: packageGuard,
+                TYPST_PACKAGE_CACHE_PATH: packageGuard,
+                HTTPS_PROXY: DEAD_PROXY,
+                https_proxy: DEAD_PROXY,
+                ALL_PROXY: DEAD_PROXY,
+            },
         });
 
         let stderr = '';

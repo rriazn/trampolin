@@ -54,6 +54,14 @@ describe('compileResultsPdf', { timeout: 20000 }, () => {
     await expect(compile('#let p = "@pre" + "view/cetz:0.2.2"\n#import p: canvas')).rejects.toMatchObject({ name: 'TemplateError' });
   });
 
+  // a refused connection to the dead local proxy means no request left the host
+  it('does not reach the package server, the download fails at a dead local proxy', async () => {
+    await expect(compile('#let p = "@pre" + "view/cetz:0.2.2"\n#import p: canvas')).rejects.toMatchObject({
+      name: 'TemplateError',
+      message: expect.stringMatching(/failed to download package.*Connection refused/),
+    });
+  });
+
   it('removes its temporary files after success and after failure', async () => {
     const before = resultsDirs().length;
     await compile('Hello');

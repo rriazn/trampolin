@@ -76,6 +76,9 @@ The results PDF needs the `typst` CLI (v0.15.1). The Docker image and the devcon
 through `scripts/install-typst.sh`; on another machine run that script (it installs to
 `~/.local/bin` by default) or point `TYPST_BIN` at your own copy.
 
+The Docker image runs as the unprivileged `node` user. A volume mounted on `/app/src/data` must be
+writable by uid 1000.
+
 ### Environment variables
 
 | Variable | Default | Purpose |
@@ -204,7 +207,8 @@ Rules for uploaded templates, enforced by the app:
 - a UTF-8 `.typ` file of at most 256 KB, without package imports (`@preview/...`, `@local/...`)
 - compiled in an empty temporary directory that only holds `main.typ` and `results.json`, so a template
   cannot read other files, and it cannot load packages (the package location is a plain file, so
-  nothing can be stored or used, whoever runs the app)
+  nothing can be stored or used, whoever runs the app, and a proxy that refuses connections keeps
+  the package download off the network)
 - stopped after 10 seconds, with a memory limit of 1 GB per compile
 
 ### Data contract (`results.json`, version 1)

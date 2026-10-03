@@ -1,10 +1,18 @@
 FROM node:20.19.0
 
+# browsers outside /root so the unprivileged node user finds them
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 WORKDIR /app
+RUN chown node:node /app
 
-COPY package*.json /app/
+COPY --chown=node:node package*.json /app/
 
-RUN npm install && npx playwright install --with-deps chromium
+USER node
+RUN npm install
+
+USER root
+RUN npx playwright install --with-deps chromium
 
 # typst compiles the results PDF, xz-utils unpacks its release archive
 COPY scripts/install-typst.sh /tmp/install-typst.sh
@@ -13,8 +21,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends xz-utils \
     && bash /tmp/install-typst.sh /usr/local/bin \
     && rm /tmp/install-typst.sh
 
-COPY src /app/src/
-COPY VERSION /app/VERSION
+COPY --chown=node:node src /app/src/
+COPY --chown=node:node VERSION /app/VERSION
+
+# the app writes its database and sessions below /app/src/data, tests write below /app
+USER node
 
 EXPOSE 3000
 
