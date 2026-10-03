@@ -93,3 +93,29 @@ test('admin sees the Typst error when the uploaded template is broken', async ({
   await page.waitForURL('/admin/competitions');
   await expect(page.getByText('Template error at line 2, column 8: expected expression')).toBeVisible();
 });
+
+test('a fully scored attempt shows its judges, values and totals in the PDF', async ({ page, request }) => {
+  // execution 2 - (0.2 + 0.1), difficulty 1.2 + 1.4, penalty 0.2
+  const res = await request.post('/test/seed', { data: { type: 'scored' } });
+  expect(res.ok()).toBeTruthy();
+
+  await login(page, 'admin@example.com', 'admin123', '/admin');
+  await page.goto('/admin/competitions');
+  const closing = page.getByRole('row').filter({ hasText: 'Spring Championship' });
+  await closing.getByRole('button', { name: /Close/ }).click();
+  await expect(closing.getByRole('cell', { name: 'closed' })).toBeVisible();
+
+  const { buffer } = await downloadResults(page, await openResultsForm(page));
+  const text = await pdfText(buffer);
+  expect(text).toMatch(/Round total: 4\.1 \(Rank 1\)/);
+  // per skill values of the two element roles and the summary line
+  for (const expected of ['0.2', '0.1', '1.2', '1.4', '1.7', '2.6', '-0.2', '4.1']) {
+    expect(text).toContain(expected);
+  }
+  // judges page, one judge per role of the test panel
+  for (const expected of ['E1', 'D1', 'P1', 'Maria Schmidt', 'Petra Voss']) {
+    expect(text).toContain(expected);
+  }
+  // the second attempt of Leon and both attempts of Emma are not scored
+  expect(text).toContain('Not scored');
+});

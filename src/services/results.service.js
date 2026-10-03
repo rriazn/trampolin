@@ -144,7 +144,8 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
                 rank: row.rank,
                 attempts: row.attempts.map((a, i) => ({
                     ...buildAttempt(a, panelSlots, labelByAssignment, t, lng),
-                    counted: a.finalScore !== null && (round.scoring_mode !== 'best_attempt' || i === bestIndex),
+                    // only a fully scored attempt has a total cell the template can mark
+                    counted: a.status === 'scored' && a.finalScore !== null && (round.scoring_mode !== 'best_attempt' || i === bestIndex),
                 })),
             });
         }

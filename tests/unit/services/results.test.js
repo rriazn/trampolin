@@ -397,8 +397,8 @@ describe('buildResultsData counted attempts', () => {
         db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(attempt.id);
         return;
       }
-      addScore(attempt.id, head, getJudgeRoleIds().head_judge, penalty);
-      db.prepare("UPDATE attempts SET status='scored' WHERE id=?").run(attempt.id);
+      addScore(attempt.id, head, getJudgeRoleIds().head_judge, penalty === 'partial' ? 0 : penalty);
+      if (penalty !== 'partial') db.prepare("UPDATE attempts SET status='scored' WHERE id=?").run(attempt.id);
     });
     return buildResultsData(comp, makeT('en'), 'en').groups[0].competitors[0].rounds[0].attempts.map(a => a.counted);
   }
@@ -413,5 +413,11 @@ describe('buildResultsData counted attempts', () => {
 
   it('counts every scored attempt of a sum round but not a skipped one', () => {
     expect(roundWithAttempts('sum', [0.3, 0.1, 'skipped'])).toEqual([true, true, false]);
+  });
+
+  // a partial attempt (status pending) has a score but no total cell, so nothing is flagged for it
+  it('does not flag an attempt that is not fully scored, even when it holds the best score', () => {
+    expect(roundWithAttempts('best_attempt', [0.3, 'partial'])).toEqual([false, false]);
+    expect(roundWithAttempts('sum', [0.3, 'partial'])).toEqual([true, false]);
   });
 });

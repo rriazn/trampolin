@@ -87,7 +87,7 @@ writable by uid 1000.
 | `SESSION_SECRET` | `dev-secret-change-in-prod` | express-session signing secret - set a real value in production |
 | `DB_PATH` | `src/data/trampolin.db` | SQLite database file |
 | `TYPST_BIN` | `typst` | path of the Typst CLI used for the results PDF |
-| `ENABLE_TEST_SEED` | unset | when `"true"`, exposes a `/test/seed` endpoint that resets the DB with fixed test data, `{ "type": "synchro" }` as JSON body seeds a synchro competition instead (used by tests, never enable in production) |
+| `ENABLE_TEST_SEED` | unset | when `"true"`, exposes a `/test/seed` endpoint that resets the DB with fixed test data, `{ "type": "synchro" }` as JSON body seeds a synchro competition instead, `{ "type": "scored" }` an individual one on the test panel with one attempt fully scored (used by tests, never enable in production) |
 
 ## Roles
 
@@ -234,7 +234,8 @@ judges[]         { label (role names, a shared assignment on one line), members[
 
 An attempt is shown in full only when its `status` is `scored`. For `skipped` and `pending` attempts
 `rows` and `summary` are empty and `final` is `null`. `counted` tells whether the attempt counts towards
-the round total (see above), `elementCount` is the number of skills the attempt had.
+the round total (see above), but is never true for an attempt that is not `scored`, as there is no total
+to mark. `elementCount` is the number of skills the attempt had.
 
 `rows[]` has one row per judged element role of the panel, in panel order, so new panels work without
 changes. The row comes in two kinds:
