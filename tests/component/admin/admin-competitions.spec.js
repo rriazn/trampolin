@@ -82,29 +82,14 @@ test.describe('when logged in as admin', () => {
 
   // Results PDF
 
-  test('shows the results PDF form only for closed competitions', async ({ page }) => {
-    await expect(page.getByRole('row').filter({ hasText: 'Winter Cup' }).getByText('Results PDF')).toBeVisible();
-    await expect(page.getByRole('row').filter({ hasText: 'Autumn Open' }).getByText('Results PDF')).toHaveCount(0);
-    await expect(page.getByRole('row').filter({ hasText: 'Spring Cup' }).getByText('Results PDF')).toHaveCount(0);
+  test('shows a Documents button on every competition row', async ({ page }) => {
+    for (const name of ['Winter Cup', 'Autumn Open', 'Spring Cup']) {
+      await expect(page.getByRole('row').filter({ hasText: name }).getByRole('link', { name: 'Documents' })).toBeVisible();
+    }
   });
 
-  test('keeps the preview button disabled until a template file is chosen', async ({ page }) => {
-    const row = page.getByRole('row').filter({ hasText: 'Winter Cup' });
-    await row.getByText('Results PDF').click();
-    const preview = row.getByRole('button', { name: 'Preview template' });
-    await expect(row.getByRole('button', { name: 'Download PDF' })).toBeEnabled();
-    await expect(preview).toBeDisabled();
-    await row.locator('input[name=template]').setInputFiles({ name: 'mine.typ', mimeType: 'text/plain', buffer: Buffer.from('= Hello') });
-    await expect(preview).toBeEnabled();
-    await row.locator('input[name=template]').setInputFiles([]);
-    await expect(preview).toBeDisabled();
-  });
-
-  test('links to the default template and the sample data', async ({ page }) => {
-    const row = page.getByRole('row').filter({ hasText: 'Winter Cup' });
-    await row.getByText('Results PDF').click();
-    await expect(row.getByRole('link', { name: 'Default template' })).toHaveAttribute('href', '/admin/results/default-template');
-    await expect(row.getByRole('link', { name: 'Sample data' })).toHaveAttribute('href', '/admin/results/sample-data');
+  test('no longer shows the results PDF form in the table', async ({ page }) => {
+    await expect(page.getByText('Results PDF')).toHaveCount(0);
   });
 
   // Buttons

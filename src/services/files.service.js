@@ -11,9 +11,42 @@ const { normalizeRole } = require("./users.service");
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+const MAX_IMPORT_ROWS = 2000;
+exports.MAX_IMPORT_ROWS = MAX_IMPORT_ROWS;
+const MAX_UNPACKED_BYTES = 50 * 1024 * 1024;
+const MAX_ZIP_ENTRIES = 1000;
+
+// checks the entry count and the unpacked size declared in the zip central directory, before anything is unpacked
+const zipSizesAreSafe = (buffer) => {
+    const eocd = buffer.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    if (eocd < 0 || eocd + 22 > buffer.length) return false;
+    const entries = buffer.readUInt16LE(eocd + 10);
+    let offset = buffer.readUInt32LE(eocd + 16);
+    if (entries === 0xffff || entries > MAX_ZIP_ENTRIES) return false;
+    let total = 0;
+    for (let i = 0; i < entries; i++) {
+        if (offset + 46 > buffer.length || buffer.readUInt32LE(offset) !== 0x02014b50) return false;
+        total += buffer.readUInt32LE(offset + 24);
+        offset += 46 + buffer.readUInt16LE(offset + 28) + buffer.readUInt16LE(offset + 30) + buffer.readUInt16LE(offset + 32);
+    }
+    return total <= MAX_UNPACKED_BYTES;
+};
+
 exports.isXlsxBuffer = async (buffer) => {
     const type = await fileType.fileTypeFromBuffer(buffer);
-    return !!type && type.mime === XLSX_MIME;
+    return !!type && type.mime === XLSX_MIME && zipSizesAreSafe(buffer);
+};
+
+// rows of the first sheet only, capped at MAX_IMPORT_ROWS, an unparseable file gives no rows
+const readFirstSheetRows = (buffer) => {
+    try {
+        const wb = XLSX.read(buffer, { type: 'buffer', sheets: 0, sheetRows: MAX_IMPORT_ROWS + 2, dense: true });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+        return { rows: rows.slice(0, MAX_IMPORT_ROWS), truncated: rows.length > MAX_IMPORT_ROWS };
+    } catch {
+        // structurally valid enough to pass the magic-byte check, but unparseable
+        return { rows: [], truncated: false };
+    }
 };
 
 exports.createUsersXlsx = (users) => {
@@ -31,13 +64,7 @@ exports.createUsersXlsx = (users) => {
 };
 
 exports.parseUsersXlsx = async (buffer) => {
-    let rows = [];
-    try {
-        const wb = XLSX.read(buffer, { type: 'buffer' });
-        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    } catch {
-        // structurally valid enough to pass the magic-byte check, but unparseable
-    }
+    const { rows, truncated } = readFirstSheetRows(buffer);
     const defaultHash = await bcrypt.hash('referee123', 10);
     let created = 0, skipped = 0;
     for (const row of rows) {
@@ -51,7 +78,7 @@ exports.parseUsersXlsx = async (buffer) => {
         const info = createOrIgnoreUserDB(name, email, hash, normalizeRole(role));
         info.changes ? created++ : skipped++;
     }
-    return { created, skipped };
+    return { created, skipped, truncated };
 };
 
 const INDIVIDUAL_COLUMNS = ['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group'];
@@ -128,13 +155,7 @@ const rowToSportsmanBody = (row, isSynchro) => {
 
 exports.parseSportsmenXlsx = (competitionId, buffer) => {
     const competition = getCompetitionById(competitionId) || { type: 'individual' };
-    let rows = [];
-    try {
-        const wb = XLSX.read(buffer, { type: 'buffer' });
-        rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-    } catch {
-        // unparseable file: rows stays empty, all will be counted as skipped
-    }
+    const { rows, truncated } = readFirstSheetRows(buffer);
     const insertAll = db.transaction(() => {
         let created = 0, skipped = 0, unknownGroup = 0;
         for (const row of rows) {
@@ -148,5 +169,5 @@ exports.parseSportsmenXlsx = (competitionId, buffer) => {
         }
         return { created, skipped, unknownGroup };
     });
-    return insertAll();
+    return { ...insertAll(), truncated };
 };

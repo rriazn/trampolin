@@ -1,17 +1,17 @@
-const multer = require('multer');
 const { getCompetitionById } = require('../services/db/competitions.crud');
 const { renderNotFound } = require('../services/errors.service');
 const { fileNameSlug } = require('../services/helpers/admin.helpers');
 const { buildResultsData, buildLabels } = require('../services/results.service');
 const {
-    compileResultsPdf, readUploadedTemplate, readDefaultTemplate, readSampleData, TemplateError, MAX_TEMPLATE_BYTES,
+    compilePdf, readUploadedTemplate, readDefaultTemplate, readSampleData, TemplateError, MAX_TEMPLATE_BYTES,
 } = require('../services/pdf.service');
+const { receiveUpload } = require('../middleware/upload');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_TEMPLATE_BYTES } }).single('template');
+const documentsUrl = (req) => `/admin/competitions/${req.params.id}/documents`;
 
 const flashAndReturn = (req, res, message) => {
     req.session.flash = { error: message };
-    res.redirect('/admin/competitions');
+    res.redirect(documentsUrl(req));
 };
 
 // a broken template is shown to the admin, any other error is a real failure
@@ -29,15 +29,16 @@ const sendPdf = (res, pdf, disposition) => {
     res.send(pdf);
 };
 
-// sample data with the labels of the requesting admin's language
-const sampleDataFor = (req) => ({ ...readSampleData(), labels: buildLabels(req.t) });
-
 // reads the optional template upload, a too large file becomes a flash instead of a server error
-exports.receiveTemplate = (req, res, next) => {
-    upload(req, res, (err) => {
-        if (!err) return next();
-        flashAndReturn(req, res, req.t(err.code === 'LIMIT_FILE_SIZE' ? 'results:errors.tooLarge' : 'results:errors.uploadFailed'));
-    });
+exports.receiveTemplate = receiveUpload('template', MAX_TEMPLATE_BYTES, {
+    redirectTo: documentsUrl, tooLargeKey: 'results:errors.tooLarge', failedKey: 'results:errors.uploadFailed',
+});
+
+exports.getDocuments = (req, res) => {
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    res.render('admin/documents', { competition });
 };
 
 exports.downloadResults = async (req, res) => {
@@ -49,32 +50,30 @@ exports.downloadResults = async (req, res) => {
 
     try {
         const source = req.file ? readUploadedTemplate(req.file, req.t) : readDefaultTemplate();
-        const pdf = await compileResultsPdf(source, buildResultsData(competition, req.t, req.language), req.t);
+        const pdf = await compilePdf(source, buildResultsData(competition, req.t, req.language), req.t);
         sendPdf(res, pdf, `attachment; filename="results-${fileNameSlug(competition.name)}.pdf"`);
     } catch (err) {
         flashTemplateError(req, res, err);
     }
 };
 
-exports.previewTemplate = async (req, res) => {
+// renders the uploaded template with the sample data in the requesting admin's language
+exports.previewResultsTemplate = async (req, res) => {
+    if (!getCompetitionById(req.params.id))
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     try {
         const source = readUploadedTemplate(req.file, req.t);
-        const pdf = await compileResultsPdf(source, sampleDataFor(req), req.t);
+        const pdf = await compilePdf(source, { ...readSampleData(), labels: buildLabels(req.t) }, req.t);
         sendPdf(res, pdf, 'inline; filename="template-preview.pdf"');
     } catch (err) {
         flashTemplateError(req, res, err);
     }
 };
 
-exports.downloadDefaultTemplate = (req, res) => {
+exports.downloadResultsTemplate = (req, res) => {
+    if (!getCompetitionById(req.params.id))
+        return renderNotFound(res, req.t('errors:notFound.competition'));
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="default-template.typ"');
     res.send(readDefaultTemplate());
-};
-
-// named results.json because that is the file name a template reads
-exports.downloadSampleData = (req, res) => {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="results.json"');
-    res.send(JSON.stringify(sampleDataFor(req), null, 2));
 };

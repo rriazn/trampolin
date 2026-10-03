@@ -37,6 +37,6 @@
     "i18next": "^26.4.2",
     "i18next-http-middleware": "^3.9.9",
     "multer": "^2.2.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }

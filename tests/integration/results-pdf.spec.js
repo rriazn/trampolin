@@ -24,11 +24,12 @@ async function pdfText(buffer) {
   return text.replace(/\s+/g, ' ');
 }
 
+// opens the documents page of the competition through its button and returns the results card
 async function openResultsForm(page) {
   await page.goto('/admin/competitions');
-  const row = page.getByRole('row').filter({ hasText: 'Spring Championship' });
-  await row.getByText('Results PDF').click();
-  return row;
+  await page.getByRole('row').filter({ hasText: 'Spring Championship' }).getByRole('link', { name: 'Documents' }).click();
+  await page.waitForURL(/\/admin\/competitions\/\d+\/documents$/);
+  return page.locator('#document-results');
 }
 
 async function downloadResults(page, row) {
@@ -90,7 +91,7 @@ test('admin sees the Typst error when the uploaded template is broken', async ({
   await row.locator('input[name=template]').setInputFiles({ name: 'broken.typ', mimeType: 'text/plain', buffer: Buffer.from('= Title\n#let x = ') });
   await row.getByRole('button', { name: 'Download PDF' }).click();
 
-  await page.waitForURL('/admin/competitions');
+  await page.waitForURL(/\/admin\/competitions\/\d+\/documents$/);
   await expect(page.getByText('Template error at line 2, column 8: expected expression')).toBeVisible();
 });
 

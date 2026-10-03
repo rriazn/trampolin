@@ -3,21 +3,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { makeT, require } from './testHelpers.js';
-const { compileResultsPdf, createPackageGuard, readUploadedTemplate, readDefaultTemplate, readSampleData } = require('../../../src/services/pdf.service.js');
+const { compilePdf, createPackageGuard, readUploadedTemplate, readDefaultTemplate, readSampleData } = require('../../../src/services/pdf.service.js');
 
 const t = makeT('en');
 const data = { name: 'Anna' };
-const compile = (source, options) => compileResultsPdf(source, data, t, options);
+const compile = (source, options) => compilePdf(source, data, t, options);
 const resultsDirs = () => fs.readdirSync(os.tmpdir()).filter(name => name.startsWith('trampolin-results-'));
 
-describe('compileResultsPdf', { timeout: 20000 }, () => {
+describe('compilePdf', { timeout: 20000 }, () => {
   it('compiles the default template with the sample data into a PDF', async () => {
-    const pdf = await compileResultsPdf(readDefaultTemplate(), readSampleData(), t);
+    const pdf = await compilePdf(readDefaultTemplate(), readSampleData(), t);
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
   });
 
   it('embeds the shipped Lato font in the default template', async () => {
-    const pdf = await compileResultsPdf(readDefaultTemplate(), readSampleData(), t);
+    const pdf = await compilePdf(readDefaultTemplate(), readSampleData(), t);
     expect(pdf.includes('Lato')).toBe(true);
   });
 
@@ -30,6 +30,26 @@ describe('compileResultsPdf', { timeout: 20000 }, () => {
     await expect(compile('= Title\n#let x = ')).rejects.toMatchObject({
       name: 'TemplateError', message: 'expected expression', line: 2, column: 8,
     });
+  });
+
+  it('fails cleanly when the PDF would exceed the output size cap', async () => {
+    const before = resultsDirs().length;
+    await expect(compile('Hello', { outputBlocks: 1 })).rejects.toMatchObject({ name: 'TemplateError', message: t('results:errors.outputTooLarge') });
+    expect(resultsDirs().length).toBe(before);
+  });
+
+  it('keeps only the start of a very long error output', async () => {
+    const source = `#let x = ${'a'.repeat(200)}\n#panic("${'b'.repeat(100000)}")`;
+    await expect(compile(source)).rejects.toMatchObject({ name: 'TemplateError' });
+  });
+
+  it('lets two compiles run at once and makes a third wait, or fail when no slot frees up in time', async () => {
+    const runaway = '#for i in range(100000) { for j in range(100000) { let x = i * j } }';
+    const slow = [compile(runaway, { timeoutMs: 2500 }), compile(runaway, { timeoutMs: 2500 })].map(p => p.catch(e => e));
+    await expect(compile('Hello', { queueWaitMs: 200 })).rejects.toMatchObject({ name: 'TemplateError', message: t('results:errors.busy') });
+    const waited = await compile('Hello', { queueWaitMs: 15000 });
+    expect(waited.subarray(0, 5).toString()).toBe('%PDF-');
+    expect((await Promise.all(slow)).every(e => e.message === t('results:errors.timeout'))).toBe(true);
   });
 
   it('stops a runaway template at the timeout', async () => {

@@ -131,7 +131,7 @@ Test result list generation based on the provided template and sample data as fo
 D=$(mktemp -d) && \
 cp src/templates/results/default.typ $D/main.typ && \
 cp src/templates/results/sample-results.json $D/results.json && \
-typst compile --root $D --ignore-system-fonts --font-path src/templates/results/fonts $D/main.typ sample-results.pdf && rm -rf "$D"
+typst compile --root $D --ignore-system-fonts --font-path src/templates/fonts $D/main.typ sample-results.pdf && rm -rf "$D"
 ```
 
 ## Secret scanning
@@ -159,8 +159,9 @@ rounds into the `results.json` document and `src/services/pdf.service.js` compil
 
 ## Results PDF
 
-An admin downloads the results of a **closed** competition from the competitions page (the
-**Results PDF** button on the competition's row). The PDF has a title page with a group overview,
+An admin downloads the results of a **closed** competition from the competition's **Documents** page
+(the **Documents** button on its row in the competitions list, further generated documents will be
+listed there too). The results list is disabled there until the competition is closed. The PDF has a title page with a group overview,
 one section per group and a page with the judges.
 
 - Groups are listed alphabetically. Inside a group the athletes who reached the last round come first
@@ -175,11 +176,12 @@ one section per group and a page with the judges.
 
 ### Custom templates
 
-The form next to the button takes an optional `.typ` file. It is used for that one download only and
-is never stored. **Preview template** renders the chosen file with sample data in a new tab, so a
-template can be checked before the real download. **Default template** and **Sample data** download
-the starting points described below. If the template does not compile, the Typst error with line and
-column is shown and nothing is downloaded.
+The results list card on the Documents page takes an optional `.typ` file. It is used for that one
+download only and is never stored. **Preview template** renders the chosen file with sample data in a
+new tab, so a template can be checked before the real download (it works for any competition).
+**Default template** downloads the starting point described below, the sample data for local work is
+`src/templates/results/sample-results.json` in the repository. If the template does not compile, the
+Typst error with line and column is shown and nothing is downloaded.
 
 A template is a [Typst](https://typst.app/docs) file that reads `results.json` and does no maths:
 
@@ -195,11 +197,11 @@ data file `results.json`) and compile with the same flags the app uses:
 D=$(mktemp -d)
 cp src/templates/results/default.typ $D/main.typ
 cp src/templates/results/sample-results.json $D/results.json
-typst compile --root $D --ignore-system-fonts --font-path src/templates/results/fonts $D/main.typ out.pdf
+typst compile --root $D --ignore-system-fonts --font-path src/templates/fonts $D/main.typ out.pdf
 ```
 
 `typst watch` takes the same arguments for live recompiling. The built-in font is Lato (SIL OFL,
-shipped in `src/templates/results/fonts/`), use `#set text(font: "Lato")` to get it. System fonts are
+shipped in `src/templates/fonts/`), use `#set text(font: "Lato")` to get it. System fonts are
 ignored on purpose, so a PDF looks the same on every server.
 
 Rules for uploaded templates, enforced by the app:
@@ -209,7 +211,8 @@ Rules for uploaded templates, enforced by the app:
   cannot read other files, and it cannot load packages (the package location is a plain file, so
   nothing can be stored or used, whoever runs the app, and a proxy that refuses connections keeps
   the package download off the network)
-- stopped after 10 seconds, with a memory limit of 1 GB per compile
+- stopped after 10 seconds, with a memory limit of 1 GB and an output size limit of about 50 to 100 MB
+  per compile, and at most 2 compiles run at once (others wait up to 30 seconds)
 
 ### Data contract (`results.json`, version 1)
 

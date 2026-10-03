@@ -8,11 +8,17 @@ const MAX_TEMPLATE_BYTES = 256 * 1024;
 const COMPILE_TIMEOUT_MS = 10000;
 // virtual memory cap in KB for one compile
 const COMPILE_MEMORY_KB = 1048576;
+// output file size cap for ulimit -f, counted in 512 byte blocks by dash and in 1024 byte blocks by bash (50 to 100 MB)
+const COMPILE_OUTPUT_BLOCKS = 102400;
+const MAX_STDERR_BYTES = 64 * 1024;
+// compiles that run at the same time, more wait for a free slot
+const MAX_PARALLEL_COMPILES = 2;
+const QUEUE_WAIT_MS = 30000;
 // typst downloads a package before it fails to store it, a proxy that refuses connections keeps that request off the network
 const DEAD_PROXY = 'http://127.0.0.1:1';
 const TEMPLATE_DIR = path.join(__dirname, '../templates/results');
-// fonts shipped with the app (Liberation Sans), system fonts are ignored so every server renders the same
-const FONT_DIR = path.join(TEMPLATE_DIR, 'fonts');
+// fonts shipped with the app (Lato) and shared by all documents, system fonts are ignored so every server renders the same
+const FONT_DIR = path.join(__dirname, '../templates/fonts');
 
 class TemplateError extends Error {
     constructor(message, { line, column } = {}) {
@@ -24,6 +30,36 @@ class TemplateError extends Error {
 }
 exports.TemplateError = TemplateError;
 exports.MAX_TEMPLATE_BYTES = MAX_TEMPLATE_BYTES;
+
+let runningCompiles = 0;
+const waitingCompiles = [];
+
+// resolves when a compile slot is free, rejects when none frees up in time
+function acquireSlot(t, queueWaitMs) {
+    if (runningCompiles < MAX_PARALLEL_COMPILES) {
+        runningCompiles++;
+        return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+        const waiter = { resolve };
+        waiter.timer = setTimeout(() => {
+            waitingCompiles.splice(waitingCompiles.indexOf(waiter), 1);
+            reject(new TemplateError(t('results:errors.busy')));
+        }, queueWaitMs);
+        waitingCompiles.push(waiter);
+    });
+}
+
+// hands the slot to the next waiting compile, or frees it
+function releaseSlot() {
+    const next = waitingCompiles.shift();
+    if (!next) {
+        runningCompiles--;
+        return;
+    }
+    clearTimeout(next.timer);
+    next.resolve();
+}
 
 exports.readDefaultTemplate = () => fs.readFileSync(path.join(TEMPLATE_DIR, 'default.typ'), 'utf8');
 
@@ -46,7 +82,16 @@ function createPackageGuard(workDir) {
 exports.createPackageGuard = createPackageGuard;
 
 // runs typst on main.typ and results.json in a throwaway directory and resolves with the PDF buffer
-exports.compileResultsPdf = async (templateSource, data, t, { timeoutMs = COMPILE_TIMEOUT_MS } = {}) => {
+exports.compilePdf = async (templateSource, data, t, { timeoutMs = COMPILE_TIMEOUT_MS, queueWaitMs = QUEUE_WAIT_MS, outputBlocks = COMPILE_OUTPUT_BLOCKS } = {}) => {
+    await acquireSlot(t, queueWaitMs);
+    try {
+        return await compileInTempDir(templateSource, data, t, timeoutMs, outputBlocks);
+    } finally {
+        releaseSlot();
+    }
+};
+
+async function compileInTempDir(templateSource, data, t, timeoutMs, outputBlocks) {
     const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'trampolin-results-'));
     const rootDir = path.join(workDir, 'root');
     const outFile = path.join(workDir, 'out.pdf');
@@ -56,8 +101,9 @@ exports.compileResultsPdf = async (templateSource, data, t, { timeoutMs = COMPIL
         fs.writeFileSync(path.join(rootDir, 'main.typ'), templateSource);
         fs.writeFileSync(path.join(rootDir, 'results.json'), JSON.stringify(data));
 
-        const { code, stderr, timedOut } = await runTypst(rootDir, outFile, packageGuard, timeoutMs);
+        const { code, signal, stderr, timedOut } = await runTypst(rootDir, outFile, packageGuard, timeoutMs, outputBlocks);
         if (timedOut) throw new TemplateError(t('results:errors.timeout'));
+        if (signal === 'SIGXFSZ') throw new TemplateError(t('results:errors.outputTooLarge'));
         if (code !== 0) {
             const diagnostic = parseDiagnostic(stderr);
             throw new TemplateError(diagnostic ? diagnostic.message : t('results:errors.compileFailed'), diagnostic || {});
@@ -66,12 +112,12 @@ exports.compileResultsPdf = async (templateSource, data, t, { timeoutMs = COMPIL
     } finally {
         fs.rmSync(workDir, { recursive: true, force: true });
     }
-};
+}
 
-function runTypst(rootDir, outFile, packageGuard, timeoutMs) {
+function runTypst(rootDir, outFile, packageGuard, timeoutMs, outputBlocks) {
     return new Promise((resolve, reject) => {
         // the shell sets the memory limit and then becomes typst, so killing the child kills typst
-        const child = spawn('sh', ['-c', `ulimit -v ${COMPILE_MEMORY_KB} && exec "$0" "$@"`, TYPST_BIN,
+        const child = spawn('sh', ['-c', `ulimit -v ${COMPILE_MEMORY_KB} && ulimit -f ${outputBlocks} && exec "$0" "$@"`, TYPST_BIN,
             'compile', '--root', rootDir, '--diagnostic-format', 'short', '--ignore-system-fonts', '--font-path', FONT_DIR,
             path.join(rootDir, 'main.typ'), outFile,
         ], {
@@ -90,10 +136,10 @@ function runTypst(rootDir, outFile, packageGuard, timeoutMs) {
 
         let stderr = '';
         let timedOut = false;
-        child.stderr.on('data', chunk => { stderr += chunk; });
+        child.stderr.on('data', (chunk) => { if (stderr.length < MAX_STDERR_BYTES) stderr += chunk; });
         const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, timeoutMs);
         child.on('error', (err) => { clearTimeout(timer); reject(err); });
-        child.on('close', (code) => { clearTimeout(timer); resolve({ code, stderr, timedOut }); });
+        child.on('close', (code, signal) => { clearTimeout(timer); resolve({ code, signal, stderr, timedOut }); });
     });
 }
 

@@ -29,14 +29,14 @@
     "compileFailed": "Die Vorlage konnte nicht kompiliert werden",
     "notClosed": "Das Ergebnis-PDF ist nur für abgeschlossene Wettkämpfe verfügbar",
     "compileError": "Fehler in der Vorlage, Zeile {{line}}, Spalte {{column}}: {{message}}",
-    "uploadFailed": "Die Vorlage konnte nicht hochgeladen werden"
+    "uploadFailed": "Die Vorlage konnte nicht hochgeladen werden",
+    "busy": "Es werden gerade zu viele Ergebnisse erstellt, bitte gleich nochmal versuchen",
+    "outputTooLarge": "Das erzeugte PDF ist zu groß"
   },
   "ui": {
-    "summary": "Ergebnis-PDF",
     "templateLabel": "Eigene Vorlage (.typ, optional)",
     "download": "PDF herunterladen",
     "preview": "Vorlage testen",
-    "defaultTemplate": "Standardvorlage",
-    "sampleData": "Beispieldaten"
+    "defaultTemplate": "Standardvorlage"
   }
 }

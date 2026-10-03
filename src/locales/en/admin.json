@@ -19,6 +19,7 @@
     "table": { "name": "Name", "date": "Date", "status": "Status", "type": "Type" },
     "groups": "Groups",
     "judges": "Judges",
+    "documents": "Documents",
     "activate": "Activate",
     "close": "Close",
     "confirmDelete": "Delete competition and ALL its data?"
@@ -57,7 +58,9 @@
     "confirmDelete": "Delete user {{name}}?",
     "errors": {
       "noFile": "No file uploaded.",
-      "invalidFileType": "Invalid file type. Please upload an Excel file."
+      "invalidFileType": "Invalid file type. Please upload an Excel file.",
+      "tooLarge": "The file is larger than 5 MB.",
+      "uploadFailed": "The file could not be uploaded."
     }
   },
   "userForm": {
@@ -73,6 +76,16 @@
       "required": "Name, email and password are required.",
       "requiredNameEmail": "Name and email are required.",
       "emailInUse": "Email already in use."
+    }
+  },
+  "documents": {
+    "pageTitle": "Documents – {{name}}",
+    "heading": "Documents",
+    "infoText": "Generate printable documents for this competition.",
+    "results": {
+      "title": "Results list (PDF)",
+      "description": "All rounds of every competitor, group by group, with a judges page at the end.",
+      "availableWhenClosed": "Available once the competition is closed."
     }
   },
   "judges": {
@@ -200,6 +213,7 @@
     "badStatus": "Bad status"
   },
   "flash": {
+    "importTruncated": "Only the first {{count}} rows were read.",
     "users": {
       "created": "User \"{{name}}\" created.",
       "updated": "User updated.",

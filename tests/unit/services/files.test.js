@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import XLSX from 'xlsx';
 import { db, require, makeCompetition, makeGroup } from './testHelpers.js';
 const {
-  isXlsxBuffer, createUsersXlsx, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx,
+  isXlsxBuffer, createUsersXlsx, parseUsersXlsx, createSportsmenXlsx, parseSportsmenXlsx, MAX_IMPORT_ROWS,
 } = require('../../../src/services/files.service.js');
 
 function xlsxBufferFromRows(rows) {
@@ -21,6 +21,14 @@ describe('isXlsxBuffer', () => {
   it('rejects plain text', async () => {
     expect(await isXlsxBuffer(Buffer.from('not an excel file'))).toBe(false);
   });
+
+  it('rejects a workbook that declares more than 50 MB unpacked', async () => {
+    const buf = xlsxBufferFromRows([['a'], [1]]);
+    // patch the uncompressed size of the first central directory entry
+    const eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+    buf.writeUInt32LE(60 * 1024 * 1024, buf.readUInt32LE(eocd + 16) + 24);
+    expect(await isXlsxBuffer(buf)).toBe(false);
+  });
 });
 
 describe('createUsersXlsx / parseUsersXlsx', () => {
@@ -34,6 +42,32 @@ describe('createUsersXlsx / parseUsersXlsx', () => {
     const { created } = await parseUsersXlsx(buf);
     expect(created).toBe(1);
     expect(db.prepare("SELECT * FROM users WHERE email='roundtrip@test.com'").get()).toBeDefined();
+  });
+});
+
+describe('import row limit', () => {
+  const rowsOfSportsmen = (count) => [['Name', 'Group'], ...Array.from({ length: count }, (_, i) => [`Athlete ${i}`, ''])];
+
+  it('reads at most MAX_IMPORT_ROWS rows and reports the cut', () => {
+    const comp = makeCompetition();
+    const result = parseSportsmenXlsx(comp.id, xlsxBufferFromRows(rowsOfSportsmen(MAX_IMPORT_ROWS + 5)));
+    expect(result).toMatchObject({ created: MAX_IMPORT_ROWS, truncated: true });
+  });
+
+  it('does not report a cut when the sheet fits', () => {
+    const comp = makeCompetition();
+    const result = parseSportsmenXlsx(comp.id, xlsxBufferFromRows(rowsOfSportsmen(MAX_IMPORT_ROWS)));
+    expect(result).toMatchObject({ created: MAX_IMPORT_ROWS, truncated: false });
+  });
+
+  it('only reads the first sheet', () => {
+    const comp = makeCompetition();
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Name'], ['First Sheet']]), 'One');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Name'], ['Second Sheet']]), 'Two');
+    parseSportsmenXlsx(comp.id, XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
+    const names = db.prepare('SELECT name FROM sportsmen WHERE competition_id=?').all(comp.id).map(r => r.name);
+    expect(names).toEqual(['First Sheet']);
   });
 });
 
