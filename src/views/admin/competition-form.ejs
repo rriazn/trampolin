@@ -2,9 +2,9 @@
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5)">
-        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
-        <li class="breadcrumb-item active text-white"><%= competition ? t('common:actions.edit') : t('admin:competitionForm.newTitle') %></li>
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item active"><%= competition ? t('common:actions.edit') : t('admin:competitionForm.newTitle') %></li>
       </ol>
     </nav>
     <h1><i class="bi bi-trophy me-2"></i><%= competition ? t('admin:competitionForm.editTitle') : t('admin:competitionForm.newTitle') %></h1>

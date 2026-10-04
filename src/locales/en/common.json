@@ -4,7 +4,9 @@
     "scoring": "Scoring",
     "headJudge": "Head Judge",
     "viewer": "Leaderboards",
-    "logout": "Logout"
+    "logout": "Logout",
+    "toggle": "Toggle navigation",
+    "skipToContent": "Skip to content"
   },
   "footer": {
     "versionLatest": "latest"
@@ -71,6 +73,7 @@
     "cancel": "Cancel",
     "back": "Back",
     "add": "Add",
-    "edit": "Edit"
+    "edit": "Edit",
+    "close": "Close"
   }
 }

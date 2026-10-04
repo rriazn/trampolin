@@ -3,11 +3,11 @@
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
-        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
-        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups" class="text-white-50"><%= round.competition_name %></a></li>
-        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds" class="text-white-50"><%= round.group_name %></a></li>
-        <li class="breadcrumb-item active text-white"><%= round.name %></li>
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups"><%= round.competition_name %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds"><%= round.group_name %></a></li>
+        <li class="breadcrumb-item active"><%= round.name %></li>
       </ol>
     </nav>
     <div class="d-flex justify-content-between align-items-end">
@@ -26,7 +26,7 @@
         <form method="POST" action="<%= baseUrl %>/entries/randomize" onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmRandomize')) %>)">
           <button type="submit" class="btn btn-accent rounded-pill"><i class="bi bi-shuffle me-1"></i><%= t('admin:entries.randomize') %></button>
         </form>
-        <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-light rounded-pill">
+        <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-secondary rounded-pill">
           <i class="bi bi-bar-chart me-1"></i><%= t('admin:entries.leaderboard') %>
         </a>
       </div>

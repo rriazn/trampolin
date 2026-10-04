@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<%= typeof language !== 'undefined' && language === 'de' ? 'de' : 'en' %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,50 +13,51 @@
   <link href="/style.css" rel="stylesheet">
 </head>
 <body>
-<div class="lang-switcher">
-  <form method="POST" action="/language/en" class="d-inline">
-    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
-    <button class="lang-switcher-btn <%= (typeof language === 'undefined' || language === 'en') ? 'active' : '' %>">EN</button>
-  </form>
-  <span class="lang-switcher-sep">/</span>
-  <form method="POST" action="/language/de" class="d-inline">
-    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
-    <button class="lang-switcher-btn <%= (typeof language !== 'undefined' && language === 'de') ? 'active' : '' %>">DE</button>
-  </form>
-</div>
-<% if (typeof hideNav === 'undefined' || !hideNav) { %>
-<nav class="navbar navbar-main navbar-expand-lg">
+<a class="skip-link visually-hidden-focusable" href="#main"><%= t('common:nav.skipToContent') %></a>
+<% if (typeof hideNav !== 'undefined' && hideNav) { %>
+<%- include('lang-switcher') %>
+<% } else { %>
+<nav class="navbar navbar-main navbar-expand-lg" data-bs-theme="dark">
   <div class="container">
-    <a class="navbar-brand" href="/">🤸 Trampo<span class="dot">·</span>Score</a>
+    <a class="navbar-brand" href="/">Trampo<span class="dot">·</span>Score</a>
     <% if (currentUser) { %>
-    <div class="d-flex align-items-center gap-3">
-      <span class="nav-user-chip"><i class="bi bi-person-fill me-1"></i><%= currentUser.name %></span>
-      <% if (currentUser.role === 'admin') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>" href="/admin"><i class="bi bi-gear-fill me-1"></i><%= t('common:nav.admin') %></a>
-      <% } %>
-      <% if (currentUser.role === 'referee') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>" href="/referee"><i class="bi bi-pencil-square me-1"></i><%= t('common:nav.scoring') %></a>
-      <% } %>
-      <% if (currentUser.role === 'head_judge') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><i class="bi bi-flag-fill me-1"></i><%= t('common:nav.headJudge') %></a>
-      <% } %>
-      <% if (currentUser.role === 'viewer') { %>
-      <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='viewer' ? 'active' : '' %>" href="/viewer"><i class="bi bi-trophy-fill me-1"></i><%= t('common:nav.viewer') %></a>
-      <% } %>
-      <form method="POST" action="/logout" class="m-0">
-        <button class="btn btn-sm btn-outline-light rounded-pill px-3"><%= t('common:nav.logout') %></button>
-      </form>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="<%= t('common:nav.toggle') %>">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <div class="nav-items ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 pt-3 pt-lg-0">
+        <span class="nav-user-chip"><%= currentUser.name %></span>
+        <% if (currentUser.role === 'admin') { %>
+        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>" href="/admin"><%= t('common:nav.admin') %></a>
+        <% } %>
+        <% if (currentUser.role === 'referee') { %>
+        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>" href="/referee"><%= t('common:nav.scoring') %></a>
+        <% } %>
+        <% if (currentUser.role === 'head_judge') { %>
+        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>" href="/head-judge"><%= t('common:nav.headJudge') %></a>
+        <% } %>
+        <% if (currentUser.role === 'viewer') { %>
+        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='viewer' ? 'active' : '' %>" href="/viewer"><%= t('common:nav.viewer') %></a>
+        <% } %>
+        <%- include('lang-switcher', { modifier: 'lang-switcher-inline' }) %>
+        <form method="POST" action="/logout" class="m-0">
+          <button class="btn btn-sm btn-outline-light"><%= t('common:nav.logout') %></button>
+        </form>
+      </div>
     </div>
+    <% } else { %>
+    <%- include('lang-switcher', { modifier: 'lang-switcher-inline ms-auto' }) %>
     <% } %>
   </div>
 </nav>
 <% } %>
 
+<main id="main">
 <% if (typeof flash !== 'undefined' && flash.success) { %>
 <div class="container mt-3">
   <div class="alert flash-bar alert-success d-flex align-items-center gap-2" role="alert">
     <i class="bi bi-check-circle-fill"></i> <%= flash.success %>
-    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="<%= t('common:actions.close') %>"></button>
   </div>
 </div>
 <% } %>
@@ -64,7 +65,7 @@
 <div class="container mt-3">
   <div class="alert flash-bar alert-danger d-flex align-items-center gap-2" role="alert">
     <i class="bi bi-exclamation-triangle-fill"></i> <%= flash.error %>
-    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="<%= t('common:actions.close') %>"></button>
   </div>
 </div>
 <% } %>

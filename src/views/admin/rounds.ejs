@@ -2,10 +2,10 @@
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5); --bs-breadcrumb-item-active-color:#fff">
-        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
-        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/groups" class="text-white-50"><%= competition.name %></a></li>
-        <li class="breadcrumb-item active text-white"><%= group.name %></li>
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/groups"><%= competition.name %></a></li>
+        <li class="breadcrumb-item active"><%= group.name %></li>
       </ol>
     </nav>
     <h1><i class="bi bi-list-ol me-2"></i><%= t('admin:rounds.heading') %></h1>

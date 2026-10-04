@@ -2,9 +2,9 @@
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5)">
-        <li class="breadcrumb-item"><a href="/admin/users" class="text-white-50"><%= t('admin:userForm.breadcrumbUsers') %></a></li>
-        <li class="breadcrumb-item active text-white"><%= user ? t('common:actions.edit') : t('admin:userForm.newTitle') %></li>
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/users"><%= t('admin:userForm.breadcrumbUsers') %></a></li>
+        <li class="breadcrumb-item active"><%= user ? t('common:actions.edit') : t('admin:userForm.newTitle') %></li>
       </ol>
     </nav>
     <h1><i class="bi bi-person-<%= user ? 'gear' : 'plus' %> me-2"></i><%= user ? t('admin:userForm.editTitle') : t('admin:userForm.newTitle') %></h1>
