@@ -3,7 +3,7 @@
   --ink: #1a1c1e;
   --graphite: #3d4247;
   --slate: #5c6268;
-  --stone: #8a9096;
+  --stone: #868c92;
   --hairline: #c9cdd1;
   --rule: #e3e5e7;
   --ground: #f4f4f3;
@@ -12,13 +12,9 @@
   --turquoise-deep: #00686b;
   --turquoise-bright: #2ec4c9;
   --turquoise-tint: #e0f2f2;
-  --orange: #c84b00;
+  --orange: #b84300;
   --orange-tint: #fdebdc;
   --radius-control: 2px;
-
-  /* Legacy names still referenced by inline styles in the views */
-  --brand: var(--ink);
-  --brand-light: var(--graphite);
 }
 
 /* Bootstrap variable overrides */
@@ -40,10 +36,10 @@
   --bs-success-rgb: 0, 124, 128;
   --bs-info: #007c80;
   --bs-info-rgb: 0, 124, 128;
-  --bs-warning: #c84b00;
-  --bs-warning-rgb: 200, 75, 0;
-  --bs-danger: #c84b00;
-  --bs-danger-rgb: 200, 75, 0;
+  --bs-warning: #b84300;
+  --bs-warning-rgb: 184, 67, 0;
+  --bs-danger: #b84300;
+  --bs-danger-rgb: 184, 67, 0;
   --bs-secondary: #5c6268;
   --bs-secondary-rgb: 92, 98, 104;
   --bs-light: #f4f4f3;
@@ -61,10 +57,10 @@
   --bs-info-border-subtle: #007c80;
   --bs-info-text-emphasis: #1a1c1e;
   --bs-warning-bg-subtle: #fdebdc;
-  --bs-warning-border-subtle: #c84b00;
+  --bs-warning-border-subtle: #b84300;
   --bs-warning-text-emphasis: #1a1c1e;
   --bs-danger-bg-subtle: #fdebdc;
-  --bs-danger-border-subtle: #c84b00;
+  --bs-danger-border-subtle: #b84300;
   --bs-danger-text-emphasis: #1a1c1e;
 
   --bs-border-radius: 2px;
@@ -192,7 +188,7 @@ summary:focus-visible,
 .page-hero .breadcrumb {
   --bs-breadcrumb-divider-color: var(--stone);
   --bs-breadcrumb-item-active-color: var(--ink);
-  font-size: .9rem;
+  font-size: .95rem;
 }
 
 /* Sections */
@@ -487,10 +483,10 @@ summary:focus-visible,
   .lb-table { font-size: .95rem; }
   .lb-table thead th,
   .lb-table tbody td { padding: .6rem .5rem; }
-  .lb-table thead th { font-size: .7rem; letter-spacing: .02em; }
+  .lb-table thead th { font-size: .75rem; letter-spacing: .02em; }
   .lb-col-rank,
   .lb-col-total { width: auto; }
-  .lb-rank { font-size: 1.2rem; }
+  .lb-rank { font-size: 1.3rem; }
   .lb-score { font-size: 1.1rem; }
 }
 

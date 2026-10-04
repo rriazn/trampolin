@@ -133,6 +133,11 @@ test.describe('execution judge: checkbox deductions', () => {
     await expect(page.locator('input[type=radio][name=element_1]')).toHaveCount(6);
   });
 
+  test('deduction options are at least 44px tall so they can be tapped', async ({ page }) => {
+    const box = await page.locator('.score-option').first().boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  });
+
   test('does not show a landing line when the attempt has only 1 trick', async ({ page }) => {
     await expect(page.getByText('Landing')).not.toBeVisible();
   });
