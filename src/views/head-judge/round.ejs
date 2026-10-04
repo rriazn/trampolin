@@ -19,7 +19,7 @@
   <% } else { %>
   <ul class="list-unstyled mb-0">
     <% readiness.groups.forEach(g => { %>
-    <li class="d-flex align-items-center gap-2 mb-2">
+    <li class="d-flex flex-wrap align-items-center gap-2 mb-2">
       <i class="bi <%= g.isReady ? 'bi-check-circle-fill text-success' : 'bi-exclamation-circle text-warning' %>"></i>
       <span><%= g.roleKeys.map(k => t('common:judgeRoles.' + k)).join(' & ') %></span>
       <span class="badge ms-auto <%= g.isReady ? 'bg-success' : 'bg-warning text-dark' %>"><%= t('headJudge:round.assignedCount', { assigned: g.assignedCount, required: g.required }) %></span>
@@ -55,9 +55,9 @@
 <% } else { %>
 <div data-live="attempt" data-live-key="<%= round.status %>-<%= attempt.attempt_id %>">
 <div class="card p-4 mb-4">
-  <div class="d-flex align-items-center gap-3">
+  <div class="d-flex flex-wrap align-items-center gap-3">
     <span class="badge bg-secondary fs-6">#<%= attempt.start_order %></span>
-    <div>
+    <div class="text-break">
       <div class="fw-bold fs-5">
         <%= competitorName(attempt.sportsman_name, attempt.partner_name) %>
         <% if (typeof attemptTotal !== 'undefined' && attemptTotal !== null) { %>
@@ -79,7 +79,7 @@
   <h2 class="h5 fw-bold mb-3"><%= t('headJudge:round.checklistHeading') %></h2>
   <% checklist.forEach((item, idx) => { %>
   <div class="<%= idx < checklist.length - 1 ? 'mb-3 pb-3 border-bottom' : 'mb-0' %>">
-    <div class="d-flex align-items-center gap-2 mb-2">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
       <i class="bi <%= item.isComplete ? 'bi-check-circle-fill text-success' : 'bi-hourglass-split text-warning' %>"></i>
       <span class="fw-semibold"><%= t('common:judgeRoles.' + item.judgeRoleKey) %></span>
       <span class="badge ms-auto <%= item.isComplete ? 'bg-success' : 'bg-warning text-dark' %>"><%= t('headJudge:round.submittedCount', { count: item.count, required: item.required }) %></span>
@@ -154,7 +154,7 @@
     <button class="btn btn-outline-danger btn-touch px-4"><%= t('headJudge:round.completeRound') %></button>
   </form>
 </div>
-<script src="/live-refresh.js" defer></script>
+<script src="<%= assetUrl('/live-refresh.js') %>" defer></script>
 <% } %>
 
 </div>

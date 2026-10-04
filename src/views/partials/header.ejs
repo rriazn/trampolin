@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>Trampo·Score</title>
-  <link href="/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="/style.css" rel="stylesheet">
+  <link rel="preload" href="/vendor/inter/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link href="<%= assetUrl('/vendor/bootstrap/css/bootstrap.min.css') %>" rel="stylesheet">
+  <link href="<%= assetUrl('/vendor/bootstrap-icons/bootstrap-icons.min.css') %>" rel="stylesheet">
+  <link href="<%= assetUrl('/style.css') %>" rel="stylesheet">
 </head>
 <body>
 <a class="skip-link visually-hidden-focusable" href="#main"><%= t('common:nav.skipToContent') %></a>

@@ -200,6 +200,13 @@ summary:focus-visible,
   margin-bottom: 2rem;
 }
 .page-hero h1 { font-weight: 800; font-size: 1.8rem; margin: 0; }
+/* long German compounds and large text sizes break instead of running off the screen */
+.page-hero h1,
+.lb-title,
+.error-title {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
 .page-hero p  { color: var(--slate); margin: .3rem 0 0; font-size: .95rem; }
 .page-hero .breadcrumb {
   --bs-breadcrumb-divider-color: var(--stone);
@@ -573,7 +580,11 @@ summary:focus-visible,
 /* Close buttons, 44px target with the icon kept at 1em */
 .btn-close,
 .modal-header .btn-close {
+  --bs-btn-close-focus-shadow: none;
   padding: .875rem;
+}
+.btn-close:focus {
+  box-shadow: none;
 }
 .btn-close:focus-visible {
   outline: 2px solid var(--turquoise);

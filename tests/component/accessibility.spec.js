@@ -169,6 +169,31 @@ test.describe('touch targets', () => {
   });
 });
 
+test.describe('focus and wrapping', () => {
+  test('the dialog close button shows only the turquoise outline when focused by keyboard', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/admin/competitions');
+    await page.getByRole('row').filter({ hasText: 'Winter Cup' }).locator('button.btn-outline-danger').click();
+    await expect(confirmModal(page).getByRole('button', { name: 'Cancel' })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    const style = await confirmModal(page).locator('.btn-close').evaluate(el => {
+      const cs = getComputedStyle(el);
+      return { shadow: cs.boxShadow, outline: `${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineColor}` };
+    });
+    expect(style.shadow).toBe('none');
+    expect(style.outline).toBe('solid 2px rgb(0, 124, 128)');
+  });
+
+  test('a long page title wraps instead of widening the page', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 });
+    await loginAsAdmin(page);
+    await page.goto('/admin');
+    await page.locator('.page-hero h1').evaluate(el => { el.textContent = 'Wettkampfleiterdashboardübersichtsseite'; });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBe(0);
+  });
+});
+
 test.describe('confirm modal', () => {
   test('replaces window.confirm and focuses Cancel first', async ({ page }) => {
     let nativeDialog = false;

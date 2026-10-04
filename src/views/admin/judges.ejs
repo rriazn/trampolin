@@ -35,7 +35,7 @@
        const roleDisplayName = role.roleKeys.map(k => t('common:judgeRoles.' + k)).join(' & ');
   %>
   <div class="card p-4 mb-4" id="role-<%= role.groupKey %>">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h2 class="h5 fw-bold mb-0"><%= roleDisplayName %></h2>
       <span class="badge <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
         <%= t('admin:judges.filled', { assigned: role.assigned.length, required: role.required }) %>

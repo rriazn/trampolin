@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const session = require('express-session');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
@@ -8,6 +9,7 @@ const { getAppVersion } = require('./services/version.service');
 const { getSessionIdleTimeoutMs } = require('./services/session.service');
 const { checkSessionValidity } = require('./middleware/auth');
 const vendorAssets = require('./middleware/vendor');
+const { publicAssets, assetUrl } = require('./middleware/assets');
 require('./db/database');
 
 const app = express();
@@ -16,8 +18,9 @@ const appVersion = getAppVersion();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(compression());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(publicAssets);
 app.use('/vendor', vendorAssets);
 
 app.use(session({
@@ -57,6 +60,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || {};
   res.locals.appVersion = appVersion;
   res.locals.currentUrl = req.originalUrl;
+  res.locals.assetUrl = assetUrl;
   Object.assign(res.locals, require('./services/helpers/competitor.helpers'));
   delete req.session.flash;
   next();
