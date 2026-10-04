@@ -14,11 +14,13 @@
     "totalScore": "Gesamtwertung",
     "bestScore": "Bester Wert"
   },
+  "partial": "unvollständig",
   "modal": {
     "attemptTitle": "{{name}} — Versuch {{number}}",
     "judge": "Kampfrichter",
     "landing": "Landung",
     "bonus": "Bonus",
-    "missingSkill": "Fehlendes Element"
+    "missingSkill": "Fehlendes Element",
+    "detailButton": "Details je Sprung"
   }
 }

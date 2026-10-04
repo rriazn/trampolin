@@ -14,11 +14,13 @@
     "totalScore": "Total Score",
     "bestScore": "Best Score"
   },
+  "partial": "partial",
   "modal": {
     "attemptTitle": "{{name}} — Attempt {{number}}",
     "judge": "Judge",
     "landing": "Landing",
     "bonus": "Bonus",
-    "missingSkill": "Missing skill"
+    "missingSkill": "Missing skill",
+    "detailButton": "Per-trick detail"
   }
 }

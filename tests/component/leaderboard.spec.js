@@ -73,19 +73,19 @@ test.describe('with scored athletes', () => {
     await expect(page.locator('table tbody tr').first()).toContainText('Bob');
   });
 
-  test('rank 1 receives the gold trophy icon', async ({ page }) => {
+  test('rank 1 is highlighted and shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.gold')).toBeVisible();
+    await expect(page.locator('.lb-rank-1')).toHaveText('1');
   });
 
-  test('rank 2 receives the silver trophy icon', async ({ page }) => {
+  test('rank 2 shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.silver')).toBeVisible();
+    await expect(page.locator('.lb-rank-2')).toHaveText('2');
   });
 
-  test('rank 3 receives the bronze trophy icon', async ({ page }) => {
+  test('rank 3 shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.bronze')).toBeVisible();
+    await expect(page.locator('.lb-rank-3')).toHaveText('3');
   });
 
   test('shows the "Best Score" column header', async ({ page }) => {

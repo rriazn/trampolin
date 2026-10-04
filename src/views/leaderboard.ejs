@@ -3,7 +3,7 @@
 <div class="lb-hero">
   <div class="container">
     <p class="text-muted small mb-1"><%= round.competition_name %></p>
-    <h1 class="fw-bolder mb-1" style="font-size:2.2rem"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
+    <h1 class="lb-title mb-1"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
     <p class="text-muted small mb-0">
       <%= t('leaderboard:live') %>
       &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<div class="container" style="padding-bottom:3rem">
+<div class="container pb-5">
 <% if (!panelConfigured) { %>
 <div class="card p-5 text-center text-muted mt-4">
   <h5><%= t('leaderboard:panelNotConfiguredTitle') %></h5>
@@ -23,44 +23,35 @@
 </div>
 <% } else { %>
 <div class="lb-table-wrap mt-0">
-  <table class="table table-hover mb-0" style="background:#fff">
-    <caption class="text-muted small px-2" style="caption-side:bottom">
-      <sup>*</sup> <%= t('leaderboard:footnote') %>
+  <table class="table table-hover mb-0 lb-table">
+    <caption>
+      <sup class="lb-partial">*</sup> <%= t('leaderboard:footnote') %>
     </caption>
     <thead>
       <tr>
-        <th style="width:70px;background:var(--brand)" class="text-white text-center"><%= t('leaderboard:table.rank') %></th>
-        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.athlete') %></th>
-        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.club') %></th>
-        <th style="background:var(--brand)" class="text-white"><%= t('leaderboard:table.group') %></th>
+        <th scope="col" class="lb-col-rank text-center"><%= t('leaderboard:table.rank') %></th>
+        <th scope="col"><%= t('leaderboard:table.athlete') %></th>
+        <th scope="col" class="d-none d-md-table-cell"><%= t('leaderboard:table.club') %></th>
+        <th scope="col" class="d-none d-md-table-cell"><%= t('leaderboard:table.group') %></th>
         <% for (let n = 1; n <= maxAttempts; n++) { %>
-        <th style="background:var(--brand)" class="text-white text-center"><%= t('leaderboard:table.attempt', { number: n }) %></th>
+        <th scope="col" class="text-center"><%= t('leaderboard:table.attempt', { number: n }) %></th>
         <% } %>
-        <th style="background:var(--brand);width:130px" class="text-white text-end"><%= round.scoring_mode === 'sum' ? t('leaderboard:table.totalScore') : t('leaderboard:table.bestScore') %></th>
+        <th scope="col" class="lb-col-total text-end"><%= round.scoring_mode === 'sum' ? t('leaderboard:table.totalScore') : t('leaderboard:table.bestScore') %></th>
       </tr>
     </thead>
     <tbody>
-    <% leaderboard.forEach((row, idx) => {
-         const rankClass = row.rank === 1 ? 'gold' : row.rank === 2 ? 'silver' : row.rank === 3 ? 'bronze' : '';
-         const rowBg = row.rank === 1 ? 'style="background:#fffbea"' : row.rank === 2 ? 'style="background:#f8f9fa"' : row.rank === 3 ? 'style="background:#fff8f3"' : '';
+    <% leaderboard.forEach(row => {
+         const rankKey = row.rank <= 3 ? row.rank : 'rest';
     %>
-    <tr <%- rowBg %>>
+    <tr class="lb-row-<%= rankKey %>">
       <td class="text-center align-middle">
-        <% if (row.rank === 1) { %>
-          <span class="lb-rank gold"><%= row.rank %></span>
-        <% } else if (row.rank === 2) { %>
-          <span class="lb-rank silver"><%= row.rank %></span>
-        <% } else if (row.rank === 3) { %>
-          <span class="lb-rank bronze"><%= row.rank %></span>
-        <% } else { %>
-          <span class="text-muted fw-bold"><%= row.rank %></span>
-        <% } %>
+        <span class="lb-rank lb-rank-<%= rankKey %>"><%= row.rank %></span>
       </td>
       <td class="align-middle">
-        <span class="fw-bold <%= row.rank === 1 ? 'fs-6' : '' %>"><%= row.name %></span>
+        <span class="lb-name"><%= row.name %></span>
       </td>
-      <td class="align-middle text-muted"><%= row.club || '–' %></td>
-      <td class="align-middle">
+      <td class="align-middle text-muted d-none d-md-table-cell"><%= row.club || '–' %></td>
+      <td class="align-middle d-none d-md-table-cell">
         <% if (row.group) { %>
         <span class="badge bg-light text-dark border"><%= row.group %></span>
         <% } else { %><span class="text-muted">–</span><% } %>
@@ -72,11 +63,11 @@
         <% if (a && a.finalScore !== null) {
              const breakdownTitle = a.breakdown.map(b => `${t('common:judgeRoles.' + b.judgeRoleKey)}: ${b.value.toFixed(2)}`).join(' · ');
         %>
-          <span class="fw-semibold" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
-            <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="text-muted">*</sup><% } %>
+          <span class="fw-semibold" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (' + t('leaderboard:partial') + ')' %>">
+            <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="lb-partial">*</sup><% } %>
           </span>
           <% if (a.perTrickDetail.length > 0) { %>
-          <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>" title="Per-trick detail">
+          <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>" title="<%= t('leaderboard:modal.detailButton') %>" aria-label="<%= t('leaderboard:modal.detailButton') %>">
             <i class="bi bi-table"></i>
           </button>
           <% } %>
@@ -85,7 +76,7 @@
       <% } %>
       <td class="text-end align-middle">
         <% if (row.total !== null) { %>
-          <span class="lb-score <%= rankClass %>"><%= row.total.toFixed(3) %></span>
+          <span class="lb-score"><%= row.total.toFixed(3) %></span>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
     </tr>
@@ -97,12 +88,12 @@
 <% leaderboard.forEach(row => { %>
 <% row.attempts.forEach(a => { %>
 <% if (a.perTrickDetail.length > 0) { %>
-<div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1">
+<div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1" aria-labelledby="pt-title-<%= row.sportsmanId %>-<%= a.number %>" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title" id="pt-title-<%= row.sportsmanId %>-<%= a.number %>"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('common:actions.close') %>"></button>
       </div>
       <div class="modal-body">
         <% a.perTrickDetail.forEach(detail => { %>
