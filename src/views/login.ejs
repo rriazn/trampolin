@@ -12,21 +12,15 @@
     <% } %>
     <form method="POST" action="/login">
       <div class="mb-3">
-        <label class="form-label fw-600 small text-muted text-uppercase"><%= t('login:email') %></label>
-        <div class="input-group">
-          <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
-          <input type="email" name="email" class="form-control border-start-0" placeholder="<%= t('login:emailPlaceholder') %>" required autofocus>
-        </div>
+        <label class="form-label fw-semibold small text-muted text-uppercase" for="f-email"><%= t('login:email') %></label>
+        <input type="email" name="email" id="f-email" class="form-control" placeholder="<%= t('login:emailPlaceholder') %>" required autofocus>
       </div>
       <div class="mb-4">
-        <label class="form-label fw-600 small text-muted text-uppercase"><%= t('login:password') %></label>
-        <div class="input-group">
-          <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
-          <input type="password" name="password" class="form-control border-start-0" placeholder="<%= t('login:passwordPlaceholder') %>" required>
-        </div>
+        <label class="form-label fw-semibold small text-muted text-uppercase" for="f-password"><%= t('login:password') %></label>
+        <input type="password" name="password" id="f-password" class="form-control" placeholder="<%= t('login:passwordPlaceholder') %>" required>
       </div>
-      <button type="submit" class="btn btn-brand w-100 py-2 rounded-pill">
-        <i class="bi bi-box-arrow-in-right me-1"></i> <%= t('login:signIn') %>
+      <button type="submit" class="btn btn-accent w-100 py-2">
+        <%= t('login:signIn') %>
       </button>
     </form>
   </div>

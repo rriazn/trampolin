@@ -74,6 +74,7 @@
     "back": "Back",
     "add": "Add",
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "delete": "Delete"
   }
 }

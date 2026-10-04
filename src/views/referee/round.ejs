@@ -1,44 +1,42 @@
 <%- include('../partials/header', { title: round.name, activePage: 'scoring' }) %>
 <div class="page-hero">
-  <div class="container d-flex justify-content-between align-items-end">
+  <div class="container d-flex flex-wrap gap-3 justify-content-between align-items-end">
     <div>
-      <h1><i class="bi bi-pencil-square me-2"></i><%= round.name %></h1>
+      <h1><%= round.name %></h1>
       <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
     </div>
-    <a href="/referee" class="btn btn-outline-secondary rounded-pill"><i class="bi bi-arrow-left me-1"></i><%= t('common:actions.back') %></a>
+    <a href="/referee" class="btn btn-outline-secondary"><%= t('common:actions.back') %></a>
   </div>
 </div>
 
 <div class="container">
 <% if (state === 'not_started') { %>
 <div class="card p-5 text-center text-muted">
-  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5><%= t('referee:round.notStartedTitle') %></h5>
   <p class="mb-0 small"><%= t('referee:round.notStartedBody') %></p>
 </div>
 <% } else if (state === 'no_assignment') { %>
 <div class="card p-5 text-center text-muted">
-  <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5><%= t('referee:round.noAssignmentTitle') %></h5>
   <p class="mb-0 small"><%= t('referee:round.noAssignmentBody') %></p>
 </div>
 <% } else { %>
 <div class="card p-4 mb-4">
   <div class="d-flex align-items-center gap-3">
-    <span class="badge bg-secondary rounded-pill fs-6">#<%= attempt.start_order %></span>
+    <span class="badge bg-secondary fs-6">#<%= attempt.start_order %></span>
     <div>
-      <div class="fw-700 fs-5"><%= competitorName(attempt.sportsman_name, attempt.partner_name) %></div>
+      <div class="fw-bold fs-5"><%= competitorName(attempt.sportsman_name, attempt.partner_name) %></div>
       <div class="text-muted small">
         <%= competitorClub(attempt.club, attempt.partner_club) || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
-    <span class="badge rounded-pill bg-primary ms-auto"><%= t('referee:round.attemptNumber', { number: attempt.attempt_number }) %></span>
+    <span class="badge bg-primary ms-auto"><%= t('referee:round.attemptNumber', { number: attempt.attempt_number }) %></span>
   </div>
 </div>
 
 <% inputs.forEach(input => { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-700 mb-3"><i class="bi bi-person-video3 me-2"></i><%= t('common:judgeRoles.' + input.key) %></h5>
+  <h5 class="fw-bold mb-3"><%= t('common:judgeRoles.' + input.key) %></h5>
 
   <% if (input.granularity === 'element') { %>
   <form method="POST" action="/referee/score/elements">
@@ -47,7 +45,7 @@
     <% input.elements.forEach((el, idx) => { %>
     <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
         <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : el.kind === 'missingSkill' ? 'bg-danger bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
-      <span class="fw-600" style="width:90px">
+      <span class="fw-semibold" style="width:90px">
         <% if (el.kind === 'landing') { %><%= t('referee:round.landing') %>
         <% } else if (el.kind === 'bonus') { %><%= t('referee:round.bonus') %>
         <% } else if (el.kind === 'missingSkill') { %><%= t('referee:round.missingSkill') %>
@@ -59,35 +57,35 @@
       <div class="d-flex gap-3 flex-wrap">
         <% var deductionOptions = el.kind === 'landing' ? [0, 0.1, 0.2, 0.3, 0.5, 1.0] : [0, 0.1, 0.2, 0.3, 0.4, 0.5]; %>
         <% deductionOptions.forEach(v => { %>
-        <div class="form-check form-check-inline m-0">
-          <input class="form-check-input" type="radio" name="element_<%= el.number %>"
+        <label class="score-option">
+          <input class="form-check-input m-0" type="radio" name="element_<%= el.number %>"
                  id="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>" value="<%= v %>"
                  <%= (el.value !== null ? el.value : 0) === v ? 'checked' : '' %>>
-          <label class="form-check-label small" for="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>"><%= v %></label>
-        </div>
+          <span><%= v %></span>
+        </label>
         <% }) %>
       </div>
       <% } else if (el.kind === 'missingSkill') { %>
       <div class="d-flex gap-3 flex-wrap">
         <% [0, 2.0].forEach(v => { %>
-        <div class="form-check form-check-inline m-0">
-          <input class="form-check-input" type="radio" name="element_<%= el.number %>"
+        <label class="score-option">
+          <input class="form-check-input m-0" type="radio" name="element_<%= el.number %>"
                  id="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>" value="<%= v %>"
                  <%= (el.value !== null ? el.value : 0) === v ? 'checked' : '' %>>
-          <label class="form-check-label small" for="el<%= input.judge_role_id %>_<%= el.number %>_<%= v %>"><%= v %></label>
-        </div>
+          <span><%= v %></span>
+        </label>
         <% }) %>
       </div>
       <% } else { %>
       <input type="number" name="element_<%= el.number %>"
              value="<%= el.value !== null ? Math.round(el.value * 10) : 0 %>"
-             min="0" step="1" class="form-control form-control-sm" style="width:90px"
+             min="0" step="1" inputmode="numeric" class="form-control score-input"
              <% if (el.kind !== 'bonus') { %>required<% } %>>
       <span class="text-muted small">/10</span>
       <% } %>
     </div>
     <% }) %>
-    <button class="btn btn-sm btn-brand rounded-pill mt-2"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
+    <button class="btn btn-accent btn-touch mt-2"><%= t('common:actions.save') %></button>
   </form>
   <% if (input.ownValue) { %>
   <p class="text-muted small mt-2 mb-0">
@@ -98,17 +96,17 @@
   <% } else if (input.notApplicable) { %>
   <p class="text-muted small mb-0"><i class="bi bi-dash-circle me-1"></i><%= t('referee:round.notApplicable') %></p>
   <% } else { %>
-  <form method="POST" action="/referee/score" class="d-flex gap-2 align-items-center">
+  <form method="POST" action="/referee/score" class="d-flex flex-wrap gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
     <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
     <input type="number" name="score"
            value="<%= input.score !== null ? input.score : '' %>"
            min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
-           step="<%= input.step %>" class="form-control form-control-sm" style="width:100px"
+           step="<%= input.step %>" inputmode="decimal" class="form-control score-input"
            placeholder="<%= input.score_min %>–<%= input.score_max !== null ? input.score_max : '∞' %>" required>
-    <button class="btn btn-sm btn-brand rounded-pill"><i class="bi bi-check-lg"></i> <%= t('common:actions.save') %></button>
+    <button class="btn btn-accent btn-touch"><%= t('common:actions.save') %></button>
     <% if (input.score !== null) { %>
-    <span class="text-success fw-600 small"><i class="bi bi-check-circle-fill"></i> <%= t('referee:round.saved') %></span>
+    <span class="text-success fw-semibold small"><i class="bi bi-check-circle-fill"></i> <%= t('referee:round.saved') %></span>
     <% } %>
   </form>
   <% if (input.contribution) { %>

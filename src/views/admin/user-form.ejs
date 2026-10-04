@@ -19,29 +19,29 @@
 <% } %>
 <form method="POST" action="<%= action %>">
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.fullName') %></label>
-    <input type="text" name="name" class="form-control" value="<%= user ? user.name : '' %>" required>
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-name"><%= t('admin:userForm.fullName') %></label>
+    <input type="text" name="name" id="f-name" class="form-control" value="<%= user ? user.name : '' %>" required>
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.email') %></label>
-    <input type="email" name="email" class="form-control" value="<%= user ? user.email : '' %>" required>
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-email"><%= t('admin:userForm.email') %></label>
+    <input type="email" name="email" id="f-email" class="form-control" value="<%= user ? user.email : '' %>" required>
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.password') %><% if (user) { %> <span class="text-muted fw-normal"><%= t('admin:userForm.passwordKeepCurrent') %></span><% } %></label>
-    <input type="password" name="password" class="form-control" <%= user ? '' : 'required' %>>
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-password"><%= t('admin:userForm.password') %><% if (user) { %> <span class="text-muted fw-normal"><%= t('admin:userForm.passwordKeepCurrent') %></span><% } %></label>
+    <input type="password" name="password" id="f-password" class="form-control" <%= user ? '' : 'required' %>>
   </div>
   <div class="mb-4">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:userForm.role') %></label>
-    <select name="role" class="form-select">
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-role"><%= t('admin:userForm.role') %></label>
+    <select name="role" id="f-role" class="form-select">
       <option value="referee" <%= (!user || user.role==='referee') ? 'selected' : '' %>><%= t('common:roles.referee') %></option>
       <option value="admin" <%= (user && user.role==='admin') ? 'selected' : '' %>><%= t('common:roles.admin') %></option>
       <option value="head_judge" <%= (user && user.role==='head_judge') ? 'selected' : '' %>><%= t('common:roles.head_judge') %></option>
       <option value="viewer" <%= (user && user.role==='viewer') ? 'selected' : '' %>><%= t('common:roles.viewer') %></option>
     </select>
   </div>
-  <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= user ? t('common:actions.save') : t('common:actions.create') %></button>
-    <a href="/admin/users" class="btn btn-outline-secondary rounded-pill px-4"><%= t('common:actions.cancel') %></a>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="submit" class="btn btn-accent px-4"><%= user ? t('common:actions.save') : t('common:actions.create') %></button>
+    <a href="/admin/users" class="btn btn-outline-secondary px-4"><%= t('common:actions.cancel') %></a>
   </div>
 </form>
 </div>

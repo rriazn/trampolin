@@ -1,11 +1,11 @@
 <%- include('../partials/header', { title: t('admin:competitions.heading'), activePage: 'admin' }) %>
 <div class="page-hero">
-  <div class="container d-flex justify-content-between align-items-center">
+  <div class="container d-flex flex-wrap gap-3 justify-content-between align-items-center">
     <div>
-      <h1><i class="bi bi-trophy me-2"></i><%= t('admin:competitions.heading') %></h1>
+      <h1><%= t('admin:competitions.heading') %></h1>
       <p><%= t('admin:competitions.subtitle') %></p>
     </div>
-    <a href="/admin/competitions/new" class="btn btn-accent rounded-pill"><i class="bi bi-plus-lg me-1"></i><%= t('admin:competitions.newCompetition') %></a>
+    <a href="/admin/competitions/new" class="btn btn-accent"><%= t('admin:competitions.newCompetition') %></a>
   </div>
 </div>
 
@@ -24,34 +24,34 @@
       <tbody>
       <% competitions.forEach(c => { %>
       <tr>
-        <td class="fw-600"><%= c.name %></td>
+        <td class="fw-semibold"><%= c.name %></td>
         <td class="text-muted"><%= c.date || '–' %></td>
-        <td><span class="badge rounded-pill text-bg-light border px-3 competition-type-<%= c.type %>"><%= t('common:competitionTypes.' + c.type) %></span></td>
-        <td><span class="badge rounded-pill status-<%= c.status %> px-3"><%= t('common:status.' + c.status) %></span></td>
+        <td><span class="badge text-bg-light border px-3 competition-type-<%= c.type %>"><%= t('common:competitionTypes.' + c.type) %></span></td>
+        <td><span class="badge status-<%= c.status %> px-3"><%= t('common:status.' + c.status) %></span></td>
         <td class="text-end">
-          <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand rounded-pill me-1">
-            <i class="bi bi-collection me-1"></i><%= t('admin:competitions.groups') %>
+          <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand me-1">
+            <%= t('admin:competitions.groups') %>
           </a>
-          <a href="/admin/competitions/<%= c.id %>/judges" class="btn btn-sm btn-brand rounded-pill me-1">
-            <i class="bi bi-person-badge me-1"></i><%= t('admin:competitions.judges') %>
+          <a href="/admin/competitions/<%= c.id %>/judges" class="btn btn-sm btn-brand me-1">
+            <%= t('admin:competitions.judges') %>
           </a>
-          <a href="/admin/competitions/<%= c.id %>/edit" class="btn btn-sm btn-outline-secondary rounded-pill me-1">
+          <a href="/admin/competitions/<%= c.id %>/edit" class="btn btn-sm btn-outline-secondary me-1" aria-label="<%= t('common:actions.edit') %>" title="<%= t('common:actions.edit') %>">
             <i class="bi bi-pencil"></i>
           </a>
           <% if (c.status === 'planned') { %>
           <form method="POST" action="/admin/competitions/<%= c.id %>/status" class="d-inline">
             <input type="hidden" name="status" value="active">
-            <button class="btn btn-sm btn-success rounded-pill me-1"><i class="bi bi-play-fill me-1"></i><%= t('admin:competitions.activate') %></button>
+            <button class="btn btn-sm btn-outline-secondary me-1"><%= t('admin:competitions.activate') %></button>
           </form>
           <% } else if (c.status === 'active') { %>
           <form method="POST" action="/admin/competitions/<%= c.id %>/status" class="d-inline">
             <input type="hidden" name="status" value="closed">
-            <button class="btn btn-sm btn-outline-secondary rounded-pill me-1"><i class="bi bi-stop-fill me-1"></i><%= t('admin:competitions.close') %></button>
+            <button class="btn btn-sm btn-outline-secondary me-1"><%= t('admin:competitions.close') %></button>
           </form>
           <% } %>
           <form method="POST" action="/admin/competitions/<%= c.id %>/delete" class="d-inline"
                 onsubmit="return confirm(<%= JSON.stringify(t('admin:competitions.confirmDelete')) %>)">
-            <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
           </form>
         </td>
       </tr>

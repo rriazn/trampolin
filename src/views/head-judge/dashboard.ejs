@@ -1,7 +1,7 @@
 <%- include('../partials/header', { title: t('headJudge:dashboard.pageTitle'), activePage: 'head-judge' }) %>
 <div class="page-hero">
   <div class="container">
-    <h1><i class="bi bi-flag-fill me-2"></i><%= t('headJudge:dashboard.heading') %></h1>
+    <h1><%= t('headJudge:dashboard.heading') %></h1>
     <p><%= t('headJudge:dashboard.subtitle') %></p>
   </div>
 </div>
@@ -9,7 +9,6 @@
 <div class="container">
 <% if (rounds.length === 0) { %>
 <div class="card p-5 text-center text-muted">
-  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5><%= t('headJudge:dashboard.noRoundsTitle') %></h5>
   <p class="mb-0 small"><%= t('headJudge:dashboard.noRoundsBody') %></p>
 </div>
@@ -17,17 +16,14 @@
 <div class="row g-3">
   <% rounds.forEach(r => { %>
   <div class="col-md-6 col-lg-4">
-    <a href="/head-judge/competitions/<%= r.competition_id %>/groups/<%= r.group_id %>/rounds/<%= r.id %>" class="text-decoration-none">
-      <div class="card p-4 h-100" style="transition:.15s;cursor:pointer;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+    <a href="/head-judge/competitions/<%= r.competition_id %>/groups/<%= r.group_id %>/rounds/<%= r.id %>" class="text-decoration-none card-link">
+      <div class="card p-4 h-100">
         <div class="d-flex align-items-center gap-3">
-          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#3a4080);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="bi bi-flag-fill text-white fs-5"></i>
-          </div>
           <div>
-            <div class="fw-700"><%= r.group_name %> · <%= r.name %></div>
+            <div class="fw-bold"><%= r.group_name %> · <%= r.name %></div>
             <div class="text-muted small"><%= r.competition_name %></div>
           </div>
-          <span class="badge rounded-pill ms-auto <%= r.status === 'in_progress' ? 'bg-success' : r.status === 'completed' ? 'bg-secondary' : (r.isReady ? 'bg-primary' : 'bg-warning text-dark') %>">
+          <span class="badge ms-auto <%= r.status === 'in_progress' ? 'bg-success' : r.status === 'completed' ? 'bg-secondary' : (r.isReady ? 'bg-primary' : 'bg-warning text-dark') %>">
             <% if (r.status === 'in_progress') { %><%= t('headJudge:dashboard.statusInProgress') %>
             <% } else if (r.status === 'completed') { %><%= t('headJudge:dashboard.statusCompleted') %>
             <% } else { %><%= r.isReady ? t('headJudge:dashboard.statusReady') : t('headJudge:dashboard.statusNotStaffed') %>

@@ -228,13 +228,6 @@ summary:focus-visible,
   position: relative;
   overflow: hidden;
 }
-.stat-card .stat-icon {
-  font-size: 3rem;
-  color: var(--hairline);
-  position: absolute;
-  right: 1rem;
-  top: .75rem;
-}
 .stat-card .stat-num  { font-size: 2.8rem; font-weight: 800; line-height: 1; }
 .stat-card .stat-label{ font-size: .85rem; color: var(--slate); margin-top: .25rem; }
 
@@ -502,4 +495,47 @@ summary:focus-visible,
   font-weight: 700;
   font-size: 1.4rem;
   color: var(--ink);
+}
+
+/* Linked dashboard sections */
+.card-link { color: inherit; }
+.card-link:hover .card { border-color: var(--ink); }
+.card-link:focus-visible { outline-offset: 0; }
+
+/* Scoring controls, sized for touch */
+.btn-touch {
+  min-height: 2.75rem;
+  padding-inline: 1.25rem;
+}
+.score-input {
+  min-height: 2.75rem;
+  width: 7rem;
+  font-size: 1.1rem;
+}
+.score-option {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-width: 3.5rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0 .9rem;
+  background: var(--surface);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.score-option input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.score-option:has(input:checked) {
+  background: var(--turquoise-tint);
+  border-color: var(--turquoise);
+}
+.score-option:focus-within {
+  outline: 2px solid var(--turquoise);
+  outline-offset: 2px;
 }

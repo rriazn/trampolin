@@ -66,7 +66,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
   });
 
-  test('shows a head_judge user with a gold "Head Judge" badge', async ({ page }) => {
+  test('shows a head_judge user with a "Head Judge" badge', async ({ page }) => {
     await page.goto('/admin/users/new');
     await page.locator('input[name=name]').fill('Badge Head Judge');
     await page.locator('input[name=email]').fill('badgeheadjudge@test.com');
@@ -78,7 +78,6 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Badge Head Judge' });
     const badge = row.locator('.badge');
     await expect(badge).toHaveText('Head Judge');
-    await expect(badge).toHaveClass(/bg-gold/);
   });
 
   // Buttons

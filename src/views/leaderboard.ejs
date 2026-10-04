@@ -2,10 +2,10 @@
 
 <div class="lb-hero">
   <div class="container">
-    <p class="text-muted small mb-1"><i class="bi bi-trophy me-1"></i><%= round.competition_name %></p>
-    <h1 class="fw-900 mb-1" style="font-size:2.2rem"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
+    <p class="text-muted small mb-1"><%= round.competition_name %></p>
+    <h1 class="fw-bolder mb-1" style="font-size:2.2rem"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
     <p class="text-muted small mb-0">
-      <i class="bi bi-arrow-repeat me-1"></i><%= t('leaderboard:live') %>
+      <%= t('leaderboard:live') %>
       &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
     </p>
   </div>
@@ -14,13 +14,11 @@
 <div class="container" style="padding-bottom:3rem">
 <% if (!panelConfigured) { %>
 <div class="card p-5 text-center text-muted mt-4">
-  <i class="bi bi-exclamation-circle fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5><%= t('leaderboard:panelNotConfiguredTitle') %></h5>
   <p class="mb-0 small"><%= t('leaderboard:panelNotConfiguredBody') %></p>
 </div>
 <% } else if (leaderboard.length === 0) { %>
 <div class="card p-5 text-center text-muted mt-4">
-  <i class="bi bi-hourglass-split fs-1 mb-3 d-block" style="color:#b0b8d4"></i>
   <h5><%= t('leaderboard:noAthletesScored') %></h5>
 </div>
 <% } else { %>
@@ -49,17 +47,17 @@
     <tr <%- rowBg %>>
       <td class="text-center align-middle">
         <% if (row.rank === 1) { %>
-          <span class="lb-rank gold"><i class="bi bi-trophy-fill"></i></span>
+          <span class="lb-rank gold"><%= row.rank %></span>
         <% } else if (row.rank === 2) { %>
-          <span class="lb-rank silver"><i class="bi bi-trophy-fill"></i></span>
+          <span class="lb-rank silver"><%= row.rank %></span>
         <% } else if (row.rank === 3) { %>
-          <span class="lb-rank bronze"><i class="bi bi-trophy-fill"></i></span>
+          <span class="lb-rank bronze"><%= row.rank %></span>
         <% } else { %>
-          <span class="text-muted fw-700"><%= row.rank %></span>
+          <span class="text-muted fw-bold"><%= row.rank %></span>
         <% } %>
       </td>
       <td class="align-middle">
-        <span class="fw-700 <%= row.rank === 1 ? 'fs-6' : '' %>"><%= row.name %></span>
+        <span class="fw-bold <%= row.rank === 1 ? 'fs-6' : '' %>"><%= row.name %></span>
       </td>
       <td class="align-middle text-muted"><%= row.club || '–' %></td>
       <td class="align-middle">
@@ -74,7 +72,7 @@
         <% if (a && a.finalScore !== null) {
              const breakdownTitle = a.breakdown.map(b => `${t('common:judgeRoles.' + b.judgeRoleKey)}: ${b.value.toFixed(2)}`).join(' · ');
         %>
-          <span class="fw-600" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
+          <span class="fw-semibold" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (partial)' %>">
             <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="text-muted">*</sup><% } %>
           </span>
           <% if (a.perTrickDetail.length > 0) { %>
@@ -108,7 +106,7 @@
       </div>
       <div class="modal-body">
         <% a.perTrickDetail.forEach(detail => { %>
-        <h6 class="fw-700"><%= t('common:judgeRoles.' + detail.roleKey) %></h6>
+        <h6 class="fw-bold"><%= t('common:judgeRoles.' + detail.roleKey) %></h6>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered">
             <thead>
@@ -122,7 +120,7 @@
             <tbody>
               <% detail.judges.forEach(j => { %>
               <tr>
-                <td class="fw-600"><%= j.name %></td>
+                <td class="fw-semibold"><%= j.name %></td>
                 <% j.values.forEach(v => { %>
                 <td class="text-center"><%= v !== null ? v : '–' %></td>
                 <% }) %>

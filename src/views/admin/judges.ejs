@@ -7,7 +7,7 @@
         <li class="breadcrumb-item active"><%= competition.name %></li>
       </ol>
     </nav>
-    <h1><i class="bi bi-person-badge me-2"></i><%= t('admin:judges.heading') %></h1>
+    <h1><%= t('admin:judges.heading') %></h1>
     <p>
       <%= competition.name %>
       <% if (panelTemplate) { %>
@@ -20,16 +20,14 @@
 <div class="container">
 <% if (!panelTemplate) { %>
   <div class="card p-4 text-center text-muted">
-    <i class="bi bi-exclamation-circle fs-1 mb-2 d-block" style="color:#b0b8d4"></i>
     <h5><%= t('admin:judges.noPanelTitle') %></h5>
     <p class="mb-3"><%= t('admin:judges.noPanelBody') %></p>
-    <a href="/admin/competitions/<%= competition.id %>/edit" class="btn btn-brand rounded-pill mx-auto" style="width:fit-content">
-      <i class="bi bi-pencil me-1"></i><%= t('admin:judges.editCompetition') %>
+    <a href="/admin/competitions/<%= competition.id %>/edit" class="btn btn-accent mx-auto" style="width:fit-content">
+      <%= t('admin:judges.editCompetition') %>
     </a>
   </div>
 <% } else { %>
   <p class="text-muted small mb-4">
-    <i class="bi bi-info-circle me-1"></i>
     <%= t('admin:judges.infoText') %>
   </p>
 
@@ -38,8 +36,8 @@
   %>
   <div class="card p-4 mb-4" id="role-<%= role.groupKey %>">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-700 mb-0"><i class="bi bi-person-video3 me-2"></i><%= roleDisplayName %></h5>
-      <span class="badge rounded-pill <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
+      <h5 class="fw-bold mb-0"><%= roleDisplayName %></h5>
+      <span class="badge <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
         <%= t('admin:judges.filled', { assigned: role.assigned.length, required: role.required }) %>
       </span>
     </div>
@@ -47,18 +45,18 @@
     <% if (role.assigned.length === 0) { %>
     <p class="text-muted small mb-3"><%= t('admin:judges.noneAssigned') %></p>
     <% } else { %>
-    <div class="table-card card mb-3">
+    <div class="table-card mb-3">
       <table class="table mb-0">
         <thead><tr><th><%= t('admin:judges.table.name') %></th><th><%= t('admin:judges.table.email') %></th><th></th></tr></thead>
         <tbody>
         <% role.assigned.forEach(a => { %>
         <tr>
-          <td class="fw-600"><i class="bi bi-person me-2 text-muted"></i><%= a.name %></td>
+          <td class="fw-semibold"><%= a.name %></td>
           <td class="text-muted"><%= a.email %></td>
           <td class="text-end">
             <form method="POST" action="/admin/competitions/<%= competition.id %>/judges/<%= a.assignment_id %>/delete" class="d-inline"
                   onsubmit="return confirm(<%= JSON.stringify(t('admin:judges.confirmRemove', { judgeName: a.name, roleName: roleDisplayName })) %>)">
-              <button class="btn btn-sm btn-outline-danger rounded-pill"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
             </form>
           </td>
         </tr>
@@ -83,7 +81,7 @@
         </select>
       </div>
       <div class="col-md-3">
-        <button type="submit" class="btn btn-brand rounded-pill w-100"><i class="bi bi-plus-lg me-1"></i><%= t('admin:judges.assign') %></button>
+        <button type="submit" class="btn btn-brand w-100"><%= t('admin:judges.assign') %></button>
       </div>
     </form>
     <% } %>

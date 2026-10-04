@@ -30,39 +30,39 @@
     var v = function (col) { return sportsman ? (sportsman[a.prefix + col] || '') : ''; };
   %>
   <div class="athlete-block" data-athlete="<%= a.prefix ? 'partner' : 'main' %>">
-    <% if (isSynchro) { %><h6 class="fw-700 mb-3"><%= t(a.title) %></h6><% } %>
+    <% if (isSynchro) { %><h6 class="fw-bold mb-3"><%= t(a.title) %></h6><% } %>
     <div class="mb-3">
-      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.fullName') %></label>
-      <input type="text" name="<%= a.prefix %>name" class="form-control" value="<%= v('name') %>" required>
+      <label class="form-label small fw-semibold text-muted text-uppercase" for="f-<%= a.prefix %>name"><%= t('admin:sportsmanForm.fullName') %></label>
+      <input type="text" name="<%= a.prefix %>name" id="f-<%= a.prefix %>name" class="form-control" value="<%= v('name') %>" required>
     </div>
     <div class="mb-3">
-      <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.club') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-      <input type="text" name="<%= a.prefix %>club" class="form-control" value="<%= v('club') %>">
+      <label class="form-label small fw-semibold text-muted text-uppercase" for="f-<%= a.prefix %>club"><%= t('admin:sportsmanForm.club') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+      <input type="text" name="<%= a.prefix %>club" id="f-<%= a.prefix %>club" class="form-control" value="<%= v('club') %>">
     </div>
     <div class="row mb-3">
       <div class="col-md-6">
-        <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.gender') %></label>
-        <select name="<%= a.prefix %>gender" class="form-select">
+        <label class="form-label small fw-semibold text-muted text-uppercase" for="f-<%= a.prefix %>gender"><%= t('admin:sportsmanForm.gender') %></label>
+        <select name="<%= a.prefix %>gender" id="f-<%= a.prefix %>gender" class="form-select">
           <option value=""><%= t('admin:sportsmanForm.genderNotSet') %></option>
           <option value="m" <%= v('gender') === 'm' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderMale') %></option>
           <option value="f" <%= v('gender') === 'f' ? 'selected' : '' %>><%= t('admin:sportsmanForm.genderFemale') %></option>
         </select>
       </div>
       <div class="col-md-6">
-        <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.birthYear') %></label>
-        <input type="number" name="<%= a.prefix %>birth_year" class="form-control" value="<%= v('birth_year') %>" placeholder="<%= t('admin:sportsmanForm.birthYearPlaceholder') %>" min="1900" max="2099">
+        <label class="form-label small fw-semibold text-muted text-uppercase" for="f-<%= a.prefix %>birth_year"><%= t('admin:sportsmanForm.birthYear') %></label>
+        <input type="number" name="<%= a.prefix %>birth_year" id="f-<%= a.prefix %>birth_year" class="form-control" value="<%= v('birth_year') %>" placeholder="<%= t('admin:sportsmanForm.birthYearPlaceholder') %>" min="1900" max="2099">
       </div>
     </div>
   </div>
   <% }) %>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.routine') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-    <input type="text" name="routine" class="form-control" value="<%= sportsman ? (sportsman.routine || '') : '' %>" placeholder="<%= t('admin:sportsmanForm.routinePlaceholder') %>">
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-routine"><%= t('admin:sportsmanForm.routine') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+    <input type="text" name="routine" id="f-routine" class="form-control" value="<%= sportsman ? (sportsman.routine || '') : '' %>" placeholder="<%= t('admin:sportsmanForm.routinePlaceholder') %>">
   </div>
   <% if (groups && groups.length > 0) { %>
   <div class="mb-4">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:sportsmanForm.group') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-    <select name="group_id" class="form-select">
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-group_id"><%= t('admin:sportsmanForm.group') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+    <select name="group_id" id="f-group_id" class="form-select">
       <option value=""><%= t('admin:sportsmanForm.groupUnassigned') %></option>
       <% groups.forEach(g => { %>
       <option value="<%= g.id %>" <%= sportsman && sportsman.group_id === g.id ? 'selected' : '' %>><%= g.name %></option>
@@ -70,9 +70,9 @@
     </select>
   </div>
   <% } %>
-  <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= sportsman ? t('common:actions.save') : t('common:actions.create') %></button>
-    <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-secondary rounded-pill px-4"><%= t('common:actions.cancel') %></a>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="submit" class="btn btn-accent px-4"><%= sportsman ? t('common:actions.save') : t('common:actions.create') %></button>
+    <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-secondary px-4"><%= t('common:actions.cancel') %></a>
   </div>
 </form>
 </div>
