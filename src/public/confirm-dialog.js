@@ -25,8 +25,13 @@
     pending = null;
     form.dataset.confirmed = 'true';
     modal.hide();
-    if (form.requestSubmit) form.requestSubmit(submitter);
-    else form.submit();
+    // the submit event fires synchronously, so the flag only has to live for this call
+    try {
+      if (form.requestSubmit) form.requestSubmit(submitter);
+      else form.submit();
+    } finally {
+      delete form.dataset.confirmed;
+    }
   });
 
   // focus cancel so a stray Enter never confirms a destructive action

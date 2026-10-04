@@ -12,6 +12,7 @@
 <div class="container">
 
 <% if (round.status === 'not_started') { %>
+<div data-live="readiness" data-live-announce="<%= t('headJudge:round.updated') %>" data-live-key="<%= round.status %>-<%= readiness.isReady %>">
 <div class="card p-4 mb-4">
   <h2 class="h5 fw-bold mb-3"><%= t('headJudge:round.readinessHeading') %></h2>
   <% if (readiness.groups.length === 0) { %>
@@ -28,6 +29,7 @@
   </ul>
   <% } %>
 </div>
+</div>
 
 <div class="card p-4 mb-4 text-center">
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/start">
@@ -39,7 +41,7 @@
 </div>
 
 <% } else if (round.status === 'completed') { %>
-<div class="card p-5 text-center text-muted">
+<div data-live="completed" data-live-key="<%= round.status %>" class="card p-5 text-center text-muted">
   <h2 class="h5"><%= t('headJudge:round.completedHeading') %></h2>
   <p class="mb-3 small"><%= t('headJudge:round.completedBody') %></p>
   <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -154,8 +156,8 @@
     <button class="btn btn-outline-danger btn-touch px-4"><%= t('headJudge:round.completeRound') %></button>
   </form>
 </div>
-<script src="<%= assetUrl('/live-refresh.js') %>" defer></script>
 <% } %>
 
 </div>
+<script src="<%= assetUrl('/live-refresh.js') %>" defer></script>
 <%- include('../partials/footer') %>

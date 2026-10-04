@@ -17,6 +17,16 @@ describe('asset cache headers', () => {
     expect(res.headers['cache-control']).toBe('public, max-age=31536000, immutable');
   });
 
+  it('does not treat an arbitrary query string as a version', async () => {
+    const res = await request(app).get('/style.css?x=1');
+    expect(res.headers['cache-control']).toBe('public, max-age=0');
+  });
+
+  it('lets a font url with the bootstrap-icons content hash be cached for a year', async () => {
+    const res = await request(app).get('/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2?dd67030699838ea613ee6dbda90effa6');
+    expect(res.headers['cache-control']).toBe('public, max-age=31536000, immutable');
+  });
+
   it('makes an unversioned stylesheet revalidate', async () => {
     const res = await request(app).get('/style.css');
     expect(res.headers['cache-control']).toBe('public, max-age=0');

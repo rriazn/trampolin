@@ -14,9 +14,14 @@ const vendorDirs = {
 const WEEK = 60 * 60 * 24 * 7;
 const YEAR = 60 * 60 * 24 * 365;
 
+// the ?v= token from assetUrl, or the content hash bootstrap-icons appends to its font urls
+function isVersionedRequest(query) {
+  return Object.keys(query || {}).some(key => key === 'v' || /^[0-9a-f]{32}$/.test(key));
+}
+
 // a versioned url never changes content, fonts rarely do, everything else revalidates through its ETag
 function assetHeaders(res, filePath) {
-  const versioned = Object.keys(res.req.query || {}).length > 0;
+  const versioned = isVersionedRequest(res.req.query);
   if (versioned) res.setHeader('Cache-Control', `public, max-age=${YEAR}, immutable`);
   else if (/\.woff2?$/.test(filePath)) res.setHeader('Cache-Control', `public, max-age=${WEEK}`);
   else res.setHeader('Cache-Control', 'public, max-age=0');

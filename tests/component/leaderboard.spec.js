@@ -45,14 +45,26 @@ test.describe('hero and auto-refresh', () => {
     await page.clock.install();
     await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
     const board = page.locator('[data-live=board]');
-    await page.evaluate(() => {
-      window.notReloaded = true;
-      document.querySelector('[data-live=board]').innerHTML = '<p id="stale">stale</p>';
+    await page.evaluate(() => { window.notReloaded = true; });
+    await page.route('**/leaderboard/competitions/**', async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace('No athletes scored yet', 'Changed on the server');
+      await route.fulfill({ response, body });
     });
     await page.clock.fastForward(10500);
-    await expect(board.locator('#stale')).toHaveCount(0);
-    await expect(board.getByText('No athletes scored yet')).toBeVisible();
+    await expect(board.getByText('Changed on the server')).toBeVisible();
     expect(await page.evaluate(() => window.notReloaded)).toBe(true);
+  });
+
+  test('polling leaves a region alone when only the live dom changed', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    await page.evaluate(() => {
+      document.querySelector('[data-live=board]').innerHTML = '<p id="local">local</p>';
+    });
+    await page.clock.fastForward(10500);
+    await page.waitForTimeout(300);
+    await expect(page.locator('#local')).toHaveCount(1);
   });
 
   test('polling pauses while a field has focus', async ({ page }) => {

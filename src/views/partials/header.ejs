@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>Trampo·Score</title>
-  <link rel="preload" href="/vendor/inter/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="<%= assetUrl('/vendor/inter/inter-latin-wght-normal.woff2') %>" as="font" type="font/woff2" crossorigin>
+  <style>
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url('<%= assetUrl('/vendor/inter/inter-latin-wght-normal.woff2') %>') format('woff2');
+    }
+  </style>
   <link href="<%= assetUrl('/vendor/bootstrap/css/bootstrap.min.css') %>" rel="stylesheet">
   <link href="<%= assetUrl('/vendor/bootstrap-icons/bootstrap-icons.min.css') %>" rel="stylesheet">
   <link href="<%= assetUrl('/style.css') %>" rel="stylesheet">

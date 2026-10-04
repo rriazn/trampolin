@@ -2,19 +2,20 @@
 (function () {
   var INTERVAL_MS = 10000;
   var lastHtml = null;
-  var announcer = null;
+  // server html per region, the live dom is not comparable because bootstrap changes it
+  var lastRegionHtml = {};
+  var announcer = document.createElement('div');
+  announcer.className = 'visually-hidden';
+  announcer.setAttribute('role', 'status');
+  announcer.setAttribute('aria-live', 'polite');
+  document.body.appendChild(announcer);
 
   // screen readers hear a short message when a region changed, the swap itself is silent
   function announce(message) {
     if (!message) return;
-    if (!announcer) {
-      announcer = document.createElement('div');
-      announcer.className = 'visually-hidden';
-      announcer.setAttribute('role', 'status');
-      announcer.setAttribute('aria-live', 'polite');
-      document.body.appendChild(announcer);
-    }
-    announcer.textContent = message;
+    // clearing first makes a repeated message count as a change
+    announcer.textContent = '';
+    window.setTimeout(function () { announcer.textContent = message; }, 100);
   }
 
   function userIsBusy() {
@@ -22,6 +23,25 @@
     if (document.querySelector('.modal.show')) return true;
     var el = document.activeElement;
     return !!el && /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName);
+  }
+
+  function focusables(region) {
+    return Array.prototype.slice.call(region.querySelectorAll('a[href], button, [tabindex]'));
+  }
+
+  // replaces a region and puts keyboard focus back on the same control, so the swap does not drop it
+  function swapRegion(region, html) {
+    var active = document.activeElement;
+    var index = active && region.contains(active) ? focusables(region).indexOf(active) : -1;
+    region.innerHTML = html;
+    if (index < 0) return;
+    var target = focusables(region)[index];
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  // a reload is only for a lost session or a page that is gone, a gateway error or rate limit just retries
+  function shouldReload(res) {
+    return res.redirected || [401, 403, 404].indexOf(res.status) !== -1;
   }
 
   function liveRegions(root) {
@@ -46,11 +66,11 @@
     return fetch(window.location.href, { credentials: 'same-origin', cache: 'no-cache', headers: { Accept: 'text/html' } })
       .then(function (res) {
         // a redirect means the session ended or the page moved, so load whatever the server now wants
-        if (res.redirected || !res.ok) {
-          window.location.reload();
+        if (shouldReload(res)) {
+          if (!userIsBusy()) window.location.reload();
           return null;
         }
-        return res.text();
+        return res.ok ? res.text() : null;
       })
       .then(function (html) {
         if (html === null) return;
@@ -69,14 +89,18 @@
           return;
         }
         names.forEach(function (name) {
-          if (fresh[name].innerHTML !== current[name].innerHTML) {
-            current[name].innerHTML = fresh[name].innerHTML;
-            announce(current[name].getAttribute('data-live-announce'));
-          }
+          var serverHtml = fresh[name].innerHTML;
+          if (serverHtml === lastRegionHtml[name]) return;
+          lastRegionHtml[name] = serverHtml;
+          swapRegion(current[name], serverHtml);
+          announce(current[name].getAttribute('data-live-announce'));
         });
       })
       .catch(function () { /* offline, try again on the next tick */ });
   }
+
+  var initial = liveRegions(document);
+  Object.keys(initial).forEach(function (name) { lastRegionHtml[name] = initial[name].innerHTML; });
 
   markUpdated();
   window.setInterval(refresh, INTERVAL_MS);

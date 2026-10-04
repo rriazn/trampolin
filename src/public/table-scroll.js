@@ -9,6 +9,18 @@
   document.querySelectorAll('.table-card').forEach(function (card) {
     update(card);
     card.addEventListener('scroll', function () { update(card); }, { passive: true });
-    if (window.ResizeObserver) new ResizeObserver(function () { update(card); }).observe(card);
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(function () { update(card); });
+      observer.observe(card);
+      // the table can grow without the card changing size, for example when the webfont swaps in
+      var table = card.querySelector('table');
+      if (table) observer.observe(table);
+    }
   });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () {
+      document.querySelectorAll('.table-card').forEach(update);
+    });
+  }
 })();
