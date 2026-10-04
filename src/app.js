@@ -7,6 +7,7 @@ const path = require('path');
 const { getAppVersion } = require('./services/version.service');
 const { getSessionIdleTimeoutMs } = require('./services/session.service');
 const { checkSessionValidity } = require('./middleware/auth');
+const vendorAssets = require('./middleware/vendor');
 require('./db/database');
 
 const app = express();
@@ -17,6 +18,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/vendor', vendorAssets);
 
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.db', dir: path.join(__dirname, 'data') }),

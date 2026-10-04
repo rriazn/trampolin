@@ -1,32 +1,30 @@
-<%- include('partials/header', { title: t('leaderboard:pageTitle', { roundName: round.name }), autoRefresh: true }) %>
+<%- include('partials/header', { title: t('leaderboard:pageTitle', { roundName: round.name }), wide: true }) %>
 
 <div class="lb-hero">
-  <div class="container">
+  <div class="container lb-container">
     <p class="text-muted small mb-1"><%= round.competition_name %></p>
     <h1 class="lb-title mb-1"><%= round.name %> &nbsp;·&nbsp; <%= round.group_name %></h1>
     <p class="text-muted small mb-0">
       <%= t('leaderboard:live') %>
-      &nbsp;·&nbsp; <%= new Date().toLocaleTimeString() %>
+      <span data-live-updated class="d-none"></span>
     </p>
   </div>
 </div>
 
-<div class="container pb-5">
+<div class="container lb-container pb-5" data-live="board">
 <% if (!panelConfigured) { %>
 <div class="card p-5 text-center text-muted mt-4">
-  <h5><%= t('leaderboard:panelNotConfiguredTitle') %></h5>
+  <h2 class="h5"><%= t('leaderboard:panelNotConfiguredTitle') %></h2>
   <p class="mb-0 small"><%= t('leaderboard:panelNotConfiguredBody') %></p>
 </div>
 <% } else if (leaderboard.length === 0) { %>
 <div class="card p-5 text-center text-muted mt-4">
-  <h5><%= t('leaderboard:noAthletesScored') %></h5>
+  <h2 class="h5"><%= t('leaderboard:noAthletesScored') %></h2>
 </div>
 <% } else { %>
 <div class="lb-table-wrap mt-0">
   <table class="table table-hover mb-0 lb-table">
-    <caption>
-      <sup class="lb-partial">*</sup> <%= t('leaderboard:footnote') %>
-    </caption>
+    <caption class="visually-hidden"><%= round.name %> · <%= round.group_name %></caption>
     <thead>
       <tr>
         <th scope="col" class="lb-col-rank text-center"><%= t('leaderboard:table.rank') %></th>
@@ -60,17 +58,11 @@
            const a = row.attempts.find(a => a.number === n);
       %>
       <td class="text-center align-middle">
-        <% if (a && a.finalScore !== null) {
-             const breakdownTitle = a.breakdown.map(b => `${t('common:judgeRoles.' + b.judgeRoleKey)}: ${b.value.toFixed(2)}`).join(' · ');
-        %>
-          <span class="fw-semibold" title="<%= breakdownTitle %><%= a.isComplete ? '' : ' (' + t('leaderboard:partial') + ')' %>">
-            <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="lb-partial">*</sup><% } %>
-          </span>
-          <% if (a.perTrickDetail.length > 0) { %>
-          <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>" title="<%= t('leaderboard:modal.detailButton') %>" aria-label="<%= t('leaderboard:modal.detailButton') %>">
-            <i class="bi bi-table"></i>
+        <% if (a && a.finalScore !== null) { %>
+          <button type="button" class="lb-attempt-btn" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>">
+            <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="lb-partial" aria-hidden="true">*</sup><span class="visually-hidden"> (<%= t('leaderboard:partial') %>)</span><% } %>
+            <span class="visually-hidden">: <%= t('leaderboard:modal.detailButton') %></span>
           </button>
-          <% } %>
         <% } else { %><span class="text-muted">–</span><% } %>
       </td>
       <% } %>
@@ -83,28 +75,51 @@
     <% }) %>
     </tbody>
   </table>
+  <p class="lb-footnote"><sup class="lb-partial">*</sup> <%= t('leaderboard:footnote') %></p>
 </div>
 
 <% leaderboard.forEach(row => { %>
 <% row.attempts.forEach(a => { %>
-<% if (a.perTrickDetail.length > 0) { %>
+<% if (a.finalScore !== null) { %>
 <div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1" aria-labelledby="pt-title-<%= row.sportsmanId %>-<%= a.number %>" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="pt-title-<%= row.sportsmanId %>-<%= a.number %>"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h5>
+        <h2 class="h5 modal-title" id="pt-title-<%= row.sportsmanId %>-<%= a.number %>"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('common:actions.close') %>"></button>
       </div>
       <div class="modal-body">
-        <% a.perTrickDetail.forEach(detail => { %>
-        <h6 class="fw-bold"><%= t('common:judgeRoles.' + detail.roleKey) %></h6>
+        <h3 class="h6 fw-bold"><%= t('leaderboard:modal.breakdownHeading') %></h3>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered">
             <thead>
               <tr>
-                <th><%= t('leaderboard:modal.judge') %></th>
+                <th scope="col"><%= t('leaderboard:modal.role') %></th>
+                <th scope="col" class="text-end"><%= t('leaderboard:modal.value') %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% a.breakdown.forEach(b => { %>
+              <tr>
+                <td class="fw-semibold"><%= t('common:judgeRoles.' + b.judgeRoleKey) %></td>
+                <td class="text-end"><%= b.value.toFixed(2) %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% if (!a.isComplete) { %>
+          <p class="text-muted small mb-0"><sup class="lb-partial">*</sup> <%= t('leaderboard:modal.partialNote') %></p>
+          <% } %>
+        </div>
+        <% a.perTrickDetail.forEach(detail => { %>
+        <h3 class="h6 fw-bold"><%= t('common:judgeRoles.' + detail.roleKey) %></h3>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-bordered">
+            <thead>
+              <tr>
+                <th scope="col"><%= t('leaderboard:modal.judge') %></th>
                 <% detail.elementNumbers.forEach(n => { %>
-                <th class="text-center"><%= n === 11 ? (detail.isDeduction ? t('leaderboard:modal.landing') : t('leaderboard:modal.bonus')) : n === 12 && !detail.isDeduction ? t('leaderboard:modal.missingSkill') : n %></th>
+                <th scope="col" class="text-center"><%= n === 11 ? (detail.isDeduction ? t('leaderboard:modal.landing') : t('leaderboard:modal.bonus')) : n === 12 && !detail.isDeduction ? t('leaderboard:modal.missingSkill') : n %></th>
                 <% }) %>
               </tr>
             </thead>
@@ -130,4 +145,5 @@
 <% }) %>
 <% } %>
 </div>
-<%- include('partials/footer') %>
+<script src="/live-refresh.js" defer></script>
+<%- include('partials/footer', { wide: true }) %>

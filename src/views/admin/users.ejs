@@ -20,10 +20,10 @@
 <div class="container">
   <div class="collapse mb-4" id="uploadForm">
     <div class="upload-panel">
-      <h6 class="fw-bold mb-1"><%= t('admin:users.importHeading') %></h6>
+      <h2 class="h6 fw-bold mb-1"><%= t('admin:users.importHeading') %></h2>
       <p class="text-muted small mb-3"><%- t('admin:users.importHelp') %></p>
       <form method="POST" action="/admin/users/upload" enctype="multipart/form-data" class="d-flex gap-2 align-items-center flex-wrap">
-        <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.ods,.csv" required style="max-width:320px">
+        <input type="file" name="file" class="form-control file-input" accept=".xlsx,.xls,.ods,.csv" required aria-label="<%= t('admin:users.importHeading') %>">
         <button type="submit" class="btn btn-brand"><%= t('admin:users.upload') %></button>
       </form>
     </div>
@@ -32,7 +32,7 @@
   <div class="table-card card">
     <table class="table mb-0">
       <thead>
-        <tr><th><%= t('admin:users.table.name') %></th><th><%= t('admin:users.table.email') %></th><th><%= t('admin:users.table.role') %></th><th><%= t('admin:users.table.created') %></th><th></th></tr>
+        <tr><th scope="col"><%= t('admin:users.table.name') %></th><th scope="col"><%= t('admin:users.table.email') %></th><th scope="col"><%= t('admin:users.table.role') %></th><th scope="col"><%= t('admin:users.table.created') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr>
       </thead>
       <tbody>
       <% users.forEach(u => { %>
@@ -46,7 +46,7 @@
             <i class="bi bi-pencil"></i>
           </a>
           <form method="POST" action="/admin/users/<%= u.id %>/delete" class="d-inline"
-                onsubmit="return confirm(<%= JSON.stringify(t('admin:users.confirmDelete', { name: u.name })) %>)">
+                data-confirm="<%= t('admin:users.confirmDelete', { name: u.name }) %>">
             <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
           </form>
         </td>

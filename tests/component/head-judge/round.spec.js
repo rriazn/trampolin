@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm, cancelConfirm } = require('../../helpers/confirm-modal');
 
 async function loginAsHeadJudge(page) {
   await page.goto('/login');
@@ -97,6 +98,12 @@ test.describe('scoring and advancing', () => {
     await expect(page.getByText('Leon Weber')).toBeVisible();
   });
 
+  test('the penalty input is reachable by its heading and shows its range', async ({ page }) => {
+    const input = page.getByRole('spinbutton', { name: 'Your head judge penalty' });
+    await expect(input).toBeVisible();
+    await expect(input).toHaveAttribute('placeholder', /–/);
+  });
+
   test('submitting the head judge penalty saves it and shows a flash message', async ({ page }) => {
     const input = page.locator('.card:has-text("Your head judge penalty") input[name=score]');
     await input.fill('0.2');
@@ -106,8 +113,8 @@ test.describe('scoring and advancing', () => {
   });
 
   test('"Skip Athlete" shows a confirm dialog and advances to the next athlete', async ({ page }) => {
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Skip Athlete/ }).click();
+    await acceptConfirm(page);
     await expect(page.locator('.alert-success')).toContainText('skipped');
     await expect(page.getByText('Noah Becker')).toBeVisible();
   });
@@ -136,10 +143,47 @@ test.describe('completed state', () => {
   });
 
   test('"Complete Round" shows a confirm dialog and force-completes the round', async ({ page }) => {
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Complete Round/ }).click();
+    await acceptConfirm(page);
     await expect(page.getByText('Round completed')).toBeVisible();
     await expect(page.getByRole('link', { name: /View Leaderboard/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Back to Last Attempt/ })).toBeVisible();
+  });
+});
+
+test.describe('in progress layout', () => {
+  test.beforeEach(async ({ page, request }) => {
+    const res = await request.post('/test/seed/head-judge');
+    const seed = await res.json();
+    await loginAsHeadJudge(page);
+    await page.goto(`/head-judge/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    await page.getByRole('button', { name: /Start Round/ }).click();
+  });
+
+  test('does not reload the page with a meta refresh', async ({ page }) => {
+    await expect(page.locator('meta[http-equiv="refresh"]')).toHaveCount(0);
+  });
+
+  test('a half-typed trick count survives a poll', async ({ page }) => {
+    await page.clock.install();
+    await page.reload();
+    const input = page.locator('input[name=element_count]');
+    await input.fill('7');
+    await page.getByRole('heading', { name: 'Trick count' }).click();
+    await page.clock.fastForward(10500);
+    await expect(input).toHaveValue('7');
+  });
+
+  test('"Complete Round" sits apart from the navigation buttons', async ({ page }) => {
+    const complete = page.getByRole('button', { name: /Complete Round/ });
+    await expect(page.locator('.border-top').filter({ has: complete })).toHaveCount(1);
+    await expect(page.locator('.border-top').filter({ has: page.getByRole('button', { name: /Next/ }) })).toHaveCount(0);
+  });
+
+  test('cancelling the confirm modal does not complete the round', async ({ page }) => {
+    await page.getByRole('button', { name: /Complete Round/ }).click();
+    await cancelConfirm(page);
+    await expect(page.getByRole('button', { name: /Complete Round/ })).toBeVisible();
+    await expect(page.getByText('Round completed')).toHaveCount(0);
   });
 });

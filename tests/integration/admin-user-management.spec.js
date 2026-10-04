@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAsAdmin(page) {
   await page.goto('/login');
@@ -50,8 +51,8 @@ test('admin deletes a referee, they are removed from the list and can no longer 
   await loginAsAdmin(page);
   await page.goto('/admin/users');
   const row = page.getByRole('row').filter({ hasText: 'Bob Smith' });
-  page.once('dialog', dialog => dialog.accept());
   await row.locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await expect(page.getByRole('cell', { name: 'Bob Smith' })).not.toBeVisible();
 
   await page.getByRole('button', { name: /Logout/ }).click();

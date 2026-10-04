@@ -4,7 +4,7 @@
   "panelNotConfiguredTitle": "Panel not configured",
   "panelNotConfiguredBody": "This competition doesn't have a judge panel selected yet.",
   "noAthletesScored": "No athletes scored yet",
-  "footnote": "not every judge has submitted yet · hover a score for its per-role breakdown",
+  "footnote": "not every judge has submitted yet · select a score for its per-role breakdown",
   "table": {
     "rank": "Rank",
     "athlete": "Athlete",
@@ -21,6 +21,10 @@
     "landing": "Landing",
     "bonus": "Bonus",
     "missingSkill": "Missing skill",
-    "detailButton": "Per-trick detail"
+    "detailButton": "Score details",
+    "breakdownHeading": "Score by role",
+    "role": "Role",
+    "value": "Score",
+    "partialNote": "Partial: not every judge has submitted yet."
   }
 }

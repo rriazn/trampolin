@@ -8,6 +8,9 @@
     "toggle": "Toggle navigation",
     "skipToContent": "Skip to content"
   },
+  "confirmDialog": {
+    "title": "Please confirm"
+  },
   "footer": {
     "versionLatest": "latest"
   },
@@ -75,6 +78,8 @@
     "add": "Add",
     "edit": "Edit",
     "close": "Close",
-    "delete": "Delete"
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "column": "Actions"
   }
 }

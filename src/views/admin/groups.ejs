@@ -27,7 +27,7 @@
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th><%= t('admin:groups.table.groupName') %></th><th><%= t('admin:groups.table.abbreviation') %></th><th><%= t('admin:groups.table.rounds') %></th><th></th></tr></thead>
+      <thead><tr><th scope="col"><%= t('admin:groups.table.groupName') %></th><th scope="col"><%= t('admin:groups.table.abbreviation') %></th><th scope="col"><%= t('admin:groups.table.rounds') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr></thead>
       <tbody>
       <% groups.forEach(g => { %>
       <tr>
@@ -43,7 +43,7 @@
             <%= t('admin:groups.roundsButton') %>
           </a>
           <form method="POST" action="/admin/competitions/<%= competition.id %>/groups/<%= g.id %>/delete" class="d-inline"
-                onsubmit="return confirm(<%= JSON.stringify(t('admin:groups.confirmDelete')) %>)">
+                data-confirm="<%= t('admin:groups.confirmDelete') %>">
             <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
           </form>
         </td>
@@ -55,7 +55,7 @@
   <% } %>
 
   <div class="card p-4">
-    <h5 class="fw-bold mb-3"><%= t('admin:groups.addGroup') %></h5>
+    <h2 class="h5 fw-bold mb-3"><%= t('admin:groups.addGroup') %></h2>
     <% if (locals.error) { %>
     <div class="alert alert-danger mb-3"><%= locals.error %></div>
     <% } %>

@@ -20,9 +20,9 @@
 <div class="container">
 <% if (!panelTemplate) { %>
   <div class="card p-4 text-center text-muted">
-    <h5><%= t('admin:judges.noPanelTitle') %></h5>
+    <h2 class="h5"><%= t('admin:judges.noPanelTitle') %></h2>
     <p class="mb-3"><%= t('admin:judges.noPanelBody') %></p>
-    <a href="/admin/competitions/<%= competition.id %>/edit" class="btn btn-accent mx-auto" style="width:fit-content">
+    <a href="/admin/competitions/<%= competition.id %>/edit" class="btn btn-accent mx-auto w-fit">
       <%= t('admin:judges.editCompetition') %>
     </a>
   </div>
@@ -36,7 +36,7 @@
   %>
   <div class="card p-4 mb-4" id="role-<%= role.groupKey %>">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0"><%= roleDisplayName %></h5>
+      <h2 class="h5 fw-bold mb-0"><%= roleDisplayName %></h2>
       <span class="badge <%= role.assigned.length >= role.required ? 'bg-success' : 'bg-warning text-dark' %>">
         <%= t('admin:judges.filled', { assigned: role.assigned.length, required: role.required }) %>
       </span>
@@ -47,7 +47,7 @@
     <% } else { %>
     <div class="table-card mb-3">
       <table class="table mb-0">
-        <thead><tr><th><%= t('admin:judges.table.name') %></th><th><%= t('admin:judges.table.email') %></th><th></th></tr></thead>
+        <thead><tr><th scope="col"><%= t('admin:judges.table.name') %></th><th scope="col"><%= t('admin:judges.table.email') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr></thead>
         <tbody>
         <% role.assigned.forEach(a => { %>
         <tr>
@@ -55,7 +55,7 @@
           <td class="text-muted"><%= a.email %></td>
           <td class="text-end">
             <form method="POST" action="/admin/competitions/<%= competition.id %>/judges/<%= a.assignment_id %>/delete" class="d-inline"
-                  onsubmit="return confirm(<%= JSON.stringify(t('admin:judges.confirmRemove', { judgeName: a.name, roleName: roleDisplayName })) %>)">
+                  data-confirm="<%= t('admin:judges.confirmRemove', { judgeName: a.name, roleName: roleDisplayName }) %>">
               <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
             </form>
           </td>

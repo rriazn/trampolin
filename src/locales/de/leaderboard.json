@@ -4,7 +4,7 @@
   "panelNotConfiguredTitle": "Kampfgericht nicht konfiguriert",
   "panelNotConfiguredBody": "Dieser Wettkampf hat noch kein Kampfgericht ausgewählt.",
   "noAthletesScored": "Noch keine Athleten bewertet",
-  "footnote": "Noch nicht alle Kampfrichter haben ihre Wertung abgegeben · Hovern Sie über eine Wertung, um Details zu sehen",
+  "footnote": "Noch nicht alle Kampfrichter haben ihre Wertung abgegeben · Wählen Sie eine Wertung, um Details zu sehen",
   "table": {
     "rank": "Platzierung",
     "athlete": "Athlet",
@@ -21,6 +21,10 @@
     "landing": "Landung",
     "bonus": "Bonus",
     "missingSkill": "Fehlendes Element",
-    "detailButton": "Details je Sprung"
+    "detailButton": "Wertungsdetails",
+    "breakdownHeading": "Wertung je Rolle",
+    "role": "Rolle",
+    "value": "Wertung",
+    "partialNote": "Vorläufig: Noch nicht alle Kampfrichter haben ihre Wertung abgegeben."
   }
 }

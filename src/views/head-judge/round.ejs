@@ -1,11 +1,11 @@
-<%- include('../partials/header', { title: round.name, activePage: 'head-judge', autoRefresh: round.status === 'in_progress' }) %>
+<%- include('../partials/header', { title: round.name, activePage: 'head-judge' }) %>
 <div class="page-hero">
   <div class="container d-flex flex-wrap gap-3 justify-content-between align-items-end">
     <div>
       <h1><%= round.name %></h1>
       <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
     </div>
-    <a href="/head-judge" class="btn btn-outline-secondary"><%= t('common:actions.back') %></a>
+    <a href="/head-judge" class="btn btn-outline-secondary btn-touch"><%= t('common:actions.back') %></a>
   </div>
 </div>
 
@@ -13,7 +13,7 @@
 
 <% if (round.status === 'not_started') { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-bold mb-3"><%= t('headJudge:round.readinessHeading') %></h5>
+  <h2 class="h5 fw-bold mb-3"><%= t('headJudge:round.readinessHeading') %></h2>
   <% if (readiness.groups.length === 0) { %>
   <p class="text-muted small mb-0"><%= t('headJudge:round.noPanelSelected') %></p>
   <% } else { %>
@@ -40,19 +40,20 @@
 
 <% } else if (round.status === 'completed') { %>
 <div class="card p-5 text-center text-muted">
-  <h5><%= t('headJudge:round.completedHeading') %></h5>
+  <h2 class="h5"><%= t('headJudge:round.completedHeading') %></h2>
   <p class="mb-3 small"><%= t('headJudge:round.completedBody') %></p>
   <div class="d-flex flex-wrap gap-2 justify-content-center">
     <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" class="btn btn-accent btn-touch">
       <%= t('headJudge:round.viewLeaderboard') %>
     </a>
     <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/back">
-      <button class="btn btn-outline-secondary"><%= t('headJudge:round.backToLastAttempt') %></button>
+      <button class="btn btn-outline-secondary btn-touch"><%= t('headJudge:round.backToLastAttempt') %></button>
     </form>
   </div>
 </div>
 
 <% } else { %>
+<div data-live="attempt" data-live-key="<%= round.status %>-<%= attempt.attempt_id %>">
 <div class="card p-4 mb-4">
   <div class="d-flex align-items-center gap-3">
     <span class="badge bg-secondary fs-6">#<%= attempt.start_order %></span>
@@ -75,7 +76,7 @@
 </div>
 
 <div class="card p-4 mb-4">
-  <h5 class="fw-bold mb-3"><%= t('headJudge:round.checklistHeading') %></h5>
+  <h2 class="h5 fw-bold mb-3"><%= t('headJudge:round.checklistHeading') %></h2>
   <% checklist.forEach((item, idx) => { %>
   <div class="<%= idx < checklist.length - 1 ? 'mb-3 pb-3 border-bottom' : 'mb-0' %>">
     <div class="d-flex align-items-center gap-2 mb-2">
@@ -87,8 +88,8 @@
     <% if (roleJudges && roleJudges.judges.length > 0) { %>
     <div class="d-flex flex-wrap gap-2 ms-4">
       <% roleJudges.judges.forEach(j => { %>
-      <div class="p-2 rounded <%= j.isDone ? 'bg-success bg-opacity-10' : 'bg-light' %>" style="min-width:110px">
-        <div class="d-flex align-items-center gap-1 small <%= j.isDone ? 'text-success' : 'text-muted' %>">
+      <div class="p-2 rounded judge-chip <%= j.isDone ? 'bg-success bg-opacity-10' : 'bg-light' %>">
+        <div class="d-flex align-items-center gap-1 small <%= j.isDone ? 'text-turquoise-deep' : 'text-muted' %>">
           <i class="bi <%= j.isDone ? 'bi-check-lg' : 'bi-hourglass-split' %>"></i>
           <span class="fw-semibold"><%= j.name %></span>
         </div>
@@ -102,16 +103,18 @@
   </div>
   <% }) %>
 </div>
+</div>
 
 <% if (typeof headJudgeAssignment !== 'undefined' && headJudgeAssignment) { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-bold mb-3"><%= t('headJudge:round.penaltyHeading') %></h5>
+  <h2 class="h5 fw-bold mb-3" id="penalty-heading"><%= t('headJudge:round.penaltyHeading') %></h2>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/score" class="d-flex flex-wrap gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
     <input type="number" name="score"
            value="<%= headJudgeScore !== null ? headJudgeScore : '' %>"
            min="<%= headJudgeAssignment.score_min %>" <% if (headJudgeAssignment.score_max !== null) { %>max="<%= headJudgeAssignment.score_max %>"<% } %>
-           step="0.1" inputmode="decimal" class="form-control score-input" required>
+           step="0.1" inputmode="decimal" class="form-control score-input" aria-labelledby="penalty-heading"
+           placeholder="<%= headJudgeAssignment.score_min %>–<%= headJudgeAssignment.score_max !== null ? headJudgeAssignment.score_max : '∞' %>" required>
     <button class="btn btn-brand btn-touch"><%= t('common:actions.save') %></button>
     <% if (headJudgeScore !== null) { %>
     <span class="text-success fw-semibold small"><i class="bi bi-check-circle-fill"></i> <%= t('headJudge:round.saved') %></span>
@@ -121,7 +124,7 @@
 <% } %>
 
 <div class="card p-4 mb-4">
-  <h5 class="fw-bold mb-3"><%= t('headJudge:round.trickCountHeading') %></h5>
+  <h2 class="h5 fw-bold mb-3"><%= t('headJudge:round.trickCountHeading') %></h2>
   <p class="text-muted small"><%= t('headJudge:round.trickCountHelp') %></p>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/attempts/<%= attempt.attempt_id %>/element-count" class="d-flex flex-wrap gap-2 align-items-end">
     <div>
@@ -140,14 +143,18 @@
     <button class="btn btn-accent btn-touch px-4"><%= t('headJudge:round.next') %></button>
   </form>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/skip"
-        onsubmit="return confirm(<%= JSON.stringify(t('headJudge:round.confirmSkip', { name: competitorName(attempt.sportsman_name, attempt.partner_name), number: attempt.attempt_number })) %>)">
+        data-confirm="<%= t('headJudge:round.confirmSkip', { name: competitorName(attempt.sportsman_name, attempt.partner_name), number: attempt.attempt_number }) %>">
     <button class="btn btn-outline-warning btn-touch px-4"><%= t('headJudge:round.skipAthlete') %></button>
   </form>
+</div>
+
+<div class="border-top mt-5 pt-4 mb-4">
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/complete"
-        onsubmit="return confirm(<%= JSON.stringify(t('headJudge:round.confirmComplete')) %>)">
+        data-confirm="<%= t('headJudge:round.confirmComplete') %>">
     <button class="btn btn-outline-danger btn-touch px-4"><%= t('headJudge:round.completeRound') %></button>
   </form>
 </div>
+<script src="/live-refresh.js" defer></script>
 <% } %>
 
 </div>

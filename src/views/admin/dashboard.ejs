@@ -26,7 +26,7 @@
   </div>
 
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="section-title mb-0"><%= t('admin:dashboard.recentCompetitions') %></h5>
+    <h2 class="h5 section-title mb-0"><%= t('admin:dashboard.recentCompetitions') %></h2>
     <a href="/admin/competitions/new" class="btn btn-accent"><%= t('admin:dashboard.new') %></a>
   </div>
 
@@ -37,7 +37,7 @@
   <% } else { %>
   <div class="table-card card">
     <table class="table mb-0">
-      <thead><tr><th><%= t('admin:dashboard.table.name') %></th><th><%= t('admin:dashboard.table.date') %></th><th><%= t('admin:dashboard.table.status') %></th><th></th></tr></thead>
+      <thead><tr><th scope="col"><%= t('admin:dashboard.table.name') %></th><th scope="col"><%= t('admin:dashboard.table.date') %></th><th scope="col"><%= t('admin:dashboard.table.status') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr></thead>
       <tbody>
       <% competitions.forEach(c => { %>
         <tr>

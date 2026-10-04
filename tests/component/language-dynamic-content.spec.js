@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { confirmModal } = require('../helpers/confirm-modal');
 
 // confirms translation also covers seeded reference data, not just static UI copy, since these render from DB rows keyed off a stable `key` column
 let seed;
@@ -51,13 +52,8 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
 
     const updatedCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Haltung' }) });
-    let capturedDialog;
-    page.once('dialog', dialog => {
-      capturedDialog = dialog;
-      dialog.dismiss();
-    });
     await updatedCard.locator('button.btn-outline-danger').click();
-    await expect.poll(() => capturedDialog?.message()).toBe('Judge Referee A von Haltung entfernen?');
+    await expect(confirmModal(page).locator('.modal-body')).toHaveText('Judge Referee A von Haltung entfernen?');
   });
 
   test('the panel dropdown on the competition form shows translated names and description tooltips', async ({ page }) => {

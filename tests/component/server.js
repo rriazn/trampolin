@@ -9,6 +9,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
 const { getAppVersion } = require('../../src/services/version.service');
+const vendorAssets = require('../../src/middleware/vendor');
 
 // a scratch path so footer.spec.js can create/delete a VERSION file without touching the real one
 const TEST_VERSION_PATH = path.join(__dirname, 'VERSION');
@@ -18,6 +19,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../../src/views'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '../../src/public')));
+app.use('/vendor', vendorAssets);
 app.use(session({
   secret: 'component-test-secret',
   resave: false,

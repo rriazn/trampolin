@@ -22,7 +22,6 @@ exports.getLeaderboard = (req, res) => {
         round,
         leaderboard,
         maxAttempts,
-        autoRefresh: true,
         panelConfigured: panelSlots.length > 0,
     });
 };

@@ -15,15 +15,15 @@
         <h1><%= t('admin:entries.heading') %></h1>
       </div>
       <div class="d-flex flex-wrap gap-3">
-        <form method="POST" action="<%= baseUrl %>/attempts/bulk" class="d-flex gap-2 align-items-center">
-          <div style="width:90px">
-            <input type="number" name="attempt_count" class="form-control form-control-sm text-center" value="2" min="1" max="20" title="<%= t('admin:entries.attemptsPerAthlete') %>">
+        <form method="POST" action="<%= baseUrl %>/attempts/bulk" class="d-flex gap-2 align-items-center" data-confirm="<%= t('admin:entries.confirmCreateAll') %>">
+          <div class="attempt-count-field">
+            <input type="number" name="attempt_count" class="form-control form-control-sm text-center" value="2" min="1" max="20" title="<%= t('admin:entries.attemptsPerAthlete') %>" aria-label="<%= t('admin:entries.attemptsPerAthlete') %>">
           </div>
-          <button class="btn btn-brand" onclick="return confirm(<%= JSON.stringify(t('admin:entries.confirmCreateAll')) %>)">
+          <button class="btn btn-brand">
             <%= t('admin:entries.createAllAttempts') %>
           </button>
         </form>
-        <form method="POST" action="<%= baseUrl %>/entries/randomize" onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmRandomize')) %>)">
+        <form method="POST" action="<%= baseUrl %>/entries/randomize" data-confirm="<%= t('admin:entries.confirmRandomize') %>">
           <button type="submit" class="btn btn-outline-secondary"><%= t('admin:entries.randomize') %></button>
         </form>
         <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-secondary">
@@ -44,12 +44,12 @@
     <table class="table mb-0">
       <thead>
         <tr>
-          <th style="width:100px"><%= t('admin:entries.table.startOrder') %></th>
-          <th><%= t('admin:entries.table.athlete') %></th>
-          <th><%= t('admin:entries.table.club') %></th>
-          <th><%= t('admin:entries.table.routine') %></th>
-          <th><%= t('admin:entries.table.attempts') %></th>
-          <th></th>
+          <th scope="col" class="col-narrow"><%= t('admin:entries.table.startOrder') %></th>
+          <th scope="col"><%= t('admin:entries.table.athlete') %></th>
+          <th scope="col"><%= t('admin:entries.table.club') %></th>
+          <th scope="col"><%= t('admin:entries.table.routine') %></th>
+          <th scope="col"><%= t('admin:entries.table.attempts') %></th>
+          <th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th>
         </tr>
       </thead>
       <tbody>
@@ -66,7 +66,7 @@
         </td>
         <td class="text-end">
           <form method="POST" action="<%= baseUrl %>/entries/<%= e.id %>/delete" class="d-inline"
-                onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmRemove')) %>)">
+                data-confirm="<%= t('admin:entries.confirmRemove') %>">
             <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
           </form>
         </td>
@@ -78,7 +78,7 @@
   <% } %>
 
   <div class="card p-4">
-    <h5 class="fw-bold mb-3"><%= t('admin:entries.addEntry') %></h5>
+    <h2 class="h5 fw-bold mb-3"><%= t('admin:entries.addEntry') %></h2>
     <% if (locals.flash && locals.flash.error) { %>
     <div class="alert alert-danger mb-3"><%= locals.flash.error %></div>
     <% } %>
@@ -107,7 +107,7 @@
       </div>
     </form>
     <div class="d-flex justify-content-end mt-3">
-      <form method="POST" action="<%= baseUrl %>/entries/add-all" onsubmit="return confirm(<%= JSON.stringify(t('admin:entries.confirmAddAll')) %>)">
+      <form method="POST" action="<%= baseUrl %>/entries/add-all" data-confirm="<%= t('admin:entries.confirmAddAll') %>">
         <button type="submit" class="btn btn-brand"><%= t('admin:entries.addAll') %></button>
       </form>
     </div>

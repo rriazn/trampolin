@@ -5,19 +5,19 @@
       <h1><%= round.name %></h1>
       <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
     </div>
-    <a href="/referee" class="btn btn-outline-secondary"><%= t('common:actions.back') %></a>
+    <a href="/referee" class="btn btn-outline-secondary btn-touch"><%= t('common:actions.back') %></a>
   </div>
 </div>
 
 <div class="container">
 <% if (state === 'not_started') { %>
 <div class="card p-5 text-center text-muted">
-  <h5><%= t('referee:round.notStartedTitle') %></h5>
+  <h2 class="h5"><%= t('referee:round.notStartedTitle') %></h2>
   <p class="mb-0 small"><%= t('referee:round.notStartedBody') %></p>
 </div>
 <% } else if (state === 'no_assignment') { %>
 <div class="card p-5 text-center text-muted">
-  <h5><%= t('referee:round.noAssignmentTitle') %></h5>
+  <h2 class="h5"><%= t('referee:round.noAssignmentTitle') %></h2>
   <p class="mb-0 small"><%= t('referee:round.noAssignmentBody') %></p>
 </div>
 <% } else { %>
@@ -36,7 +36,7 @@
 
 <% inputs.forEach(input => { %>
 <div class="card p-4 mb-4">
-  <h5 class="fw-bold mb-3"><%= t('common:judgeRoles.' + input.key) %></h5>
+  <h2 class="h5 fw-bold mb-3" id="role-<%= input.judge_role_id %>"><%= t('common:judgeRoles.' + input.key) %></h2>
 
   <% if (input.granularity === 'element') { %>
   <form method="POST" action="/referee/score/elements">
@@ -45,7 +45,7 @@
     <% input.elements.forEach((el, idx) => { %>
     <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
         <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : el.kind === 'missingSkill' ? 'bg-danger bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
-      <span class="fw-semibold" style="width:90px">
+      <span class="fw-semibold element-label" id="el-<%= input.judge_role_id %>-<%= el.number %>">
         <% if (el.kind === 'landing') { %><%= t('referee:round.landing') %>
         <% } else if (el.kind === 'bonus') { %><%= t('referee:round.bonus') %>
         <% } else if (el.kind === 'missingSkill') { %><%= t('referee:round.missingSkill') %>
@@ -54,7 +54,7 @@
       </span>
 
       <% if (input.isDeduction) { %>
-      <div class="d-flex gap-3 flex-wrap">
+      <div class="d-flex gap-3 flex-wrap" role="group" aria-labelledby="role-<%= input.judge_role_id %> el-<%= input.judge_role_id %>-<%= el.number %>">
         <% var deductionOptions = el.kind === 'landing' ? [0, 0.1, 0.2, 0.3, 0.5, 1.0] : [0, 0.1, 0.2, 0.3, 0.4, 0.5]; %>
         <% deductionOptions.forEach(v => { %>
         <label class="score-option">
@@ -66,7 +66,7 @@
         <% }) %>
       </div>
       <% } else if (el.kind === 'missingSkill') { %>
-      <div class="d-flex gap-3 flex-wrap">
+      <div class="d-flex gap-3 flex-wrap" role="group" aria-labelledby="role-<%= input.judge_role_id %> el-<%= input.judge_role_id %>-<%= el.number %>">
         <% [0, 2.0].forEach(v => { %>
         <label class="score-option">
           <input class="form-check-input m-0" type="radio" name="element_<%= el.number %>"
@@ -80,6 +80,7 @@
       <input type="number" name="element_<%= el.number %>"
              value="<%= el.value !== null ? Math.round(el.value * 10) : 0 %>"
              min="0" step="1" inputmode="numeric" class="form-control score-input"
+             aria-labelledby="role-<%= input.judge_role_id %> el-<%= input.judge_role_id %>-<%= el.number %>"
              <% if (el.kind !== 'bonus') { %>required<% } %>>
       <span class="text-muted small">/10</span>
       <% } %>
@@ -103,6 +104,7 @@
            value="<%= input.score !== null ? input.score : '' %>"
            min="<%= input.score_min %>" <% if (input.score_max !== null) { %>max="<%= input.score_max %>"<% } %>
            step="<%= input.step %>" inputmode="decimal" class="form-control score-input"
+           aria-labelledby="role-<%= input.judge_role_id %>"
            placeholder="<%= input.score_min %>–<%= input.score_max !== null ? input.score_max : '∞' %>" required>
     <button class="btn btn-accent btn-touch"><%= t('common:actions.save') %></button>
     <% if (input.score !== null) { %>

@@ -14,11 +14,11 @@
     <table class="table mb-0">
       <thead>
         <tr>
-          <th><%= t('admin:competitions.table.name') %></th>
-          <th><%= t('admin:competitions.table.date') %></th>
-          <th><%= t('admin:competitions.table.type') %></th>
-          <th><%= t('admin:competitions.table.status') %></th>
-          <th></th>
+          <th scope="col"><%= t('admin:competitions.table.name') %></th>
+          <th scope="col"><%= t('admin:competitions.table.date') %></th>
+          <th scope="col"><%= t('admin:competitions.table.type') %></th>
+          <th scope="col"><%= t('admin:competitions.table.status') %></th>
+          <th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th>
         </tr>
       </thead>
       <tbody>
@@ -50,7 +50,7 @@
           </form>
           <% } %>
           <form method="POST" action="/admin/competitions/<%= c.id %>/delete" class="d-inline"
-                onsubmit="return confirm(<%= JSON.stringify(t('admin:competitions.confirmDelete')) %>)">
+                data-confirm="<%= t('admin:competitions.confirmDelete') %>">
             <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
           </form>
         </td>
