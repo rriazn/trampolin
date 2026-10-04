@@ -11,6 +11,7 @@
     "statusNotStaffed": "Not staffed"
   },
   "round": {
+    "updated": "Scores updated",
     "readinessHeading": "Panel readiness",
     "noPanelSelected": "No judge panel selected for this competition. Choose one on the competition's edit page.",
     "assignedCount": "{{assigned}} of {{required}} assigned",

@@ -26,8 +26,8 @@
         <form method="POST" action="<%= baseUrl %>/entries/randomize" data-confirm="<%= t('admin:entries.confirmRandomize') %>">
           <button type="submit" class="btn btn-outline-secondary"><%= t('admin:entries.randomize') %></button>
         </form>
-        <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" class="btn btn-outline-secondary">
-          <%= t('admin:entries.leaderboard') %>
+        <a href="/leaderboard/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>" target="_blank" rel="noopener" class="btn btn-outline-secondary">
+          <%= t('admin:entries.leaderboard') %><span class="visually-hidden"> (<%= t('common:actions.opensInNewTab') %>)</span>
         </a>
       </div>
     </div>

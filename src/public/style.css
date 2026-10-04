@@ -23,6 +23,8 @@
   --orange: #b84300;
   --orange-tint: #fdebdc;
   --radius-control: 2px;
+  --on-ink: rgba(255, 255, 255, .8);
+  --on-ink-line: rgba(255, 255, 255, .5);
 }
 
 /* Bootstrap variable overrides, rgb triplets stay literal because Bootstrap needs them */
@@ -133,7 +135,7 @@ summary:focus-visible,
   color: var(--turquoise-bright);
 }
 .navbar-main .nav-link {
-  color: rgba(255,255,255,.8) !important;
+  color: var(--on-ink) !important;
   font-weight: 500;
   border-bottom: 2px solid transparent;
   padding: .65rem 0 .5rem;
@@ -145,13 +147,13 @@ summary:focus-visible,
   border-bottom-color: var(--turquoise-bright);
 }
 .nav-user-chip {
-  color: rgba(255,255,255,.75);
+  color: var(--on-ink);
   font-size: .85rem;
 }
 .navbar-main .navbar-toggler {
   min-width: 2.75rem;
   min-height: 2.75rem;
-  border-color: rgba(255,255,255,.5);
+  border-color: var(--on-ink-line);
   border-radius: var(--radius-control);
 }
 .navbar-main .navbar-toggler:focus {
@@ -176,16 +178,16 @@ summary:focus-visible,
 .app-footer-text {
   font-size: .85rem;
   font-weight: 500;
-  color: rgba(255,255,255,.75);
+  color: var(--on-ink);
 }
 .app-footer-text .dot {
   color: var(--turquoise-bright);
 }
 .app-footer-version {
-  border: 1px solid rgba(255,255,255,.35);
+  border: 1px solid var(--on-ink-line);
   border-radius: var(--radius-control);
   padding: .15rem .6rem;
-  color: rgba(255,255,255,.75);
+  color: var(--on-ink);
   font-size: .82rem;
   font-weight: 600;
 }
@@ -212,6 +214,13 @@ summary:focus-visible,
   --bs-breadcrumb-divider-color: var(--stone);
   --bs-breadcrumb-item-active-color: var(--ink);
   font-size: .95rem;
+}
+
+/* breadcrumb links are the way up the hierarchy, padded to a 44px hit area without moving the layout */
+.page-hero .breadcrumb-item a {
+  display: inline-block;
+  padding-block: .7rem;
+  margin-block: -.7rem;
 }
 
 /* Sections */
@@ -364,6 +373,21 @@ summary:focus-visible,
   --bs-btn-hover-color: var(--turquoise-deep);
 }
 
+/* admin controls stay compact with a mouse and grow to 44px on touch screens and phones */
+@media (pointer: coarse), (max-width: 767.98px) {
+  .btn,
+  .form-control,
+  .form-select {
+    min-height: 2.75rem;
+  }
+  .btn-sm {
+    min-width: 2.75rem;
+  }
+  .table td .btn {
+    margin-block: .125rem;
+  }
+}
+
 /* Form controls */
 .form-control,
 .form-select {
@@ -403,10 +427,16 @@ summary:focus-visible,
   box-shadow: none;
 }
 .login-logo {
+  margin: 0;
   font-size: 2.5rem;
   font-weight: 900;
   color: var(--ink);
   letter-spacing: -1px;
+}
+/* the sign-in form is the first screen on every judge's device, so it always has full-size targets */
+.login-card .form-control,
+.login-card .btn {
+  min-height: 2.75rem;
 }
 .login-logo span { color: var(--turquoise); }
 
@@ -431,7 +461,7 @@ summary:focus-visible,
 .lang-switcher-btn {
   background: none;
   border: none;
-  color: rgba(255,255,255,.75);
+  color: var(--on-ink);
   font-size: .8rem;
   font-weight: 700;
   letter-spacing: .03em;
@@ -445,7 +475,7 @@ summary:focus-visible,
   border-bottom: 2px solid var(--turquoise-bright);
 }
 .lang-switcher-btn:hover { color: var(--surface); }
-.lang-switcher-sep { color: rgba(255,255,255,.5); font-size: .75rem; }
+.lang-switcher-sep { color: var(--on-ink-line); font-size: .75rem; }
 
 /* Error pages */
 .error-page {
@@ -457,7 +487,7 @@ summary:focus-visible,
   padding: 2rem 1rem;
 }
 .error-code { font-size: 6rem; font-weight: 900; color: var(--ink); line-height: 1; }
-.error-title { font-weight: 700; font-size: 1.4rem; margin-top: .5rem; }
+.error-title { font-weight: 700; font-size: 1.4rem; margin: .5rem 0 0; }
 .error-message { color: var(--slate); margin-top: .5rem; max-width: 420px; }
 
 /* Leaderboard, sized in em so the whole table scales on a big venue screen */

@@ -2,6 +2,20 @@
 (function () {
   var INTERVAL_MS = 10000;
   var lastHtml = null;
+  var announcer = null;
+
+  // screen readers hear a short message when a region changed, the swap itself is silent
+  function announce(message) {
+    if (!message) return;
+    if (!announcer) {
+      announcer = document.createElement('div');
+      announcer.className = 'visually-hidden';
+      announcer.setAttribute('role', 'status');
+      announcer.setAttribute('aria-live', 'polite');
+      document.body.appendChild(announcer);
+    }
+    announcer.textContent = message;
+  }
 
   function userIsBusy() {
     if (document.hidden) return true;
@@ -57,6 +71,7 @@
         names.forEach(function (name) {
           if (fresh[name].innerHTML !== current[name].innerHTML) {
             current[name].innerHTML = fresh[name].innerHTML;
+            announce(current[name].getAttribute('data-live-announce'));
           }
         });
       })

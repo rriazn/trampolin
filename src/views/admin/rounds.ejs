@@ -34,8 +34,8 @@
           <a href="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>/entries" class="btn btn-sm btn-brand me-1">
             <%= t('admin:rounds.entries') %>
           </a>
-          <a href="/leaderboard/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
-            <%= t('admin:rounds.leaderboard') %>
+          <a href="/leaderboard/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary me-1">
+            <%= t('admin:rounds.leaderboard') %><span class="visually-hidden"> (<%= t('common:actions.opensInNewTab') %>)</span>
           </a>
           <form method="POST" action="/admin/competitions/<%= competition.id %>/groups/<%= group.id %>/rounds/<%= r.id %>/delete" class="d-inline"
                 data-confirm="<%= t('admin:rounds.confirmDelete') %>">

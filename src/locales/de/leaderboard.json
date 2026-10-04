@@ -1,6 +1,7 @@
 {
   "pageTitle": "Wertungsliste – {{roundName}}",
   "live": "Live · aktualisiert alle 10s",
+  "updated": "Rangliste aktualisiert",
   "panelNotConfiguredTitle": "Kampfgericht nicht konfiguriert",
   "panelNotConfiguredBody": "Dieser Wettkampf hat noch kein Kampfgericht ausgewählt.",
   "noAthletesScored": "Noch keine Athleten bewertet",

@@ -53,7 +53,7 @@
 </div>
 
 <% } else { %>
-<div data-live="attempt" data-live-key="<%= round.status %>-<%= attempt.attempt_id %>">
+<div data-live="attempt" data-live-announce="<%= t('headJudge:round.updated') %>" data-live-key="<%= round.status %>-<%= attempt.attempt_id %>">
 <div class="card p-4 mb-4">
   <div class="d-flex flex-wrap align-items-center gap-3">
     <span class="badge bg-secondary fs-6">#<%= attempt.start_order %></span>

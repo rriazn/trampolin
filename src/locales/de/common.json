@@ -6,7 +6,8 @@
     "viewer": "Wertungslisten",
     "logout": "Logout",
     "toggle": "Navigation umschalten",
-    "skipToContent": "Zum Inhalt springen"
+    "skipToContent": "Zum Inhalt springen",
+    "language": "Sprache"
   },
   "confirmDialog": {
     "title": "Bitte bestätigen"
@@ -78,6 +79,7 @@
     "add": "Hinzufügen",
     "edit": "Bearbeiten",
     "close": "Schließen",
+    "opensInNewTab": "öffnet in einem neuen Tab",
     "delete": "Löschen",
     "confirm": "Bestätigen",
     "column": "Aktionen"

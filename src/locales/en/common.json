@@ -6,7 +6,8 @@
     "viewer": "Leaderboards",
     "logout": "Logout",
     "toggle": "Toggle navigation",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "language": "Language"
   },
   "confirmDialog": {
     "title": "Please confirm"
@@ -78,6 +79,7 @@
     "add": "Add",
     "edit": "Edit",
     "close": "Close",
+    "opensInNewTab": "opens in a new tab",
     "delete": "Delete",
     "confirm": "Confirm",
     "column": "Actions"

@@ -2,7 +2,7 @@
 <div class="login-bg">
   <div class="login-card card p-4 p-md-5 mx-3">
     <div class="text-center mb-4">
-      <div class="login-logo">Trampo<span>·</span>Score</div>
+      <h1 class="login-logo">Trampo<span>·</span>Score</h1>
       <p class="text-muted mt-1 small"><%= t('login:subtitle') %></p>
     </div>
     <% if (error) { %>
@@ -13,7 +13,7 @@
     <form method="POST" action="/login">
       <div class="mb-3">
         <label class="form-label fw-semibold small text-muted text-uppercase" for="f-email"><%= t('login:email') %></label>
-        <input type="email" name="email" id="f-email" class="form-control" placeholder="<%= t('login:emailPlaceholder') %>" required autofocus>
+        <input type="email" name="email" id="f-email" class="form-control" placeholder="<%= t('login:emailPlaceholder') %>" required>
       </div>
       <div class="mb-4">
         <label class="form-label fw-semibold small text-muted text-uppercase" for="f-password"><%= t('login:password') %></label>
