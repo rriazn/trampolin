@@ -4,7 +4,13 @@
     "scoring": "Wertung",
     "headJudge": "Wettkampfleiter",
     "viewer": "Wertungslisten",
-    "logout": "Logout"
+    "logout": "Logout",
+    "toggle": "Navigation umschalten",
+    "skipToContent": "Zum Inhalt springen",
+    "language": "Sprache"
+  },
+  "confirmDialog": {
+    "title": "Bitte bestätigen"
   },
   "footer": {
     "versionLatest": "latest"
@@ -71,6 +77,11 @@
     "cancel": "Abbrechen",
     "back": "Zurück",
     "add": "Hinzufügen",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "opensInNewTab": "öffnet in einem neuen Tab",
+    "delete": "Löschen",
+    "confirm": "Bestätigen",
+    "column": "Aktionen"
   }
 }

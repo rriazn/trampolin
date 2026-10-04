@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { confirmModal, acceptConfirm, cancelConfirm } = require('../../helpers/confirm-modal');
 
 let seed;
 
@@ -90,19 +91,15 @@ test.describe('when logged in as admin', () => {
   });
 
   test('delete button shows a confirmation dialog', async ({ page }) => {
-    let capturedDialog;
-    page.once('dialog', dialog => { capturedDialog = dialog; dialog.dismiss(); });
     const row = page.getByRole('row').filter({ hasText: 'Group A' });
     await row.locator('button.btn-outline-danger').click();
-    expect(capturedDialog).toBeDefined();
-    expect(capturedDialog.type()).toBe('confirm');
-    expect(capturedDialog.message()).toMatch(/Delete group and all its rounds and scores\?/i);
+    await expect(confirmModal(page).locator('.modal-body')).toContainText(/Delete group and all its rounds and scores\?/i);
   });
 
   test('dismissing the delete confirm keeps the group in the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Group A' });
-    page.once('dialog', dialog => dialog.dismiss());
     await row.locator('button.btn-outline-danger').click();
+    await cancelConfirm(page);
     await expect(row).toBeVisible();
   });
 
@@ -155,8 +152,8 @@ test.describe('when logged in as admin', () => {
 
   test('accepting the delete confirm removes the group from the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Group A' });
-    page.once('dialog', dialog => dialog.accept());
     await row.locator('button.btn-outline-danger').click();
+    await acceptConfirm(page);
     await expect(row).not.toBeVisible();
   });
 });

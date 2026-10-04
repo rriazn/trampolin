@@ -43,12 +43,12 @@ test.describe('when logged in as admin', () => {
   });
 
   test('referees count is at least 1 after seeding', async ({ page }) => {
-    const n = parseInt(await page.locator('.stat-blue .stat-num').textContent(), 10);
+    const n = parseInt(await page.locator('.stat-referees .stat-num').textContent(), 10);
     expect(n).toBeGreaterThanOrEqual(1);
   });
 
   test('competitions count is at least 1 after seeding', async ({ page }) => {
-    const n = parseInt(await page.locator('.stat-orange .stat-num').textContent(), 10);
+    const n = parseInt(await page.locator('.stat-competitions .stat-num').textContent(), 10);
     expect(n).toBeGreaterThanOrEqual(1);
   });
 
@@ -80,12 +80,12 @@ test.describe('when logged in as admin', () => {
   });
 
   test('"Manage" link on the Referees card navigates to /admin/users', async ({ page }) => {
-    await page.locator('.stat-blue').getByRole('link', { name: /Manage/ }).click();
+    await page.locator('.stat-referees').getByRole('link', { name: /Manage/ }).click();
     await page.waitForURL('/admin/users');
   });
 
   test('"Manage" link on the Competitions card navigates to /admin/competitions', async ({ page }) => {
-    await page.locator('.stat-orange').getByRole('link', { name: /Manage/ }).click();
+    await page.locator('.stat-competitions').getByRole('link', { name: /Manage/ }).click();
     await page.waitForURL('/admin/competitions');
   });
 

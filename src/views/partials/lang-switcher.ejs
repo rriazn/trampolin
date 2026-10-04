@@ -1,0 +1,12 @@
+<% const activeLang = (typeof language !== 'undefined' && language === 'de') ? 'de' : 'en'; %>
+<div class="lang-switcher <%= typeof modifier !== 'undefined' ? modifier : '' %>" role="group" aria-label="<%= t('common:nav.language') %>">
+  <form method="POST" action="/language/en" class="d-inline">
+    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
+    <button class="lang-switcher-btn <%= activeLang === 'en' ? 'active' : '' %>" lang="en"<%- activeLang === 'en' ? ' aria-current="true"' : '' %>>EN</button>
+  </form>
+  <span class="lang-switcher-sep" aria-hidden="true">/</span>
+  <form method="POST" action="/language/de" class="d-inline">
+    <input type="hidden" name="from" value="<%= typeof currentUrl !== 'undefined' ? currentUrl : '/' %>">
+    <button class="lang-switcher-btn <%= activeLang === 'de' ? 'active' : '' %>" lang="de"<%- activeLang === 'de' ? ' aria-current="true"' : '' %>>DE</button>
+  </form>
+</div>

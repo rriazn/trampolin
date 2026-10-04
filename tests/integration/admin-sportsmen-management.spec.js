@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAsAdmin(page) {
   await page.goto('/login');
@@ -48,7 +49,7 @@ test('admin deletes an athlete and they are removed from the list', async ({ pag
   await loginAsAdmin(page);
   await page.goto(`/admin/competitions/${seed.competitionId}/sportsmen`);
   const row = page.getByRole('row').filter({ hasText: 'Emma Fischer' });
-  page.once('dialog', dialog => dialog.accept());
   await row.locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await expect(page.getByRole('cell', { name: 'Emma Fischer' })).not.toBeVisible();
 });

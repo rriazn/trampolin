@@ -19,6 +19,13 @@ module.exports = [
     },
   },
   {
+    files: ['src/public/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: { ...globals.browser },
+    },
+  },
+  {
     files: ['tests/unit/**/*.js', 'tests/api/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
@@ -27,11 +34,12 @@ module.exports = [
     },
   },
   {
-    files: ['tests/*.js', 'tests/component/**/*.js', 'tests/integration/**/*.js'],
+    files: ['tests/*.js', 'tests/helpers/**/*.js', 'tests/component/**/*.js', 'tests/integration/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
-      globals: { ...globals.node },
+      // browser globals are for page.evaluate callbacks
+      globals: { ...globals.node, ...globals.browser },
     },
     rules: {
       // Express error handlers must declare _next as the 4th arg even when unused

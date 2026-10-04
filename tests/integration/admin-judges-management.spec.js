@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAsAdmin(page) {
   await page.goto('/login');
@@ -71,8 +72,8 @@ test('admin selects a judge panel for a competition, staffs it with judges, and 
   await expect(executionOptions.filter({ hasText: 'Judge Ben' })).toHaveCount(1);
 
   // unassigning Judge Anna from Difficulty reopens the role and she reappears as a candidate for Execution
-  page.once('dialog', dialog => dialog.accept());
   await roleCard(page, 'Difficulty').locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
   await expect(roleCard(page, 'Difficulty').getByText('0 of 1 filled')).toBeVisible();
   await expect(roleCard(page, 'Execution').locator('select[name=user_id] option').filter({ hasText: 'Judge Anna' })).toHaveCount(1);

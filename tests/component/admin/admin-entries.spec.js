@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { confirmModal, acceptConfirm, cancelConfirm } = require('../../helpers/confirm-modal');
 
 let seed;
 
@@ -89,35 +90,21 @@ test.describe('when logged in as admin', () => {
   });
 
   test('clicking the delete button shows a confirmation dialog', async ({ page }) => {
-    let capturedDialog;
-    page.once('dialog', dialog => {
-      capturedDialog = dialog;
-      dialog.dismiss();
-    });
     const row = page.getByRole('row').filter({ hasText: 'Alice' });
     await row.locator('button.btn-outline-danger').click();
-    expect(capturedDialog).toBeDefined();
-    expect(capturedDialog.type()).toBe('confirm');
-    expect(capturedDialog.message()).toMatch(/Remove this entry and all its scores\?/i);
+    await expect(confirmModal(page).locator('.modal-body')).toContainText(/Remove this entry and all its scores\?/i);
   });
 
   test('dismissing the delete confirm keeps the entry in the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Alice' });
-    page.once('dialog', dialog => dialog.dismiss());
     await row.locator('button.btn-outline-danger').click();
+    await cancelConfirm(page);
     await expect(row).toBeVisible();
   });
 
   test('clicking "Create All Attempts" shows a confirmation dialog', async ({ page }) => {
-    let capturedDialog;
-    page.once('dialog', dialog => {
-      capturedDialog = dialog;
-      dialog.dismiss();
-    });
     await page.getByRole('button', { name: /Create All Attempts/ }).click();
-    expect(capturedDialog).toBeDefined();
-    expect(capturedDialog.type()).toBe('confirm');
-    expect(capturedDialog.message()).toMatch(/Create attempts for all entries\?/i);
+    await expect(confirmModal(page).locator('.modal-body')).toContainText(/Create attempts for all entries\?/i);
   });
 
   // Breadcrumbs
@@ -150,14 +137,14 @@ test.describe('when logged in as admin', () => {
 
   test('accepting the delete confirm removes the entry from the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Alice' });
-    page.once('dialog', dialog => dialog.accept());
     await row.locator('button.btn-outline-danger').click();
+    await acceptConfirm(page);
     await expect(row).not.toBeVisible();
   });
 
   test('clicking the "Add All" button adds all remaining athletes to the round', async ({ page }) => {
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Add All/ }).click();
+    await acceptConfirm(page);
     await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
     await expect(page.getByRole('row').filter({ hasText: 'Dave' })).toBeVisible();
   });
@@ -167,22 +154,19 @@ test.describe('when logged in as admin', () => {
   });
 
   test('clicking "Randomize" shows a confirmation dialog', async ({ page }) => {
-    let capturedDialog;
-    page.once('dialog', dialog => { capturedDialog = dialog; dialog.dismiss(); });
     await page.getByRole('button', { name: /Randomize/ }).click();
-    expect(capturedDialog).toBeDefined();
-    expect(capturedDialog.type()).toBe('confirm');
+    await expect(confirmModal(page)).toBeVisible();
   });
 
   test('dismissing the randomize confirm keeps the current entries', async ({ page }) => {
-    page.once('dialog', dialog => dialog.dismiss());
     await page.getByRole('button', { name: /Randomize/ }).click();
+    await cancelConfirm(page);
     await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
   });
 
   test('accepting the randomize confirm shows the flash message and keeps all entries', async ({ page }) => {
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Randomize/ }).click();
+    await acceptConfirm(page);
     await expect(page.getByText(/Start order randomized/i)).toBeVisible();
     await expect(page.getByRole('row').filter({ hasText: 'Alice' })).toBeVisible();
   });

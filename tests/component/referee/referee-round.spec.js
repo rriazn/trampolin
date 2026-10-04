@@ -55,6 +55,10 @@ test.describe('when logged in as referee', () => {
     await expect(page.getByRole('heading', { name: 'Time of Flight' })).toBeVisible();
   });
 
+  test('the score input is reachable by the judge role name', async ({ page }) => {
+    await expect(page.getByRole('spinbutton', { name: 'Time of Flight' })).toHaveValue('9.2');
+  });
+
   test('pre-fills the previously saved score', async ({ page }) => {
     await expect(page.locator('input[name=score]')).toHaveValue('9.2');
   });
@@ -131,6 +135,16 @@ test.describe('execution judge: checkbox deductions', () => {
   test('shows one line per trick with 6 deduction checkboxes each (0, 0.1, 0.2, 0.3, 0.4, 0.5)', async ({ page }) => {
     await expect(page.getByText('Trick 1')).toBeVisible();
     await expect(page.locator('input[type=radio][name=element_1]')).toHaveCount(6);
+  });
+
+  test('each trick is a named radio group that includes the judge role', async ({ page }) => {
+    await expect(page.getByRole('group', { name: /Execution.*Trick 1/ })).toBeVisible();
+    await expect(page.getByRole('group', { name: /Execution.*Trick 1/ }).getByRole('radio')).toHaveCount(6);
+  });
+
+  test('deduction options are at least 44px tall so they can be tapped', async ({ page }) => {
+    const box = await page.locator('.score-option').first().boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(44);
   });
 
   test('does not show a landing line when the attempt has only 1 trick', async ({ page }) => {

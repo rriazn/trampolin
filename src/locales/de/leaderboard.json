@@ -1,10 +1,11 @@
 {
   "pageTitle": "Wertungsliste – {{roundName}}",
   "live": "Live · aktualisiert alle 10s",
+  "updated": "Rangliste aktualisiert",
   "panelNotConfiguredTitle": "Kampfgericht nicht konfiguriert",
   "panelNotConfiguredBody": "Dieser Wettkampf hat noch kein Kampfgericht ausgewählt.",
   "noAthletesScored": "Noch keine Athleten bewertet",
-  "footnote": "Noch nicht alle Kampfrichter haben ihre Wertung abgegeben · Hovern Sie über eine Wertung, um Details zu sehen",
+  "footnote": "Noch nicht alle Kampfrichter haben ihre Wertung abgegeben · Wählen Sie eine Wertung, um Details zu sehen",
   "table": {
     "rank": "Platzierung",
     "athlete": "Athlet",
@@ -14,11 +15,17 @@
     "totalScore": "Gesamtwertung",
     "bestScore": "Bester Wert"
   },
+  "partial": "unvollständig",
   "modal": {
     "attemptTitle": "{{name}} — Versuch {{number}}",
     "judge": "Kampfrichter",
     "landing": "Landung",
     "bonus": "Bonus",
-    "missingSkill": "Fehlendes Element"
+    "missingSkill": "Fehlendes Element",
+    "detailButton": "Wertungsdetails",
+    "breakdownHeading": "Wertung je Rolle",
+    "role": "Rolle",
+    "value": "Wertung",
+    "partialNote": "Vorläufig: Noch nicht alle Kampfrichter haben ihre Wertung abgegeben."
   }
 }

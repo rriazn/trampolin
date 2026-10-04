@@ -2,12 +2,12 @@
 <div class="page-hero">
   <div class="container">
     <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color:rgba(255,255,255,.5)">
-        <li class="breadcrumb-item"><a href="/admin/competitions" class="text-white-50"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
-        <li class="breadcrumb-item active text-white"><%= competition ? t('common:actions.edit') : t('admin:competitionForm.newTitle') %></li>
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item active"><%= competition ? t('common:actions.edit') : t('admin:competitionForm.newTitle') %></li>
       </ol>
     </nav>
-    <h1><i class="bi bi-trophy me-2"></i><%= competition ? t('admin:competitionForm.editTitle') : t('admin:competitionForm.newTitle') %></h1>
+    <h1><%= competition ? t('admin:competitionForm.editTitle') : t('admin:competitionForm.newTitle') %></h1>
   </div>
 </div>
 <div class="container">
@@ -19,15 +19,15 @@
 <% } %>
 <form method="POST" action="<%= action %>">
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.name') %></label>
-    <input type="text" name="name" class="form-control" value="<%= competition ? competition.name : '' %>" required placeholder="<%= t('admin:competitionForm.namePlaceholder') %>">
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-name"><%= t('admin:competitionForm.name') %></label>
+    <input type="text" name="name" id="f-name" class="form-control" value="<%= competition ? competition.name : '' %>" required placeholder="<%= t('admin:competitionForm.namePlaceholder') %>">
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.date') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
-    <input type="date" name="date" class="form-control" value="<%= competition ? (competition.date || '') : '' %>">
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="f-date"><%= t('admin:competitionForm.date') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+    <input type="date" name="date" id="f-date" class="form-control" value="<%= competition ? (competition.date || '') : '' %>">
   </div>
   <div class="mb-3">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.type') %></label>
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="competition-type"><%= t('admin:competitionForm.type') %></label>
     <select name="type" id="competition-type" class="form-select" <%= typeLocked ? 'disabled' : '' %>>
       <% ['individual', 'synchro'].forEach(ct => { %>
       <option value="<%= ct %>" <%= (competition ? competition.type : 'individual') === ct ? 'selected' : '' %>><%= t('common:competitionTypes.' + ct) %></option>
@@ -36,7 +36,7 @@
     <% if (typeLocked) { %><div class="form-text"><%= t('admin:competitionForm.typeLockedHelp') %></div><% } %>
   </div>
   <div class="mb-4">
-    <label class="form-label small fw-600 text-muted text-uppercase"><%= t('admin:competitionForm.judgePanel') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
+    <label class="form-label small fw-semibold text-muted text-uppercase" for="panel-template"><%= t('admin:competitionForm.judgePanel') %> <span class="text-muted fw-normal"><%= t('admin:competitionForm.optional') %></span></label>
     <select name="panel_template_id" id="panel-template" class="form-select">
       <option value=""><%= t('admin:competitionForm.noneSelected') %></option>
       <% panelTemplates.forEach(pt => { %>
@@ -45,9 +45,9 @@
     </select>
     <div class="form-text"><%= t('admin:competitionForm.panelHelp') %></div>
   </div>
-  <div class="d-flex gap-2">
-    <button type="submit" class="btn btn-brand rounded-pill px-4"><i class="bi bi-check-lg me-1"></i><%= competition ? t('common:actions.save') : t('common:actions.create') %></button>
-    <a href="/admin/competitions" class="btn btn-outline-secondary rounded-pill px-4"><%= t('common:actions.cancel') %></a>
+  <div class="d-flex flex-wrap gap-2">
+    <button type="submit" class="btn btn-accent px-4"><%= competition ? t('common:actions.save') : t('common:actions.create') %></button>
+    <a href="/admin/competitions" class="btn btn-outline-secondary px-4"><%= t('common:actions.cancel') %></a>
   </div>
 </form>
 </div>
