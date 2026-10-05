@@ -37,8 +37,48 @@ test.describe('hero and auto-refresh', () => {
     await expect(page.locator('.lb-hero').getByText(/\d+:\d+/)).toBeVisible();
   });
 
-  test('page has a 10-second auto-refresh meta tag', async ({ page }) => {
-    await expect(page.locator('meta[http-equiv="refresh"]')).toHaveAttribute('content', '10');
+  test('does not use a meta refresh, which would reload the whole page', async ({ page }) => {
+    await expect(page.locator('meta[http-equiv="refresh"]')).toHaveCount(0);
+  });
+
+  test('polling swaps the live regions without reloading the page', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    const board = page.locator('[data-live=board]');
+    await page.evaluate(() => { window.notReloaded = true; });
+    await page.route('**/leaderboard/competitions/**', async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace('No athletes scored yet', 'Changed on the server');
+      await route.fulfill({ response, body });
+    });
+    await page.clock.fastForward(10500);
+    await expect(board.getByText('Changed on the server')).toBeVisible();
+    expect(await page.evaluate(() => window.notReloaded)).toBe(true);
+  });
+
+  test('polling leaves a region alone when only the live dom changed', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    await page.evaluate(() => {
+      document.querySelector('[data-live=board]').innerHTML = '<p id="local">local</p>';
+    });
+    await page.clock.fastForward(10500);
+    await page.waitForTimeout(300);
+    await expect(page.locator('#local')).toHaveCount(1);
+  });
+
+  test('polling pauses while a field has focus', async ({ page }) => {
+    await page.clock.install();
+    await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
+    await page.evaluate(() => {
+      document.querySelector('[data-live=board]').innerHTML = '<p id="stale">stale</p>';
+      const input = document.createElement('input');
+      input.id = 'typing';
+      document.body.appendChild(input);
+      input.focus();
+    });
+    await page.clock.fastForward(10500);
+    await expect(page.locator('#stale')).toHaveCount(1);
   });
 
   test('shows empty-state message when no athletes have been scored yet', async ({ page }) => {
@@ -58,9 +98,9 @@ test.describe('with scored athletes', () => {
 
   test('all three athletes appear in the table', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('table').getByText('Bob')).toBeVisible();
-    await expect(page.locator('table').getByText('Charlie')).toBeVisible();
-    await expect(page.locator('table').getByText('Alice')).toBeVisible();
+    await expect(page.locator('.lb-table').getByText('Bob')).toBeVisible();
+    await expect(page.locator('.lb-table').getByText('Charlie')).toBeVisible();
+    await expect(page.locator('.lb-table').getByText('Alice')).toBeVisible();
   });
 
   test('empty-state card is hidden when scores exist', async ({ page }) => {
@@ -73,19 +113,19 @@ test.describe('with scored athletes', () => {
     await expect(page.locator('table tbody tr').first()).toContainText('Bob');
   });
 
-  test('rank 1 receives the gold trophy icon', async ({ page }) => {
+  test('rank 1 is highlighted and shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.gold')).toBeVisible();
+    await expect(page.locator('.lb-rank-1')).toHaveText('1');
   });
 
-  test('rank 2 receives the silver trophy icon', async ({ page }) => {
+  test('rank 2 shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.silver')).toBeVisible();
+    await expect(page.locator('.lb-rank-2')).toHaveText('2');
   });
 
-  test('rank 3 receives the bronze trophy icon', async ({ page }) => {
+  test('rank 3 shows its number', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('.lb-rank.bronze')).toBeVisible();
+    await expect(page.locator('.lb-rank-3')).toHaveText('3');
   });
 
   test('shows the "Best Score" column header', async ({ page }) => {
@@ -102,9 +142,9 @@ test.describe('with scored athletes', () => {
 
   test('best scores are displayed with three decimal places', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
-    await expect(page.locator('table')).toContainText('9.200');  // Bob's best
-    await expect(page.locator('table')).toContainText('8.800');  // Charlie's best
-    await expect(page.locator('table')).toContainText('8.500');  // Alice's best
+    await expect(page.locator('.lb-table')).toContainText('9.200');  // Bob's best
+    await expect(page.locator('.lb-table')).toContainText('8.800');  // Charlie's best
+    await expect(page.locator('.lb-table')).toContainText('8.500');  // Alice's best
   });
 
   test('individual attempt scores appear in their respective columns', async ({ page }) => {
@@ -115,13 +155,31 @@ test.describe('with scored athletes', () => {
     await expect(bobRow.locator('td').nth(5)).toContainText('9.100');
   });
 
-  test('shows a per-role breakdown tooltip and a partial marker on each attempt score', async ({ page }) => {
+  test('opens a per-role breakdown from the attempt score and marks it partial', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
     // scored seed only submits time_of_flight, so every attempt is partial (marked *)
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
-    const scoreSpan = bobRow.locator('td').nth(4).locator('span');
-    await expect(scoreSpan).toHaveAttribute('title', /Time of Flight: 9\.20/);
-    await expect(bobRow.locator('td').nth(4)).toContainText('*');
+    const scoreCell = bobRow.locator('td').nth(4);
+    await expect(scoreCell).toContainText('*');
+    await expect(scoreCell.locator('[title]')).toHaveCount(0);
+    await scoreCell.getByRole('button').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('heading', { name: 'Score by role' })).toBeVisible();
+    await expect(modal.getByRole('row', { name: /Time of Flight\s+9\.20/ })).toBeVisible();
+    await expect(modal).toContainText('Partial');
+  });
+
+  test('the attempt score is a tap target of at least 44px', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    const box = await page.locator('.lb-attempt-btn').first().boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  });
+
+  test('shows when the page last refreshed in the viewer clock', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    await expect(page.locator('[data-live-updated]')).toBeVisible();
+    await expect(page.locator('[data-live-updated]')).toHaveText(/\d{1,2}:\d{2}:\d{2}/);
   });
 
   test('renders one attempt column per attempt number in the round', async ({ page }) => {
@@ -159,8 +217,8 @@ test.describe('sum scoring mode', () => {
     await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
     // Ellie's sum (16.6) beats Dana's (16.5) even though Dana's best single attempt (9.0) is higher
     await expect(page.locator('table tbody tr').first()).toContainText('Ellie');
-    await expect(page.locator('table')).toContainText('16.600');
-    await expect(page.locator('table')).toContainText('16.500');
+    await expect(page.locator('.lb-table')).toContainText('16.600');
+    await expect(page.locator('.lb-table')).toContainText('16.500');
   });
 });
 

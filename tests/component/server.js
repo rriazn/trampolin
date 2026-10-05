@@ -10,6 +10,8 @@ const os = require('os');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
 const { getAppVersion } = require('../../src/services/version.service');
+const vendorAssets = require('../../src/middleware/vendor');
+const { publicAssets, assetUrl } = require('../../src/middleware/assets');
 
 // a scratch path in the temp dir, the mounted tests folder is not writable for the container user
 const TEST_VERSION_PATH = path.join(os.tmpdir(), 'trampolin-component-VERSION');
@@ -18,7 +20,8 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../../src/views'));
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, '../../src/public')));
+app.use(publicAssets);
+app.use('/vendor', vendorAssets);
 app.use(session({
   secret: 'component-test-secret',
   resave: false,
@@ -53,6 +56,7 @@ app.use((req, res, next) => {
   res.locals.flash = req.session.flash || {};
   res.locals.appVersion = getAppVersion(TEST_VERSION_PATH);
   res.locals.currentUrl = req.originalUrl;
+  res.locals.assetUrl = assetUrl;
   Object.assign(res.locals, require('../../src/services/helpers/competitor.helpers'));
   delete req.session.flash;
   next();

@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAsAdmin(page) {
   await page.goto('/login');
@@ -126,10 +127,10 @@ test('referee scores both attempts for all athletes and the leaderboard shows co
   await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
   await page.waitForURL(adminEntriesUrlPattern);
 
-  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: /Create All Attempts/ }).click();
   await Promise.all([
-    page.waitForURL(adminEntriesUrlPattern),
-    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+    page.waitForResponse(res => res.request().method() === 'POST' && res.url().includes('/attempts/bulk')),
+    acceptConfirm(page),
   ]);
 
   await page.goto(`/admin/competitions/${compId}/judges`);
@@ -232,8 +233,8 @@ test('removing an entry removes the athlete from the leaderboard', async ({ page
   await loginAsAdmin(page);
   await page.goto(`/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}/entries`);
   const entryRow = page.getByRole('row').filter({ hasText: 'Leon Weber' });
-  page.once('dialog', dialog => dialog.accept());
   await entryRow.locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await expect(page.getByRole('row').filter({ hasText: 'Leon Weber' })).not.toBeVisible();
 
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
@@ -263,10 +264,10 @@ test('admin adds a second round to a group and referee sees both rounds on the d
   await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
   await page.waitForURL(adminEntriesUrlPattern);
 
-  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: /Create All Attempts/ }).click();
   await Promise.all([
-    page.waitForURL(adminEntriesUrlPattern),
-    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+    page.waitForResponse(res => res.request().method() === 'POST' && res.url().includes('/attempts/bulk')),
+    acceptConfirm(page),
   ]);
 
   await logout(page);
@@ -356,10 +357,10 @@ test('a round set to "sum" scoring mode totals all attempts on the leaderboard, 
   await page.waitForURL(adminEntriesUrlPattern);
 
   await page.locator('input[name=attempt_count]').fill('2');
-  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: /Create All Attempts/ }).click();
   await Promise.all([
-    page.waitForURL(adminEntriesUrlPattern),
-    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+    page.waitForResponse(res => res.request().method() === 'POST' && res.url().includes('/attempts/bulk')),
+    acceptConfirm(page),
   ]);
 
   await page.goto(`/admin/competitions/${compId}/judges`);

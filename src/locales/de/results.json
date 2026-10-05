@@ -20,7 +20,7 @@
     "bestAttemptCounts": "bester Versuch zählt"
   },
   "errors": {
-    "noFile": "Wähle zuerst eine .typ-Vorlage aus",
+    "noFile": "Wählen Sie zuerst eine .typ-Vorlage aus",
     "notTyp": "Die Vorlage muss eine .typ-Datei sein",
     "tooLarge": "Die Vorlage ist größer als 256 KB",
     "notUtf8": "Die Vorlage ist kein gültiger UTF-8-Text",
@@ -30,7 +30,7 @@
     "notClosed": "Das Ergebnis-PDF ist nur für abgeschlossene Wettkämpfe verfügbar",
     "compileError": "Fehler in der Vorlage, Zeile {{line}}, Spalte {{column}}: {{message}}",
     "uploadFailed": "Die Vorlage konnte nicht hochgeladen werden",
-    "busy": "Es werden gerade zu viele Ergebnisse erstellt, bitte gleich nochmal versuchen",
+    "busy": "Es werden gerade zu viele Ergebnisse erstellt, bitte versuchen Sie es gleich noch einmal",
     "outputTooLarge": "Das erzeugte PDF ist zu groß"
   },
   "ui": {

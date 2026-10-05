@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAsAdmin(page) {
   await page.goto('/login');
@@ -68,10 +69,10 @@ test('admin creates and fully sets up a competition with a judge panel and staff
   await page.locator('select[name=sportsman_id]').selectOption({ label: 'Jonas Krause · TSV München' });
   await page.locator('form').filter({ has: page.locator('select[name=sportsman_id]') }).getByRole('button', { name: /Add/ }).click();
 
-  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: /Create All Attempts/ }).click();
   await Promise.all([
-    page.waitForURL(/\/admin\/competitions\/\d+\/groups\/\d+\/rounds\/\d+\/entries/),
-    page.getByRole('button', { name: /Create All Attempts/ }).click(),
+    page.waitForResponse(res => res.request().method() === 'POST' && res.url().includes('/attempts/bulk')),
+    acceptConfirm(page),
   ]);
 
   await page.goto(`/admin/competitions/${compId}/judges`);
@@ -95,8 +96,8 @@ test('admin deletes a group and its rounds disappear from the referee scoring da
   await page.waitForURL(/\/admin\/competitions\/\d+\/groups/);
 
   const groupRow = page.getByRole('row').filter({ hasText: 'Junior' });
-  page.once('dialog', dialog => dialog.accept());
   await groupRow.locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await expect(groupRow).not.toBeVisible();
 
   await page.getByRole('button', { name: /Logout/ }).click();
@@ -122,7 +123,7 @@ test('admin deletes a competition and it is removed from the list', async ({ pag
   await loginAsAdmin(page);
   await page.goto('/admin/competitions');
   const row = page.getByRole('row').filter({ hasText: 'Winter Cup' });
-  page.once('dialog', dialog => dialog.accept());
   await row.locator('button.btn-outline-danger').click();
+  await acceptConfirm(page);
   await expect(page.getByRole('cell', { name: 'Winter Cup' })).not.toBeVisible();
 });

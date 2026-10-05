@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { confirmModal, acceptConfirm, cancelConfirm } = require('../../helpers/confirm-modal');
 const xlsxFixtures = require('../fixtures/xlsx');
 
 let seed;
@@ -66,7 +67,7 @@ test.describe('when logged in as admin', () => {
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
   });
 
-  test('shows a head_judge user with a gold "Head Judge" badge', async ({ page }) => {
+  test('shows a head_judge user with a "Head Judge" badge', async ({ page }) => {
     await page.goto('/admin/users/new');
     await page.locator('input[name=name]').fill('Badge Head Judge');
     await page.locator('input[name=email]').fill('badgeheadjudge@test.com');
@@ -78,7 +79,6 @@ test.describe('when logged in as admin', () => {
     const row = page.getByRole('row').filter({ hasText: 'Badge Head Judge' });
     const badge = row.locator('.badge');
     await expect(badge).toHaveText('Head Judge');
-    await expect(badge).toHaveClass(/bg-gold/);
   });
 
   // Buttons
@@ -123,29 +123,22 @@ test.describe('when logged in as admin', () => {
   });
 
   test('clicking the delete button for a user shows a confirmation dialog', async ({ page }) => {
-    let capturedDialog;
-    page.once('dialog', dialog => {
-      capturedDialog = dialog;
-      dialog.dismiss();
-    });
     const row = page.getByRole('row').filter({ hasText: 'Referee One' });
     await row.locator('button.btn-outline-danger').click();
-    expect(capturedDialog).toBeDefined();
-    expect(capturedDialog.type()).toBe('confirm');
-    expect(capturedDialog.message()).toMatch(/Delete user/i);
+    await expect(confirmModal(page).locator('.modal-body')).toContainText(/Delete user/i);
   });
 
   test('dismissing the delete confirm keeps the user in the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Referee One' });
-    page.once('dialog', dialog => dialog.dismiss());
     await row.locator('button.btn-outline-danger').click();
+    await cancelConfirm(page);
     await expect(row).toBeVisible();
   });
 
   test('accepting the delete confirm removes the user from the list', async ({ page }) => {
     const row = page.getByRole('row').filter({ hasText: 'Referee One' });
-    page.once('dialog', dialog => dialog.accept());
     await row.locator('button.btn-outline-danger').click();
+    await acceptConfirm(page);
     await expect(row).not.toBeVisible();
   });
 

@@ -145,5 +145,8 @@ test-results/
 .last-run.json
 
 .claude
+.impeccable
+DESIGN.md
+PRODUCT.md
 
 *.pdf

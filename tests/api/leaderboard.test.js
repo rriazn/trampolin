@@ -97,10 +97,10 @@ describe('GET /leaderboard with real panel scores', () => {
     expect(res.text).toContain('10.500');
   });
 
-  it('includes a per-role breakdown title on the score', async () => {
+  it('includes each role\'s contribution to the score', async () => {
     const res = await agent.get(`/leaderboard/competitions/${compId}/groups/${grpId}/rounds/${rndId}`);
-    expect(res.text).toContain('Difficulty: 2.50');
-    expect(res.text).toContain('Time of Flight: 8.00');
+    expect(res.text).toMatch(/Difficulty[\s\S]*?2\.50/);
+    expect(res.text).toMatch(/Time of Flight[\s\S]*?8\.00/);
   });
 
   it('marks the attempt as partial since not every required role has submitted', async () => {

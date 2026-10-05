@@ -9,6 +9,8 @@ const request = require('supertest');
 // Loaded via Node's native require, same cache as the routes
 const db = require('../../../src/db/database');
 const { checkSessionValidity } = require('../../../src/middleware/auth');
+const vendorAssets = require('../../../src/middleware/vendor');
+const { publicAssets, assetUrl } = require('../../../src/middleware/assets');
 
 const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors', 'results', 'certificates'];
 const loadNamespaces = (lng) => Object.fromEntries(
@@ -21,6 +23,8 @@ function createApp() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, '../../../src/views'));
   app.use(express.urlencoded({ extended: false }));
+  app.use(publicAssets);
+  app.use('/vendor', vendorAssets);
 
   // Use in-memory session store to avoid creating session db files during tests
   app.use(session({
@@ -54,6 +58,7 @@ function createApp() {
     res.locals.currentUser = req.session.user || null;
     res.locals.flash = req.session.flash || {};
     res.locals.currentUrl = req.originalUrl;
+    res.locals.assetUrl = assetUrl;
     Object.assign(res.locals, require('../../../src/services/helpers/competitor.helpers'));
     delete req.session.flash;
     next();

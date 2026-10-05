@@ -27,6 +27,9 @@ COPY --chown=node:node VERSION /app/VERSION
 # the app writes its database and sessions below /app/src/data, tests write below /app
 USER node
 
+# turns on the template cache and the cached asset versions
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
 CMD ["npm", "start"]

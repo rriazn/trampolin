@@ -11,6 +11,7 @@
     "statusNotStaffed": "Nicht besetzt"
   },
   "round": {
+    "updated": "Wertungen aktualisiert",
     "readinessHeading": "Kampfgerichtstatus",
     "noPanelSelected": "Es wurde noch kein Kampfgericht für diesen Wettkampf gewählt. Wählen Sie es auf der Bearbeitungsseite des Wettkampfes.",
     "assignedCount": "{{assigned}} von {{required}} zugewiesen",

@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { confirmModal, acceptConfirm } = require('../../helpers/confirm-modal');
 
 let seed;
 
@@ -115,15 +116,10 @@ test.describe('when logged in as admin', () => {
     test('unassigning a judge removes them and reopens the assign form', async ({ page }) => {
       // relies on an earlier test having already assigned Judge Referee A to Difficulty
       const card = roleCard(page, 'Difficulty');
-      let capturedDialog;
-      page.once('dialog', dialog => {
-        capturedDialog = dialog;
-        dialog.accept();
-      });
       await card.locator('button.btn-outline-danger').click();
+      await expect(confirmModal(page).locator('.modal-body')).toHaveText('Remove Judge Referee A from Difficulty?');
+      await acceptConfirm(page);
       await page.waitForURL(/\/admin\/competitions\/\d+\/judges/);
-      expect(capturedDialog.type()).toBe('confirm');
-      expect(capturedDialog.message()).toBe('Remove Judge Referee A from Difficulty?');
 
       const finalCard = roleCard(page, 'Difficulty');
       await expect(finalCard.getByText('Judge Referee A')).not.toBeVisible();

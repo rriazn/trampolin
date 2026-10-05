@@ -56,7 +56,7 @@ exports.getRoundOverview = (round, userId, readiness) => {
         headJudgeScore = existing ? existing.score : null;
     }
     return { round, readiness, attempt, checklist: breakdown, judgeStatus,
-        headJudgeAssignment, headJudgeScore, autoRefresh: true,
+        headJudgeAssignment, headJudgeScore,
         attemptTotal: hasAnyScore ? total : null, attemptIsComplete: isComplete }
 };
 

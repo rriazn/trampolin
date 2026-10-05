@@ -81,7 +81,7 @@
   "documents": {
     "pageTitle": "Dokumente – {{name}}",
     "heading": "Dokumente",
-    "infoText": "Erstelle druckbare Dokumente für diesen Wettkampf.",
+    "infoText": "Erstellen Sie druckbare Dokumente für diesen Wettkampf.",
     "results": {
       "title": "Ergebnisliste (PDF)",
       "description": "Alle Runden jedes Teilnehmers, gruppenweise, mit einer Kampfrichterseite am Ende.",
@@ -89,7 +89,7 @@
     },
     "certificates": {
       "title": "Urkunden (PDF)",
-      "description": "Eine Urkundenseite pro Teilnehmer, als PDF pro Gruppe oder als ZIP aller Gruppen. Eine Gruppe ist bereit, sobald alle ihre Durchgänge abgeschlossen sind. Gestalte die Seite in Word, Canva o. ä., markiere die Stellen für die Daten und lade sie als PDF hoch.",
+      "description": "Eine Urkundenseite pro Teilnehmer, als PDF pro Gruppe oder als ZIP aller Gruppen. Eine Gruppe ist bereit, sobald alle ihre Durchgänge abgeschlossen sind. Gestalten Sie die Seite in Word, Canva o. ä., markieren Sie die Stellen für die Daten und laden Sie sie als PDF hoch.",
       "groupsHeading": "Gruppen",
       "noGroups": "Dieser Wettkampf hat noch keine Gruppen."
     }
