@@ -59,7 +59,7 @@
       %>
       <td class="text-center align-middle">
         <% if (a && a.finalScore !== null) { %>
-          <button type="button" class="lb-attempt-btn" data-bs-toggle="modal" data-bs-target="#pt-<%= row.sportsmanId %>-<%= a.number %>">
+          <button type="button" class="lb-attempt-btn" data-bs-toggle="modal" data-bs-target="#attemptModal" data-attempt-detail="pt-<%= row.sportsmanId %>-<%= a.number %>">
             <%= a.finalScore.toFixed(3) %><% if (!a.isComplete) { %><sup class="lb-partial" aria-hidden="true">*</sup><span class="visually-hidden"> (<%= t('leaderboard:partial') %>)</span><% } %>
             <span class="visually-hidden">: <%= t('leaderboard:modal.detailButton') %></span>
           </button>
@@ -78,17 +78,23 @@
   <p class="lb-footnote"><sup class="lb-partial">*</sup> <%= t('leaderboard:footnote') %></p>
 </div>
 
-<% leaderboard.forEach(row => { %>
-<% row.attempts.forEach(a => { %>
-<% if (a.finalScore !== null) { %>
-<div class="modal fade" id="pt-<%= row.sportsmanId %>-<%= a.number %>" tabindex="-1" aria-labelledby="pt-title-<%= row.sportsmanId %>-<%= a.number %>" aria-hidden="true">
+<div class="modal fade" id="attemptModal" tabindex="-1" aria-labelledby="attemptModalTitle" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="h5 modal-title" id="pt-title-<%= row.sportsmanId %>-<%= a.number %>"><%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %></h2>
+        <h2 class="h5 modal-title" id="attemptModalTitle"></h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<%= t('common:actions.close') %>"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" id="attemptModalBody"></div>
+    </div>
+  </div>
+</div>
+
+<% leaderboard.forEach(row => { %>
+<% row.attempts.forEach(a => { %>
+<% if (a.finalScore !== null) { %>
+<template id="pt-<%= row.sportsmanId %>-<%= a.number %>" data-title="<%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %>">
+
         <h3 class="h6 fw-bold"><%= t('leaderboard:modal.breakdownHeading') %></h3>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered">
@@ -136,14 +142,12 @@
           </table>
         </div>
         <% }) %>
-      </div>
-    </div>
-  </div>
-</div>
+</template>
 <% } %>
 <% }) %>
 <% }) %>
 <% } %>
 </div>
+<script src="<%= assetUrl('/attempt-modal.js') %>" defer></script>
 <script src="<%= assetUrl('/live-refresh.js') %>" defer></script>
 <%- include('partials/footer', { wide: true }) %>

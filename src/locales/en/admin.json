@@ -81,6 +81,7 @@
   "documents": {
     "pageTitle": "Documents – {{name}}",
     "heading": "Documents",
+    "previewHint": "Choose a template file to enable the preview.",
     "infoText": "Generate printable documents for this competition.",
     "results": {
       "title": "Results list (PDF)",
@@ -97,6 +98,7 @@
   "judges": {
     "pageTitle": "Judges – {{name}}",
     "heading": "Judges",
+    "selectLabel": "Judge for {{roleName}}",
     "noPanelTitle": "No judge panel selected",
     "noPanelBody": "Choose a judge panel on the competition's edit page before assigning judges.",
     "editCompetition": "Edit Competition",

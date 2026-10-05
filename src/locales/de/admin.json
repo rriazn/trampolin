@@ -81,6 +81,7 @@
   "documents": {
     "pageTitle": "Dokumente – {{name}}",
     "heading": "Dokumente",
+    "previewHint": "Wählen Sie eine Vorlagendatei, um die Vorschau zu aktivieren.",
     "infoText": "Erstellen Sie druckbare Dokumente für diesen Wettkampf.",
     "results": {
       "title": "Ergebnisliste (PDF)",
@@ -97,6 +98,7 @@
   "judges": {
     "pageTitle": "Kampfrichter – {{name}}",
     "heading": "Kampfrichter",
+    "selectLabel": "Kampfrichter für {{roleName}}",
     "noPanelTitle": "Kein Kampfgericht ausgewählt",
     "noPanelBody": "Wählen Sie ein Kampfgericht auf der Bearbeitungsseite des Wettkampfes, dann können Kampfrichter zugewiesen werden.",
     "editCompetition": "Wettkampf bearbeiten",

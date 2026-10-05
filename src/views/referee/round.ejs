@@ -43,8 +43,8 @@
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
     <input type="hidden" name="judgeRoleId" value="<%= input.judge_role_id %>">
     <% input.elements.forEach((el, idx) => { %>
-    <div class="d-flex align-items-center gap-3 py-2 px-3 rounded mb-1
-        <%= el.kind === 'landing' ? 'bg-warning bg-opacity-25' : el.kind === 'bonus' ? 'bg-info bg-opacity-10' : el.kind === 'missingSkill' ? 'bg-danger bg-opacity-10' : (idx % 2 === 0 ? 'bg-light' : '') %>">
+    <div class="d-flex align-items-center gap-3 py-2 px-3 mb-1
+        <%= el.kind === 'landing' ? 'row-attention' : el.kind === 'bonus' ? 'row-bonus' : el.kind === 'missingSkill' ? 'row-attention' : (idx % 2 === 0 ? 'row-stripe' : '') %>">
       <span class="fw-semibold element-label" id="el-<%= input.judge_role_id %>-<%= el.number %>">
         <% if (el.kind === 'landing') { %><%= t('referee:round.landing') %>
         <% } else if (el.kind === 'bonus') { %><%= t('referee:round.bonus') %>

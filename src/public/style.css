@@ -618,6 +618,17 @@ summary:focus-visible,
 /* Text on the turquoise tint needs the deep shade to stay above 4.5:1 */
 .text-turquoise-deep { color: var(--turquoise-deep) !important; }
 
+/* Tinted rows on scoring screens, the tint is paired with a label so it never carries meaning alone */
+.row-stripe { background: var(--ground); }
+.row-bonus { background: var(--turquoise-tint); }
+.row-attention { background: var(--orange-tint); }
+
+/* standalone text links get a 44px hit area without moving the layout */
+.link-touch {
+  display: inline-block;
+  padding-block: .8rem;
+}
+
 /* Fixed widths that used to be inline styles */
 .w-fit { width: fit-content; }
 .col-narrow { width: 6.25rem; }
