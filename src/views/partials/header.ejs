@@ -38,17 +38,18 @@
     <div class="collapse navbar-collapse" id="mainNav">
       <div class="nav-items ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 pt-3 pt-lg-0">
         <span class="nav-user-chip"><%= currentUser.name %></span>
+        <% const navLinkAttrs = (page) => (typeof activePage !== 'undefined' && activePage === page) ? 'class="nav-link active" aria-current="page"' : 'class="nav-link"'; %>
         <% if (currentUser.role === 'admin') { %>
-        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='admin' ? 'active' : '' %>"<%- typeof activePage !== 'undefined' && activePage==='admin' ? ' aria-current="page"' : '' %> href="/admin"><%= t('common:nav.admin') %></a>
+        <a <%- navLinkAttrs('admin') %> href="/admin"><%= t('common:nav.admin') %></a>
         <% } %>
         <% if (currentUser.role === 'referee') { %>
-        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='scoring' ? 'active' : '' %>"<%- typeof activePage !== 'undefined' && activePage==='scoring' ? ' aria-current="page"' : '' %> href="/referee"><%= t('common:nav.scoring') %></a>
+        <a <%- navLinkAttrs('scoring') %> href="/referee"><%= t('common:nav.scoring') %></a>
         <% } %>
         <% if (currentUser.role === 'head_judge') { %>
-        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='head-judge' ? 'active' : '' %>"<%- typeof activePage !== 'undefined' && activePage==='head-judge' ? ' aria-current="page"' : '' %> href="/head-judge"><%= t('common:nav.headJudge') %></a>
+        <a <%- navLinkAttrs('head-judge') %> href="/head-judge"><%= t('common:nav.headJudge') %></a>
         <% } %>
         <% if (currentUser.role === 'viewer') { %>
-        <a class="nav-link <%= typeof activePage !== 'undefined' && activePage==='viewer' ? 'active' : '' %>"<%- typeof activePage !== 'undefined' && activePage==='viewer' ? ' aria-current="page"' : '' %> href="/viewer"><%= t('common:nav.viewer') %></a>
+        <a <%- navLinkAttrs('viewer') %> href="/viewer"><%= t('common:nav.viewer') %></a>
         <% } %>
         <%- include('lang-switcher', { modifier: 'lang-switcher-inline' }) %>
         <form method="POST" action="/logout" class="m-0">

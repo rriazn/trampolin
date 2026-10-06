@@ -66,6 +66,20 @@ test.describe('when logged in as admin', () => {
     await expect(preview).toBeDisabled();
   });
 
+  test('shows the preview hint on the file input only until a template file is chosen', async ({ page }) => {
+    await openDocuments(page, 'Winter Cup');
+    const card = page.locator('#document-results');
+    const input = card.locator('input[name=template]');
+    const hint = card.getByText('Choose a template file to enable the preview.');
+    await expect(hint).toBeVisible();
+    await expect(input).toHaveAccessibleDescription('Choose a template file to enable the preview.');
+    await input.setInputFiles({ name: 'mine.typ', mimeType: 'text/plain', buffer: Buffer.from('= Hello') });
+    await expect(hint).toBeHidden();
+    await expect(input).not.toHaveAttribute('aria-describedby');
+    await input.setInputFiles([]);
+    await expect(hint).toBeVisible();
+  });
+
   test('links to the default template and offers no sample data download', async ({ page }) => {
     await openDocuments(page, 'Winter Cup');
     await expect(page.locator('#document-results').getByRole('link', { name: 'Default template' })).toHaveAttribute('href', /\/admin\/competitions\/\d+\/documents\/results\/template$/);

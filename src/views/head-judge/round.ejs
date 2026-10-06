@@ -90,7 +90,7 @@
     <% if (roleJudges && roleJudges.judges.length > 0) { %>
     <div class="d-flex flex-wrap gap-2 ms-4">
       <% roleJudges.judges.forEach(j => { %>
-      <div class="p-2 judge-chip <%= j.isDone ? 'row-bonus' : 'row-stripe' %>">
+      <div class="p-2 judge-chip <%= j.isDone ? 'judge-chip-done' : 'judge-chip-pending' %>">
         <div class="d-flex align-items-center gap-1 small <%= j.isDone ? 'text-turquoise-deep' : 'text-muted' %>">
           <i class="bi <%= j.isDone ? 'bi-check-lg' : 'bi-hourglass-split' %>"></i>
           <span class="fw-semibold"><%= j.name %></span>

@@ -623,10 +623,15 @@ summary:focus-visible,
 .row-bonus { background: var(--turquoise-tint); }
 .row-attention { background: var(--orange-tint); }
 
-/* standalone text links get a 44px hit area without moving the layout */
+/* Judge status chips on the head judge screen */
+.judge-chip-done { background: var(--turquoise-tint); }
+.judge-chip-pending { background: var(--ground); }
+
+/* standalone text links get a 44px hit area, the negative margin keeps the layout */
 .link-touch {
   display: inline-block;
   padding-block: .8rem;
+  margin-block: -.8rem;
 }
 
 /* Fixed widths that used to be inline styles */

@@ -169,6 +169,43 @@ test.describe('with scored athletes', () => {
     await expect(modal).toContainText('Partial');
   });
 
+  test('fills the attempt dialog when the table arrives by live refresh on a page that loaded empty', async ({ page }) => {
+    await page.clock.install();
+    let first = true;
+    await page.route('**/leaderboard/competitions/**', async (route) => {
+      const response = await route.fetch();
+      const body = await response.text();
+      if (!first) return route.fulfill({ response, body });
+      first = false;
+      // the first load gets the empty state, so the dialog is not in the dom yet
+      const empty = body.replace(/(<div[^>]*data-live="board"[^>]*>)[\s\S]*?(<\/div>\s*<script)/, '$1<p>No athletes scored yet</p>$2');
+      await route.fulfill({ response, body: empty });
+    });
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    await expect(page.locator('#attemptModal')).toHaveCount(0);
+    await page.clock.fastForward(10500);
+    const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
+    await bobRow.locator('td').nth(4).getByRole('button').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('heading', { name: 'Bob — Attempt 1' })).toBeVisible();
+    await expect(modal.getByRole('row', { name: /Time of Flight\s+9\.20/ })).toBeVisible();
+  });
+
+  test('clears the attempt dialog instead of showing the previous athlete when a template is missing', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
+    const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
+    await bobRow.locator('td').nth(4).getByRole('button').click();
+    const modal = page.locator('.modal.show');
+    await expect(modal.getByRole('heading', { name: 'Bob — Attempt 1' })).toBeVisible();
+    await modal.getByRole('button', { name: 'Close' }).click();
+    await expect(page.locator('.modal.show')).toHaveCount(0);
+    const charlieButton = page.locator('table tbody tr').filter({ hasText: 'Charlie' }).locator('td').nth(4).getByRole('button');
+    await charlieButton.evaluate((el) => el.setAttribute('data-attempt-detail', 'missing'));
+    await charlieButton.click();
+    await expect(page.locator('#attemptModalTitle')).toHaveText('');
+    await expect(page.locator('#attemptModalBody')).toBeEmpty();
+  });
+
   test('the attempt score is a tap target of at least 44px', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
     const box = await page.locator('.lb-attempt-btn').first().boundingBox();

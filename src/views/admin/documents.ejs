@@ -24,10 +24,10 @@
     <% } else { %>
     <form method="POST" action="/admin/competitions/<%= competition.id %>/documents/results" enctype="multipart/form-data" class="results-form">
       <label class="form-label small" for="results-template"><%= t('results:ui.templateLabel') %></label>
-      <input type="file" id="results-template" name="template" accept=".typ" class="form-control form-control-sm mb-2">
+      <input type="file" id="results-template" name="template" accept=".typ" aria-describedby="results-preview-hint" class="form-control form-control-sm mb-2">
       <button type="submit" class="btn btn-sm btn-brand me-1"><%= t('results:ui.download') %></button>
-      <button type="submit" formaction="/admin/competitions/<%= competition.id %>/documents/results/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" aria-describedby="results-preview-hint" disabled><%= t('results:ui.preview') %></button>
-      <div class="form-text" id="results-preview-hint"><%= t('admin:documents.previewHint') %></div>
+      <button type="submit" formaction="/admin/competitions/<%= competition.id %>/documents/results/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" disabled><%= t('results:ui.preview') %></button>
+      <div class="form-text preview-hint" id="results-preview-hint"><%= t('admin:documents.previewHint') %></div>
       <div class="small">
         <a class="link-touch" href="/admin/competitions/<%= competition.id %>/documents/results/template"><%= t('results:ui.defaultTemplate') %></a>
       </div>
@@ -41,7 +41,7 @@
     <p class="text-muted small mb-3"><%= t('admin:documents.certificates.description') %></p>
     <form method="POST" action="<%= certificatesUrl %>" enctype="multipart/form-data" class="certificates-form">
       <label class="form-label small" for="certificates-template"><%= t('certificates:ui.templateLabel') %></label>
-      <input type="file" id="certificates-template" name="template" accept=".pdf" class="form-control form-control-sm mb-1">
+      <input type="file" id="certificates-template" name="template" accept=".pdf" aria-describedby="certificates-preview-hint" class="form-control form-control-sm mb-1">
       <div class="form-text mb-3"><%= t('certificates:ui.markersHelp', { list: markers }) %></div>
 
       <h3 class="h6 small text-uppercase text-muted mb-2"><%= t('admin:documents.certificates.groupsHeading') %></h3>
@@ -67,8 +67,8 @@
       <% if (groups.some((g) => g.downloadable)) { %>
       <button type="submit" class="btn btn-sm btn-brand me-1"><%= t('certificates:ui.downloadAll') %></button>
       <% } %>
-      <button type="submit" formaction="<%= certificatesUrl %>/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" aria-describedby="certificates-preview-hint" disabled><%= t('certificates:ui.preview') %></button>
-      <div class="form-text" id="certificates-preview-hint"><%= t('admin:documents.previewHint') %></div>
+      <button type="submit" formaction="<%= certificatesUrl %>/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" disabled><%= t('certificates:ui.preview') %></button>
+      <div class="form-text preview-hint" id="certificates-preview-hint"><%= t('admin:documents.previewHint') %></div>
       <div class="small">
         <a class="link-touch" href="<%= certificatesUrl %>/template"><%= t('certificates:ui.exampleTemplate') %></a>
       </div>
@@ -80,7 +80,14 @@
   document.querySelectorAll('.results-form, .certificates-form').forEach((form) => {
     const files = form.querySelectorAll('input[type=file]');
     const preview = form.querySelector('.preview-button');
-    const update = () => { preview.disabled = ![...files].some((file) => file.files.length > 0); };
+    const hint = form.querySelector('.preview-hint');
+    const update = () => {
+      const chosen = [...files].some((file) => file.files.length > 0);
+      preview.disabled = !chosen;
+      // the hint only tells how to enable the preview, so it goes once a file is chosen
+      hint.hidden = chosen;
+      files.forEach((file) => (chosen ? file.removeAttribute('aria-describedby') : file.setAttribute('aria-describedby', hint.id)));
+    };
     files.forEach((file) => file.addEventListener('change', update));
   });
 </script>
