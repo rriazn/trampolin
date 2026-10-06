@@ -81,6 +81,18 @@ test.describe('when logged in as admin', () => {
     await expect(row.getByRole('button', { name: /Activate/ })).not.toBeVisible();
   });
 
+  // Results PDF
+
+  test('shows a Documents button on every competition row', async ({ page }) => {
+    for (const name of ['Winter Cup', 'Autumn Open', 'Spring Cup']) {
+      await expect(page.getByRole('row').filter({ hasText: name }).getByRole('link', { name: 'Documents' })).toBeVisible();
+    }
+  });
+
+  test('no longer shows the results PDF form in the table', async ({ page }) => {
+    await expect(page.getByText('Results PDF')).toHaveCount(0);
+  });
+
   // Buttons
 
   test('New Competition button is present', async ({ page }) => {

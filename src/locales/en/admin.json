@@ -19,6 +19,7 @@
     "table": { "name": "Name", "date": "Date", "status": "Status", "type": "Type" },
     "groups": "Groups",
     "judges": "Judges",
+    "documents": "Documents",
     "activate": "Activate",
     "close": "Close",
     "confirmDelete": "Delete competition and ALL its data?"
@@ -57,7 +58,9 @@
     "confirmDelete": "Delete user {{name}}?",
     "errors": {
       "noFile": "No file uploaded.",
-      "invalidFileType": "Invalid file type. Please upload an Excel file."
+      "invalidFileType": "Invalid file type. Please upload an Excel file.",
+      "tooLarge": "The file is larger than 5 MB.",
+      "uploadFailed": "The file could not be uploaded."
     }
   },
   "userForm": {
@@ -75,9 +78,27 @@
       "emailInUse": "Email already in use."
     }
   },
+  "documents": {
+    "pageTitle": "Documents – {{name}}",
+    "heading": "Documents",
+    "previewHint": "Choose a template file to enable the preview.",
+    "infoText": "Generate printable documents for this competition.",
+    "results": {
+      "title": "Results list (PDF)",
+      "description": "All rounds of every competitor, group by group, with a judges page at the end.",
+      "availableWhenClosed": "Available once the competition is closed."
+    },
+    "certificates": {
+      "title": "Certificates (PDF)",
+      "description": "One certificate page per participant, as a PDF per group or as a ZIP of all groups. A group is ready once all its rounds are completed. Design the page in Word, Canva or similar, mark where the data belongs and upload it as a PDF.",
+      "groupsHeading": "Groups",
+      "noGroups": "This competition has no groups yet."
+    }
+  },
   "judges": {
     "pageTitle": "Judges – {{name}}",
     "heading": "Judges",
+    "selectLabel": "Judge for {{roleName}}",
     "noPanelTitle": "No judge panel selected",
     "noPanelBody": "Choose a judge panel on the competition's edit page before assigning judges.",
     "editCompetition": "Edit Competition",
@@ -200,6 +221,7 @@
     "badStatus": "Bad status"
   },
   "flash": {
+    "importTruncated": "Only the first {{count}} rows were read.",
     "users": {
       "created": "User \"{{name}}\" created.",
       "updated": "User updated.",

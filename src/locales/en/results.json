@@ -1,0 +1,42 @@
+{
+  "labels": {
+    "title": "Results",
+    "generated": "Generated",
+    "groups": "Groups",
+    "group": "Group",
+    "place": "Place",
+    "round": "Round",
+    "rank": "Rank",
+    "attempt": "Attempt",
+    "total": "Total",
+    "roundTotal": "Round total",
+    "skills": "Skills",
+    "landing": "Landing",
+    "bonus": "Bonus",
+    "missingSkill": "Missing skill",
+    "skipped": "Skipped",
+    "pending": "Not scored",
+    "judges": "Judges",
+    "bestAttemptCounts": "best attempt counts"
+  },
+  "errors": {
+    "noFile": "Choose a .typ template file first",
+    "notTyp": "The template must be a .typ file",
+    "tooLarge": "The template is larger than 256 KB",
+    "notUtf8": "The template is not valid UTF-8 text",
+    "packages": "Templates cannot import packages",
+    "timeout": "Compiling the template took too long and was stopped",
+    "compileFailed": "The template could not be compiled",
+    "notClosed": "The results PDF is only available for closed competitions",
+    "compileError": "Template error at line {{line}}, column {{column}}: {{message}}",
+    "uploadFailed": "The template could not be uploaded",
+    "busy": "Too many results are being generated right now, try again in a moment",
+    "outputTooLarge": "The generated PDF is too large"
+  },
+  "ui": {
+    "templateLabel": "Custom template (.typ, optional)",
+    "download": "Download PDF",
+    "preview": "Preview template",
+    "defaultTemplate": "Default template"
+  }
+}

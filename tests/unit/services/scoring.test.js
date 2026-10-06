@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { combineScores, computeAttemptScore, parseAndValidate11thScore } from '../../../src/services/scoring.service.js';
+import { combineScores, computeAttemptScore, keptIndices, parseAndValidate11thScore } from '../../../src/services/scoring.service.js';
 
 describe('combineScores', () => {
   it('returns null for empty scores', () => {
@@ -44,6 +44,25 @@ describe('combineScores', () => {
 
   it('throws for an unknown combine mode', () => {
     expect(() => combineScores({ scores: [1], combine: 'bogus' })).toThrow();
+  });
+});
+
+describe('keptIndices', () => {
+  it('keeps every index when nothing is dropped', () => {
+    expect([...keptIndices([3, 1, 2])].sort()).toEqual([0, 1, 2]);
+  });
+
+  it('returns the original positions of the values that survive dropping', () => {
+    // values 6,2,4,1,5,3 -> drop the lowest (1 at index 3) and the highest (6 at index 0)
+    expect([...keptIndices([6, 2, 4, 1, 5, 3], 1, 1)].sort()).toEqual([1, 2, 4, 5]);
+  });
+
+  it('keeps everything when there are not enough scores to drop from', () => {
+    expect([...keptIndices([5, 7], 1, 1)].sort()).toEqual([0, 1]);
+  });
+
+  it('drops only one of two equal values', () => {
+    expect(keptIndices([2, 2, 2], 1, 0).size).toBe(2);
   });
 });
 

@@ -2,7 +2,7 @@
   "pageTitle": "Login",
   "subtitle": "Wettkampfwertungssystem",
   "email": "E-Mail",
-  "emailPlaceholder": "you@beispiel.com",
+  "emailPlaceholder": "name@beispiel.com",
   "password": "Passwort",
   "passwordPlaceholder": "••••••••",
   "signIn": "Einloggen",

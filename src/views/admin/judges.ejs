@@ -74,7 +74,7 @@
     <form method="POST" action="/admin/competitions/<%= competition.id %>/judges" class="row g-3 align-items-end">
       <input type="hidden" name="judge_role_id" value="<%= role.judgeRoleId %>">
       <div class="col-md-9">
-        <select name="user_id" class="form-select" required>
+        <select name="user_id" class="form-select" aria-label="<%= t('admin:judges.selectLabel', { roleName: roleDisplayName }) %>" required>
           <% role.candidates.forEach(c => { %>
           <option value="<%= c.id %>"><%= c.name %> · <%= c.email %></option>
           <% }) %>

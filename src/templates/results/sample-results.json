@@ -1,0 +1,779 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-02 14:03",
+  "labels": {
+    "title": "Results",
+    "generated": "Generated",
+    "groups": "Groups",
+    "group": "Group",
+    "place": "Place",
+    "round": "Round",
+    "rank": "Rank",
+    "attempt": "Attempt",
+    "total": "Total",
+    "roundTotal": "Round total",
+    "skills": "Skills",
+    "landing": "Landing",
+    "bonus": "Bonus",
+    "missingSkill": "Missing skill",
+    "skipped": "Skipped",
+    "pending": "Not scored",
+    "judges": "Judges",
+    "bestAttemptCounts": "best attempt counts"
+  },
+  "competition": {
+    "name": "City Championships 2026",
+    "date": "2026-10-02",
+    "type": "individual"
+  },
+  "groups": [
+    {
+      "name": "Group A",
+      "abbreviation": "GA",
+      "competitors": [
+        {
+          "place": 1,
+          "name": "Athlete A",
+          "club": "Club A",
+          "rounds": [
+            {
+              "name": "Qualifying",
+              "scoringMode": "sum",
+              "total": "76.4",
+              "rank": 1,
+              "attempts": [
+                {
+                  "number": 1,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.3"
+                      ],
+                      "landing": "0.1",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "7.9"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.6"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "5.1"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "7.9"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.1"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "15.2"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "9.4"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.3"
+                    }
+                  ],
+                  "final": "37.3",
+                  "counted": true
+                },
+                {
+                  "number": 2,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.1",
+                        "0.2",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.2"
+                      ],
+                      "landing": "0.0",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "8.3"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.6"
+                      ],
+                      "landing": null,
+                      "bonus": "0.3",
+                      "missingSkill": null,
+                      "total": "5.4"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "8.3"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.4"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "15.8"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "9.6"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "0.0"
+                    }
+                  ],
+                  "final": "39.1",
+                  "counted": true
+                }
+              ]
+            },
+            {
+              "name": "Final",
+              "scoringMode": "best_attempt",
+              "total": "39.2",
+              "rank": 1,
+              "attempts": [
+                {
+                  "number": 1,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.1",
+                        "0.2",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.2"
+                      ],
+                      "landing": "0.1",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "8.2"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.6"
+                      ],
+                      "landing": null,
+                      "bonus": "0.3",
+                      "missingSkill": null,
+                      "total": "5.4"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "8.2"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.4"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "16.1"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "9.5"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "0.0"
+                    }
+                  ],
+                  "final": "39.2",
+                  "counted": true
+                },
+                {
+                  "number": 2,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.3",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.3"
+                      ],
+                      "landing": "0.2",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "7.8"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.6"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "5.1"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "7.8"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.1"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "16.4"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "9.3"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.3"
+                    }
+                  ],
+                  "final": "38.3",
+                  "counted": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "place": 2,
+          "name": "Athlete B",
+          "club": "Club B",
+          "rounds": [
+            {
+              "name": "Qualifying",
+              "scoringMode": "sum",
+              "total": "31.6",
+              "rank": 2,
+              "attempts": [
+                {
+                  "number": 1,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "tricks": [
+                        "0.3",
+                        "0.3",
+                        "0.2",
+                        "0.3",
+                        "0.4",
+                        "0.2",
+                        "0.3",
+                        "0.2",
+                        "0.3",
+                        "0.3"
+                      ],
+                      "landing": "0.2",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "7.0"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.4",
+                        "0.4",
+                        "0.5",
+                        "0.5",
+                        "0.4",
+                        "0.5",
+                        "0.4",
+                        "0.4",
+                        "0.5",
+                        "0.4"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": "2.0",
+                      "total": "2.4"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "7.0"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "2.4"
+                    },
+                    {
+                      "roleKey": "time_of_flight",
+                      "label": "T",
+                      "value": "14.1"
+                    },
+                    {
+                      "roleKey": "horizontal_displacement",
+                      "label": "H",
+                      "value": "8.7"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.6"
+                    }
+                  ],
+                  "final": "31.6",
+                  "counted": true
+                },
+                {
+                  "number": 2,
+                  "status": "skipped",
+                  "elementCount": 10,
+                  "rows": [],
+                  "summary": [],
+                  "final": null,
+                  "counted": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Group B",
+      "abbreviation": "GB",
+      "competitors": [
+        {
+          "place": 1,
+          "name": "Athlete C",
+          "club": "Club B",
+          "rounds": [
+            {
+              "name": "Final",
+              "scoringMode": "best_attempt",
+              "total": "20.7",
+              "rank": 1,
+              "attempts": [
+                {
+                  "number": 1,
+                  "status": "scored",
+                  "elementCount": 8,
+                  "rows": [
+                    {
+                      "kind": "judges",
+                      "roleKey": "execution",
+                      "label": "E",
+                      "suffix": null,
+                      "judges": [
+                        {
+                          "label": "E1",
+                          "value": "8.5",
+                          "dropped": true
+                        },
+                        {
+                          "label": "E2",
+                          "value": "7.9",
+                          "dropped": false
+                        },
+                        {
+                          "label": "E3",
+                          "value": "7.2",
+                          "dropped": true
+                        },
+                        {
+                          "label": "E4",
+                          "value": "7.8",
+                          "dropped": false
+                        }
+                      ],
+                      "total": "15.7"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.6",
+                        "0.7",
+                        "0.6",
+                        "0.7",
+                        "0.6",
+                        "0.7",
+                        "0.7",
+                        "0.7"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "5.3"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution",
+                      "label": "E",
+                      "value": "15.7"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.3"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.3"
+                    }
+                  ],
+                  "final": "20.7",
+                  "counted": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Group C (synchronous)",
+      "abbreviation": "GCS",
+      "competitors": [
+        {
+          "place": 1,
+          "name": "Athlete D / Athlete E",
+          "club": "Club C / Club D",
+          "rounds": [
+            {
+              "name": "Final",
+              "scoringMode": "best_attempt",
+              "total": "31.9",
+              "rank": 1,
+              "attempts": [
+                {
+                  "number": 1,
+                  "status": "scored",
+                  "elementCount": 10,
+                  "rows": [
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution_t1",
+                      "label": "E",
+                      "suffix": "T1",
+                      "tricks": [
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.2",
+                        "0.1",
+                        "0.3",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.2"
+                      ],
+                      "landing": "0.1",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "4.05"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "execution_t2",
+                      "label": "E",
+                      "suffix": "T2",
+                      "tricks": [
+                        "0.1",
+                        "0.2",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.2",
+                        "0.1",
+                        "0.2",
+                        "0.1",
+                        "0.3"
+                      ],
+                      "landing": "0.2",
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "4.05"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "suffix": null,
+                      "tricks": [
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5",
+                        "0.6",
+                        "0.5",
+                        "0.5"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "5.3"
+                    },
+                    {
+                      "kind": "tricks",
+                      "roleKey": "synchronisation_skill",
+                      "label": "S",
+                      "suffix": null,
+                      "tricks": [
+                        "0.1",
+                        "0.0",
+                        "0.1",
+                        "0.0",
+                        "0.2",
+                        "0.0",
+                        "0.1",
+                        "0.0",
+                        "0.1",
+                        "0.0"
+                      ],
+                      "landing": null,
+                      "bonus": null,
+                      "missingSkill": null,
+                      "total": "18.8"
+                    }
+                  ],
+                  "summary": [
+                    {
+                      "roleKey": "execution_t1",
+                      "label": "E",
+                      "value": "8.1"
+                    },
+                    {
+                      "roleKey": "difficulty",
+                      "label": "D",
+                      "value": "5.3"
+                    },
+                    {
+                      "roleKey": "synchronisation_skill",
+                      "label": "S",
+                      "value": "18.8"
+                    },
+                    {
+                      "roleKey": "head_judge",
+                      "label": "P",
+                      "value": "-0.3"
+                    }
+                  ],
+                  "final": "31.9",
+                  "counted": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "judges": [
+    {
+      "label": "Execution",
+      "members": [
+        {
+          "label": "E1",
+          "name": "Judge A"
+        },
+        {
+          "label": "E2",
+          "name": "Judge B"
+        },
+        {
+          "label": "E3",
+          "name": "Judge C"
+        },
+        {
+          "label": "E4",
+          "name": "Judge D"
+        }
+      ]
+    },
+    {
+      "label": "Difficulty",
+      "members": [
+        {
+          "label": "D1",
+          "name": "Judge E"
+        }
+      ]
+    },
+    {
+      "label": "Time of Flight & Horizontal Displacement",
+      "members": [
+        {
+          "label": "T1 / H1",
+          "name": "Judge F"
+        }
+      ]
+    },
+    {
+      "label": "Synchronisation per Skill",
+      "members": [
+        {
+          "label": "S1",
+          "name": "Judge G"
+        }
+      ]
+    },
+    {
+      "label": "Head Judge (Penalties)",
+      "members": [
+        {
+          "label": "P1",
+          "name": "Judge H"
+        }
+      ]
+    }
+  ]
+}

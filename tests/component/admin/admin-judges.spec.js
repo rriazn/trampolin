@@ -67,6 +67,10 @@ test.describe('when logged in as admin', () => {
       await expect(page.locator('.page-hero p')).toContainText('FIG Panel');
     });
 
+    test('names the judge select after its role', async ({ page }) => {
+      await expect(roleCard(page, 'Execution').getByRole('combobox', { name: 'Judge for Execution' })).toBeVisible();
+    });
+
     test('shows the competition-wide assignment notice', async ({ page }) => {
       await expect(page.getByText('Judges are assigned once per competition and apply to every group and round within it.')).toBeVisible();
     });

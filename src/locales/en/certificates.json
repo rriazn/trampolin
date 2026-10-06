@@ -1,0 +1,44 @@
+{
+  "labels": {
+    "title": "Certificate",
+    "participation": "for participating in",
+    "group": "Group",
+    "score": "Score",
+    "round": "Round",
+    "place_ordinal_one": "{{count}}st place",
+    "place_ordinal_two": "{{count}}nd place",
+    "place_ordinal_few": "{{count}}rd place",
+    "place_ordinal_other": "{{count}}th place",
+    "with": "together with",
+    "date": "Date"
+  },
+  "errors": {
+    "notReady": "The rounds of this group are not finished yet",
+    "noReadyGroups": "No group is ready for certificates yet",
+    "noParticipants": "This group has no participants",
+    "uploadFailed": "The files could not be uploaded",
+    "noPdf": "Choose a PDF template first",
+    "notPdf": "The template must be a PDF file",
+    "pdfTooLarge": "The PDF template is larger than 5 MB",
+    "pdfUnreadable": "The PDF template could not be read, it may be damaged or protected",
+    "pdfPages": "The PDF template must have exactly one page",
+    "pdfRotated": "The page of the PDF template must not be rotated",
+    "unknownMarker": "Unknown marker in the PDF template: {{names}}",
+    "noNameMarker": "The PDF template needs a {{marker}} marker",
+    "tooManyMarkers": "The PDF template has too many markers",
+    "pdfNotUsable": "The PDF template cannot be used: {{message}}"
+  },
+  "ui": {
+    "templateLabel": "PDF template (optional)",
+    "download": "Download",
+    "downloadAll": "Download all (ZIP)",
+    "preview": "Preview",
+    "statusReady": "Ready",
+    "statusRunning": "Rounds still running",
+    "statusEmpty": "No participants",
+    "participants": "{{count}} participants",
+    "exampleTemplate": "Example template (PDF)",
+    "markersHelp": "Write these markers into your design, then export it as a PDF: {{list}}",
+    "statusNoRounds": "No rounds yet"
+  }
+}

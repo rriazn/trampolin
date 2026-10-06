@@ -6,14 +6,15 @@ const session = require('express-session');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const path = require('path');
+const os = require('os');
 const bcrypt = require('bcryptjs');
 const db = require('../../src/db/database');
 const { getAppVersion } = require('../../src/services/version.service');
 const vendorAssets = require('../../src/middleware/vendor');
 const { publicAssets, assetUrl } = require('../../src/middleware/assets');
 
-// a scratch path so footer.spec.js can create/delete a VERSION file without touching the real one
-const TEST_VERSION_PATH = path.join(__dirname, 'VERSION');
+// a scratch path in the temp dir, the mounted tests folder is not writable for the container user
+const TEST_VERSION_PATH = path.join(os.tmpdir(), 'trampolin-component-VERSION');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -28,7 +29,7 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax' },
 }));
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors', 'results', 'certificates'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`../../src/locales/${lng}/${ns}.json`)])
 );
@@ -238,6 +239,21 @@ app.post('/test/seed/scored-sum', (req, res) => {
     groupId: Number(group.lastInsertRowid),
     roundId: Number(round.lastInsertRowid),
   });
+});
+
+// one group per certificate status, for admin-documents.spec.js: Done (completed round), Running (round in progress), Empty (completed, no athletes), Planned (no rounds yet)
+app.post('/test/seed/certificates', (req, res) => {
+  cleanupDb();
+
+  const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Certificate Cup', 'active');
+  for (const [name, roundStatus, athletes] of [['Done', 'completed', ['Alice', 'Bob']], ['Running', 'in_progress', ['Carl']], ['Empty', 'completed', []], ['Planned', null, ['Dora']]]) {
+    const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation) VALUES (?, ?, ?)').run(comp.lastInsertRowid, name, name.slice(0, 2).toUpperCase());
+    if (roundStatus) db.prepare('INSERT INTO rounds (group_id, name, round_order, status) VALUES (?, ?, 1, ?)').run(group.lastInsertRowid, 'Final', roundStatus);
+    for (const athlete of athletes) {
+      db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run(athlete, comp.lastInsertRowid, group.lastInsertRowid);
+    }
+  }
+  res.json({ competitionId: Number(comp.lastInsertRowid) });
 });
 
 // two groups, for admin-entries.spec.js's regression test that only same-group athletes are offered as available entries

@@ -268,7 +268,7 @@ test('a referee\'s submitted score, including a missing-skill deduction, matches
 
   await loginAsHeadJudge(page);
   await page.goto(hjUrl);
-  const diffJudgeCard = page.locator('.p-2.rounded').filter({ hasText: 'Maria Schmidt' });
+  const diffJudgeCard = page.locator('.judge-chip').filter({ hasText: 'Maria Schmidt' });
   await expect(diffJudgeCard).toContainText('-1.00');
 });
 

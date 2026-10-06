@@ -19,6 +19,10 @@ exports.getSportsmenByCompetition = (competitionId) => {
     `).all(competitionId);
 };
 
+exports.getSportsmenByGroup = (groupId) => {
+    return db.prepare('SELECT * FROM sportsmen WHERE group_id = ? ORDER BY name').all(groupId);
+};
+
 exports.getSportsmenWithGroup = (competitionId) => {
     return db.prepare(`
         SELECT s.name, s.club, s.gender, s.birth_year, s.routine, g.abbreviation AS group_abbreviation,

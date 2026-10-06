@@ -1,0 +1,94 @@
+<%- include('../partials/header', { title: t('admin:documents.pageTitle', { name: competition.name }), activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item active"><%= competition.name %></li>
+      </ol>
+    </nav>
+    <h1><%= t('admin:documents.heading') %></h1>
+    <p><%= competition.name %></p>
+  </div>
+</div>
+
+<div class="container">
+  <p class="text-muted small mb-4"><%= t('admin:documents.infoText') %></p>
+
+  <% const resultsReady = competition.status === 'closed'; %>
+  <div class="card p-4 mb-3 document-card" id="document-results">
+    <h2 class="h5 mb-1"><%= t('admin:documents.results.title') %></h2>
+    <p class="text-muted small mb-3"><%= t('admin:documents.results.description') %></p>
+    <% if (!resultsReady) { %>
+    <p class="mb-0"><%= t('admin:documents.results.availableWhenClosed') %></p>
+    <% } else { %>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/documents/results" enctype="multipart/form-data" class="results-form">
+      <label class="form-label small" for="results-template"><%= t('results:ui.templateLabel') %></label>
+      <input type="file" id="results-template" name="template" accept=".typ" aria-describedby="results-preview-hint" class="form-control form-control-sm mb-2">
+      <button type="submit" class="btn btn-sm btn-brand me-1"><%= t('results:ui.download') %></button>
+      <button type="submit" formaction="/admin/competitions/<%= competition.id %>/documents/results/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" disabled><%= t('results:ui.preview') %></button>
+      <div class="form-text preview-hint" id="results-preview-hint"><%= t('admin:documents.previewHint') %></div>
+      <div class="small">
+        <a class="link-touch" href="/admin/competitions/<%= competition.id %>/documents/results/template"><%= t('results:ui.defaultTemplate') %></a>
+      </div>
+    </form>
+    <% } %>
+  </div>
+
+  <% const certificatesUrl = `/admin/competitions/${competition.id}/documents/certificates`; %>
+  <div class="card p-4 mb-3 document-card" id="document-certificates">
+    <h2 class="h5 mb-1"><%= t('admin:documents.certificates.title') %></h2>
+    <p class="text-muted small mb-3"><%= t('admin:documents.certificates.description') %></p>
+    <form method="POST" action="<%= certificatesUrl %>" enctype="multipart/form-data" class="certificates-form">
+      <label class="form-label small" for="certificates-template"><%= t('certificates:ui.templateLabel') %></label>
+      <input type="file" id="certificates-template" name="template" accept=".pdf" aria-describedby="certificates-preview-hint" class="form-control form-control-sm mb-1">
+      <div class="form-text mb-3"><%= t('certificates:ui.markersHelp', { list: markers }) %></div>
+
+      <h3 class="h6 small text-uppercase text-muted mb-2"><%= t('admin:documents.certificates.groupsHeading') %></h3>
+      <% if (groups.length === 0) { %>
+      <p class="text-muted small"><%= t('admin:documents.certificates.noGroups') %></p>
+      <% } else { %>
+      <ul class="list-group mb-3">
+        <% groups.forEach((g) => { %>
+        <li class="list-group-item d-flex align-items-center justify-content-between gap-2">
+          <span>
+            <strong><%= g.name %></strong>
+            <span class="small ms-2"><%= !g.ready ? (g.roundCount === 0 ? t('certificates:ui.statusNoRounds') : t('certificates:ui.statusRunning')) : g.participantCount === 0 ? t('certificates:ui.statusEmpty') : t('certificates:ui.statusReady') %></span>
+            <% if (g.ready && g.participantCount > 0) { %><span class="text-muted small ms-2"><%= t('certificates:ui.participants', { count: g.participantCount }) %></span><% } %>
+          </span>
+          <% if (g.downloadable) { %>
+          <button type="submit" formaction="/admin/competitions/<%= competition.id %>/groups/<%= g.id %>/documents/certificates" class="btn btn-sm btn-outline-secondary"><%= t('certificates:ui.download') %></button>
+          <% } %>
+        </li>
+        <% }) %>
+      </ul>
+      <% } %>
+
+      <% if (groups.some((g) => g.downloadable)) { %>
+      <button type="submit" class="btn btn-sm btn-brand me-1"><%= t('certificates:ui.downloadAll') %></button>
+      <% } %>
+      <button type="submit" formaction="<%= certificatesUrl %>/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" disabled><%= t('certificates:ui.preview') %></button>
+      <div class="form-text preview-hint" id="certificates-preview-hint"><%= t('admin:documents.previewHint') %></div>
+      <div class="small">
+        <a class="link-touch" href="<%= certificatesUrl %>/template"><%= t('certificates:ui.exampleTemplate') %></a>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  // the preview only runs when a template file is chosen
+  document.querySelectorAll('.results-form, .certificates-form').forEach((form) => {
+    const files = form.querySelectorAll('input[type=file]');
+    const preview = form.querySelector('.preview-button');
+    const hint = form.querySelector('.preview-hint');
+    const update = () => {
+      const chosen = [...files].some((file) => file.files.length > 0);
+      preview.disabled = !chosen;
+      // the hint only tells how to enable the preview, so it goes once a file is chosen
+      hint.hidden = chosen;
+      files.forEach((file) => (chosen ? file.removeAttribute('aria-describedby') : file.setAttribute('aria-describedby', hint.id)));
+    };
+    files.forEach((file) => file.addEventListener('change', update));
+  });
+</script>
+<%- include('../partials/footer') %>

@@ -309,6 +309,18 @@ describe('POST /admin/users/upload', () => {
         expect(res.text).toContain('Invalid file type');
     });
 
+    it('redirects with a flash instead of a server error for a file over 5 MB', async () => {
+        const res = await agent.post('/admin/users/upload').attach('file', Buffer.alloc(5 * 1024 * 1024 + 10, 'a'), 'users.xlsx').redirects(1);
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('larger than 5 MB');
+    });
+
+    it('redirects with a flash for an unexpected form field', async () => {
+        const res = await agent.post('/admin/users/upload').attach('other', Buffer.from('x'), 'users.xlsx').redirects(1);
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('could not be uploaded');
+    });
+
     it('skips rows with missing required fields', async () => {
         const workbook = XLSX.utils.book_new();
         const worksheetData = [

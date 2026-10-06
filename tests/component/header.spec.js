@@ -43,6 +43,10 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('link', { name: /Admin/ })).toHaveClass(/active/);
   });
 
+  test('the active Admin nav link is announced as the current page', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /Admin/ })).toHaveAttribute('aria-current', 'page');
+  });
+
   test('shows the Logout button', async ({ page }) => {
     await expect(page.getByRole('button', { name: /Logout/ })).toBeVisible();
   });
@@ -76,6 +80,10 @@ test.describe('when logged in as referee', () => {
 
   test('the Scoring nav link is active on referee pages', async ({ page }) => {
     await expect(page.getByRole('link', { name: /Scoring/ })).toHaveClass(/active/);
+  });
+
+  test('the active Scoring nav link is announced as the current page', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /Scoring/ })).toHaveAttribute('aria-current', 'page');
   });
 
   test('shows the Logout button', async ({ page }) => {
