@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
+const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function login(page, email, password, landing) {
   await page.goto('/login');
@@ -65,8 +66,8 @@ test('head judge completes the round', async ({ page }) => {
   // Leon's first attempt is scored, so Next moves on, the other three attempts are skipped
   await page.getByRole('button', { name: /Next/ }).click();
   for (let i = 0; i < 3; i++) {
-    page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Skip Athlete/ }).click();
+    await acceptConfirm(page);
   }
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
 });
