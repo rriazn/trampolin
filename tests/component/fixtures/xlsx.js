@@ -41,7 +41,7 @@ function usersImport() {
 
 function sportsmenImport() {
   return xlsxFile('sportsmen-import.xlsx', [
-    ['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group'],
+    ['Name', 'Club', 'Gender', 'Year of Birth', 'Routine', 'Group'],
     ['Charlie', 'Test Club 3', 'm', 2010, 'W11', ''],
     ['', 'Test Club 4', 'f', 2011, 'DMT', ''],
   ]);
@@ -49,7 +49,7 @@ function sportsmenImport() {
 
 function sportsmenImportGroup() {
   return xlsxFile('sportsmen-import-group.xlsx', [
-    ['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group'],
+    ['Name', 'Club', 'Gender', 'Year of Birth', 'Routine', 'Group'],
     ['David', 'Test Club 3', 'm', 2010, 'W11', 'GA'],
   ]);
 }
