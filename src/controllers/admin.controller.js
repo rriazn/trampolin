@@ -259,7 +259,7 @@ exports.exportSportsmen = async (req, res) => {
     const competition = getCompetitionById(req.params.id);
     if (!competition) 
         return renderNotFound(res, req.t('errors:notFound.competition'));
-    const buf = createSportsmenXlsx(competition.id);
+    const buf = createSportsmenXlsx(competition.id, req.language);
     res.setHeader('Content-Disposition', `attachment; filename="sportsmen-${fileNameSlug(competition.name, 'competition')}.xlsx"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.send(buf);

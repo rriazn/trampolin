@@ -124,12 +124,13 @@
     "exportExcel": "Export Excel",
     "addAthlete": "Add Athlete",
     "importHeading": "Import from Excel",
-    "importHelp": "Required: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Club</strong>, <strong>Gender</strong>, <strong>Birthyear</strong>, <strong>Routine</strong>",
-    "importHelpSynchro": "One row per pair. Required: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Club 1/2</strong>, <strong>Gender 1/2</strong>, <strong>Birthyear 1/2</strong>, <strong>Routine</strong>, <strong>Group</strong>",
+    "importHelp": "Required: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Club</strong>, <strong>Gender</strong>, <strong>Year of Birth</strong>, <strong>Routine</strong>",
+    "importHelpSynchro": "One row per pair. Required: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Club 1/2</strong>, <strong>Gender 1/2</strong>, <strong>Year of Birth 1/2</strong>, <strong>Routine</strong>, <strong>Group</strong>",
     "upload": "Upload",
     "noAthletes": "No athletes yet.",
     "addOne": "Add one",
     "table": { "athlete": "Athlete", "club": "Club", "group": "Group", "gender": "Gender", "birthYear": "Birth Year", "routine": "Routine" },
+    "excel": { "name": "Name", "club": "Club", "gender": "Gender", "yearOfBirth": "Year of Birth", "routine": "Routine", "group": "Group" },
     "confirmDelete": "Delete {{name}}?"
   },
   "sportsmanForm": {

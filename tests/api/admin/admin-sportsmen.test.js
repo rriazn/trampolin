@@ -273,7 +273,7 @@ describe('synchro competitions', () => {
     });
 
     it('round-trips a pair list through upload and export', async () => {
-        const headers = ['Name 1', 'Club 1', 'Gender 1', 'Birthyear 1', 'Name 2', 'Club 2', 'Gender 2', 'Birthyear 2', 'Routine', 'Group'];
+        const headers = ['Name 1', 'Club 1', 'Gender 1', 'Year of Birth 1', 'Name 2', 'Club 2', 'Gender 2', 'Year of Birth 2', 'Routine', 'Group'];
         const ws = XLSX.utils.aoa_to_sheet([headers, ['Upload A', 'TSV', 'm', 2008, 'Upload B', 'SV', 'f', 2009, 'W11', '']]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
@@ -288,7 +288,7 @@ describe('synchro competitions', () => {
         });
         const sheet = XLSX.read(exported.body, { type: 'buffer' });
         const rows = XLSX.utils.sheet_to_json(sheet.Sheets[sheet.SheetNames[0]]);
-        expect(rows.find(r => r['Name 1'] === 'Upload A')).toMatchObject({ 'Name 2': 'Upload B', 'Club 2': 'SV', 'Gender 2': 'f', 'Birthyear 2': 2009 });
+        expect(rows.find(r => r['Name 1'] === 'Upload A')).toMatchObject({ 'Name 2': 'Upload B', 'Club 2': 'SV', 'Gender 2': 'f', 'Year of Birth 2': 2009 });
     });
 
     it('ignores partner fields on an individual competition', async () => {
