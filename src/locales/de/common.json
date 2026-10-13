@@ -47,28 +47,28 @@
   },
   "panelTemplates": {
     "fig": {
-      "name": "FIG-Panel",
-      "description": "Vollständiges FIG-Panel: 6 Haltung, 1 Schwierigkeit, 1 Time of Flight, 1 Horizontal Displacement, 1 Wettkampfleiter (Strafabzug)."
+      "name": "FIG-Kampfgericht",
+      "description": "Vollständiges FIG-Kampfgericht: 6 Haltung, 1 Schwierigkeit, 1 Time of Flight, 1 Horizontal Displacement, 1 Wettkampfleiter (Strafabzug)."
     },
     "local": {
-      "name": "Lokales Panel",
-      "description": "Vereinfachtes Panel für lokale Wettkämpfe ohne elektronische Zeitmessung/HD-Messung: 4 Haltung, 1 Schwierigkeit, 1 Wettkampfleiter (Strafabzug)."
+      "name": "Lokales Kampfgericht",
+      "description": "Vereinfachtes Kampfgericht für lokale Wettkämpfe ohne elektronische Zeitmessung/HD-Messung: 4 Haltung, 1 Schwierigkeit, 1 Wettkampfleiter (Strafabzug)."
     },
     "test": {
-      "name": "Test-Panel",
-      "description": "Test-Panel für Entwicklung und Tests."
+      "name": "Test-Kampfgericht",
+      "description": "Test-Kampfgericht für Entwicklung und Tests."
     },
     "test_synchro": {
-      "name": "Test-Synchron-Panel",
-      "description": "Synchron-Test-Panel für Entwicklung und Tests: ein Kampfrichter pro Rolle, Synchronität als Gerätewertung."
+      "name": "Test-Synchron-Kampfgericht",
+      "description": "Synchron-Test-Kampfgericht für Entwicklung und Tests: ein Kampfrichter pro Rolle, Synchronität als Gerätewertung."
     },
     "fig_synchro": {
-      "name": "FIG-Synchron-Panel",
-      "description": "FIG-Panel für Synchron: 3 Haltungsrichter pro Trampolin, 1 Schwierigkeit, 1 Horizontal Displacement und 1 Synchronität (Gerät) vom selben Kampfrichter, 1 Wettkampfleiter (Strafabzug)."
+      "name": "FIG-Synchron-Kampfgericht",
+      "description": "FIG-Kampfgericht für Synchron: 3 Haltungsrichter pro Trampolin, 1 Schwierigkeit, 1 Horizontal Displacement und 1 Synchronität (Gerät) vom selben Kampfrichter, 1 Wettkampfleiter (Strafabzug)."
     },
     "local_synchro": {
-      "name": "Lokales Synchron-Panel",
-      "description": "Vereinfachtes Synchron-Panel ohne Synchrongerät: 2 Haltungsrichter pro Trampolin, 1 Schwierigkeit, 1 Synchronitätsrichter pro Sprung, 1 Wettkampfleiter (Strafabzug)."
+      "name": "Lokales Synchron-Kampfgericht",
+      "description": "Vereinfachtes Synchron-Kampfgericht ohne Synchrongerät: 2 Haltungsrichter pro Trampolin, 1 Schwierigkeit, 1 Synchronitätsrichter pro Sprung, 1 Wettkampfleiter (Strafabzug)."
     }
   },
   "actions": {

@@ -184,12 +184,30 @@ describe('individual sportsmen xlsx layout', () => {
 
     expect(pairByName(comp.id, 'Solo Jumper')).toMatchObject({ club: 'TSV', partner_name: null });
     parseSportsmenXlsx(comp.id, xlsxBufferFromRows([['Name'], ['Header Check']]));
-    expect(sheetRows(createSportsmenXlsx(comp.id))[0]).toEqual(['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group']);
+    expect(sheetRows(createSportsmenXlsx(comp.id))[0]).toEqual(['Name', 'Club', 'Gender', 'Year of Birth', 'Routine', 'Group']);
+  });
+
+  it('exports German headers and imports them again', () => {
+    const comp = makeCompetition();
+    const group = makeGroup(comp.id, 'Gruppe A');
+    const abbrev = db.prepare('SELECT abbreviation FROM groups WHERE id=?').get(group.id).abbreviation;
+    const headers = ['Name', 'Verein', 'Geschlecht', 'Geburtsjahr', 'Übung', 'Gruppe'];
+    parseSportsmenXlsx(comp.id, xlsxBufferFromRows([headers, ['Hans Müller', 'TSV', 'm', 2007, 'W11', abbrev]]));
+
+    expect(db.prepare('SELECT club, gender, birth_year, routine, group_id FROM sportsmen WHERE name=?').get('Hans Müller'))
+      .toEqual({ club: 'TSV', gender: 'm', birth_year: 2007, routine: 'W11', group_id: group.id });
+    expect(sheetRows(createSportsmenXlsx(comp.id, 'de'))[0]).toEqual(headers);
+  });
+
+  it('still imports the old Birthyear header', () => {
+    const comp = makeCompetition();
+    parseSportsmenXlsx(comp.id, xlsxBufferFromRows([['Name', 'Birthyear'], ['Old Header', 2005]]));
+    expect(db.prepare('SELECT birth_year FROM sportsmen WHERE name=?').get('Old Header').birth_year).toBe(2005);
   });
 });
 
 describe('synchro sportsmen xlsx layout', () => {
-  const headers = ['Name 1', 'Club 1', 'Gender 1', 'Birthyear 1', 'Name 2', 'Club 2', 'Gender 2', 'Birthyear 2', 'Routine', 'Group'];
+  const headers = ['Name 1', 'Club 1', 'Gender 1', 'Year of Birth 1', 'Name 2', 'Club 2', 'Gender 2', 'Year of Birth 2', 'Routine', 'Group'];
 
   it('imports one pair per row', () => {
     const comp = makeSynchroCompetition();

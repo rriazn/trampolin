@@ -81,35 +81,40 @@ exports.parseUsersXlsx = async (buffer) => {
     return { created, skipped, truncated };
 };
 
-const INDIVIDUAL_COLUMNS = ['Name', 'Club', 'Gender', 'Birthyear', 'Routine', 'Group'];
-const SYNCHRO_COLUMNS = ['Name 1', 'Club 1', 'Gender 1', 'Birthyear 1', 'Name 2', 'Club 2', 'Gender 2', 'Birthyear 2', 'Routine', 'Group'];
+const EXCEL_LOCALES = {
+    en: require("../locales/en/admin.json").sportsmen.excel,
+    de: require("../locales/de/admin.json").sportsmen.excel,
+};
+const LEGACY_YEAR_HEADERS = ['birthyear', 'birth year', 'birth_year'];
 
-exports.createSportsmenXlsx = (competitionId) => {
+const excelLabels = (lng) => EXCEL_LOCALES[lng] || EXCEL_LOCALES.en;
+
+const sportsmenColumns = (labels, isSynchro) => isSynchro
+    ? [`${labels.name} 1`, `${labels.club} 1`, `${labels.gender} 1`, `${labels.yearOfBirth} 1`,
+        `${labels.name} 2`, `${labels.club} 2`, `${labels.gender} 2`, `${labels.yearOfBirth} 2`, labels.routine, labels.group]
+    : [labels.name, labels.club, labels.gender, labels.yearOfBirth, labels.routine, labels.group];
+
+// lowercase header names accepted for a label key, optionally with 1/2 for synchro
+const headerAliases = (key, suffix = '') => {
+    const names = Object.values(EXCEL_LOCALES).map(labels => labels[key].toLowerCase());
+    if (key === 'yearOfBirth') names.push(...LEGACY_YEAR_HEADERS);
+    return [...new Set(names)].map(name => `${name}${suffix}`);
+};
+
+exports.createSportsmenXlsx = (competitionId, lng = 'en') => {
     const isSynchro = getCompetitionById(competitionId)?.type === 'synchro';
     const sportsmen = getSportsmenWithGroup(competitionId);
-    const rows = sportsmen.map(s => isSynchro ? {
-        'Name 1': s.name,
-        'Club 1': s.club || '',
-        'Gender 1': s.gender || '',
-        'Birthyear 1': s.birth_year || '',
-        'Name 2': s.partner_name || '',
-        'Club 2': s.partner_club || '',
-        'Gender 2': s.partner_gender || '',
-        'Birthyear 2': s.partner_birth_year || '',
-        Routine: s.routine || '',
-        Group: s.group_abbreviation || '',
-    } : {
-        Name: s.name,
-        Club: s.club || '',
-        Gender: s.gender || '',
-        Birthyear: s.birth_year || '',
-        Routine: s.routine || '',
-        Group: s.group_abbreviation || '',
+    const columns = sportsmenColumns(excelLabels(lng), isSynchro);
+    const rows = sportsmen.map(s => {
+        const values = isSynchro
+            ? [s.name, s.club, s.gender, s.birth_year, s.partner_name, s.partner_club, s.partner_gender, s.partner_birth_year, s.routine, s.group_abbreviation]
+            : [s.name, s.club, s.gender, s.birth_year, s.routine, s.group_abbreviation];
+        return Object.fromEntries(columns.map((column, i) => [column, values[i] || '']));
     });
-    const ws = XLSX.utils.json_to_sheet(rows, { header: isSynchro ? SYNCHRO_COLUMNS : INDIVIDUAL_COLUMNS });
+    const ws = XLSX.utils.json_to_sheet(rows, { header: columns });
     ws['!cols'] = isSynchro
-        ? [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }]
-        : [{ wch: 28 }, { wch: 22 }, { wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 20 }];
+        ? [{ wch: 28 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 28 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 20 }]
+        : [{ wch: 28 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sportsmen');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
@@ -129,28 +134,28 @@ const readCell = (lowerRow, ...names) => {
 const rowToSportsmanBody = (row, isSynchro) => {
     const lower = Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim().toLowerCase(), value]));
     const body = {
-        routine: readCell(lower, 'routine'),
+        routine: readCell(lower, ...headerAliases('routine')),
     };
     if (isSynchro) {
         Object.assign(body, {
-            name: readCell(lower, 'name 1'),
-            club: readCell(lower, 'club 1'),
-            gender: readCell(lower, 'gender 1'),
-            birth_year: readCell(lower, 'birthyear 1', 'birth year 1'),
-            partner_name: readCell(lower, 'name 2'),
-            partner_club: readCell(lower, 'club 2'),
-            partner_gender: readCell(lower, 'gender 2'),
-            partner_birth_year: readCell(lower, 'birthyear 2', 'birth year 2'),
+            name: readCell(lower, ...headerAliases('name', ' 1')),
+            club: readCell(lower, ...headerAliases('club', ' 1')),
+            gender: readCell(lower, ...headerAliases('gender', ' 1')),
+            birth_year: readCell(lower, ...headerAliases('yearOfBirth', ' 1')),
+            partner_name: readCell(lower, ...headerAliases('name', ' 2')),
+            partner_club: readCell(lower, ...headerAliases('club', ' 2')),
+            partner_gender: readCell(lower, ...headerAliases('gender', ' 2')),
+            partner_birth_year: readCell(lower, ...headerAliases('yearOfBirth', ' 2')),
         });
     } else {
         Object.assign(body, {
-            name: readCell(lower, 'name'),
-            club: readCell(lower, 'club'),
-            gender: readCell(lower, 'gender'),
-            birth_year: readCell(lower, 'birthyear', 'birth year', 'birth_year'),
+            name: readCell(lower, ...headerAliases('name')),
+            club: readCell(lower, ...headerAliases('club')),
+            gender: readCell(lower, ...headerAliases('gender')),
+            birth_year: readCell(lower, ...headerAliases('yearOfBirth')),
         });
     }
-    return { body, abbrev: readCell(lower, 'group') };
+    return { body, abbrev: readCell(lower, ...headerAliases('group')) };
 };
 
 exports.parseSportsmenXlsx = (competitionId, buffer) => {

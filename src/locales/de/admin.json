@@ -125,11 +125,12 @@
     "addAthlete": "Athleten hinzufügen",
     "importHeading": "Aus Excel importieren",
     "importHelp": "Pflichtfelder: <strong>Name</strong> &nbsp;·&nbsp; Optional: <strong>Verein</strong>, <strong>Geschlecht</strong>, <strong>Geburtsjahr</strong>, <strong>Übung</strong>",
-    "importHelpSynchro": "Eine Zeile pro Paar. Pflichtfelder: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Club 1/2</strong>, <strong>Gender 1/2</strong>, <strong>Birthyear 1/2</strong>, <strong>Routine</strong>, <strong>Group</strong>",
+    "importHelpSynchro": "Eine Zeile pro Paar. Pflichtfelder: <strong>Name 1</strong>, <strong>Name 2</strong> &nbsp;·&nbsp; Optional: <strong>Verein 1/2</strong>, <strong>Geschlecht 1/2</strong>, <strong>Geburtsjahr 1/2</strong>, <strong>Übung</strong>, <strong>Gruppe</strong>",
     "upload": "Upload",
     "noAthletes": "Noch keine Athleten verfügbar.",
     "addOne": "Einen hinzufügen",
     "table": { "athlete": "Athlet", "club": "Verein", "group": "Gruppe", "gender": "Geschlecht", "birthYear": "Geburtsjahr", "routine": "Übung" },
+    "excel": { "name": "Name", "club": "Verein", "gender": "Geschlecht", "yearOfBirth": "Geburtsjahr", "routine": "Übung", "group": "Gruppe" },
     "confirmDelete": "{{name}} löschen?"
   },
   "sportsmanForm": {
