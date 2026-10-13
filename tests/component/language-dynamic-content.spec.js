@@ -38,7 +38,7 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await loginAsAdminInGerman(page);
     await page.goto(`/admin/competitions/${seed.panelCompetitionId}/judges`);
 
-    await expect(page.locator('.page-hero p')).toContainText('FIG-Panel');
+    await expect(page.locator('.page-hero p')).toContainText('FIG-Kampfgericht');
     await expect(page.locator('.page-hero p')).not.toContainText('FIG Panel');
   });
 
@@ -61,11 +61,11 @@ test.describe('dynamic seeded content translates with the language switcher', ()
     await page.goto('/admin/competitions/new');
 
     const select = page.locator('select[name=panel_template_id]');
-    await expect(select.locator('option', { hasText: 'FIG-Panel' })).toHaveCount(1);
-    await expect(select.locator('option', { hasText: 'Lokales Panel' })).toHaveCount(1);
+    await expect(select.locator('option', { hasText: 'FIG-Kampfgericht' })).toHaveCount(1);
+    await expect(select.locator('option', { hasText: 'Lokales Kampfgericht' })).toHaveCount(1);
     await expect(select.locator('option', { hasText: 'FIG Panel' })).toHaveCount(0);
 
-    const figOption = select.locator('option', { hasText: 'FIG-Panel' });
+    const figOption = select.locator('option', { hasText: 'FIG-Kampfgericht' });
     await expect(figOption).toHaveAttribute('title', /Haltung/);
   });
 });
