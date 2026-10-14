@@ -127,4 +127,6 @@ router.post('/competitions/:cid/groups/:gid/rounds/:rid/entries/:eid/delete', ad
 
 router.post('/competitions/:cid/groups/:gid/rounds/:rid/attempts/bulk', adminController.addAttempts);
 
+router.post('/competitions/:cid/groups/:gid/rounds/:rid/attempts/names', adminController.saveAttemptNames);
+
 module.exports = router;

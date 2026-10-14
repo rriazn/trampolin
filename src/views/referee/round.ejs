@@ -30,7 +30,7 @@
         <%= competitorClub(attempt.club, attempt.partner_club) || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
-    <span class="badge bg-primary ms-auto"><%= t('referee:round.attemptNumber', { number: attempt.attempt_number }) %></span>
+    <span class="badge bg-primary ms-auto"><%= attemptLabel %></span>
   </div>
 </div>
 

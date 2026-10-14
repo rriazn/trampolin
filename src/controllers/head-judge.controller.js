@@ -1,6 +1,6 @@
 const { getRoundOverview, getRoundSelectionOverview, loadRound } = require("../services/rounds.service");
 const { rosterReadiness } = require("../services/panels.service");
-const { getPreviousAttemptIndex, recomputeAttemptCompletion } = require("../services/attempts.service");
+const { getPreviousAttemptIndex, recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
 const { parseAndValidateScore } = require("../services/scoring.service");
 const { getNextPendingAttemptId, updateAttemptSkippedDB } = require("../services/db/entries.crud");
 const { updateRoundStartedDB, updateRoundCurrentAttemptDB, updateRoundCompletedDB } = require("../services/db/rounds.crud");
@@ -31,7 +31,8 @@ exports.getRound = (req, res) => {
     }
 
     const roundOverview = getRoundOverview(round, req.session.user.id, readiness);
-    res.render('head-judge/round', roundOverview);
+    const attemptLabel = getAttemptLabel(round, roundOverview.attempt.attempt_number, req.t);
+    res.render('head-judge/round', { ...roundOverview, attemptLabel });
 };
 
 exports.startRound = (req, res) => {

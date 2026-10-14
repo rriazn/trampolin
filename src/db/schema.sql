@@ -117,6 +117,13 @@ CREATE TABLE IF NOT EXISTS attempts (
     UNIQUE(entry_id, attempt_number)
 );
 
+CREATE TABLE IF NOT EXISTS attempt_names (
+    round_id       INTEGER NOT NULL REFERENCES rounds(id) ON DELETE CASCADE,
+    attempt_number INTEGER NOT NULL CHECK(attempt_number > 0),
+    name           TEXT    NOT NULL,
+    PRIMARY KEY (round_id, attempt_number)
+);
+
 CREATE TABLE IF NOT EXISTS scores (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     attempt_id           INTEGER NOT NULL REFERENCES attempts(id) ON DELETE CASCADE,

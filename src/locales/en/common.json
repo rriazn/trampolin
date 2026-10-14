@@ -24,6 +24,11 @@
     "sum": "Sum",
     "best_attempt": "Best Attempt"
   },
+  "attemptName": {
+    "voluntary": "Voluntary routine",
+    "compulsory": "Compulsory routine",
+    "label": "{{number}} · {{name}}"
+  },
   "roles": {
     "admin": "Admin",
     "referee": "Referee",

@@ -11,7 +11,6 @@
     "notStartedBody": "The head judge hasn't started this round. Check back once scoring begins.",
     "noAssignmentTitle": "No judge role assigned",
     "noAssignmentBody": "You don't have a judge role assigned for this competition. Contact the admin.",
-    "attemptNumber": "Attempt #{{number}}",
     "landing": "Landing",
     "bonus": "Bonus",
     "missingSkill": "Missing compulsory skill",

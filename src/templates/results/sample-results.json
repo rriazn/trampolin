@@ -44,6 +44,7 @@
               "attempts": [
                 {
                   "number": 1,
+                  "name": "Compulsory routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [
@@ -124,6 +125,7 @@
                 },
                 {
                   "number": 2,
+                  "name": "Voluntary routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [
@@ -212,6 +214,7 @@
               "attempts": [
                 {
                   "number": 1,
+                  "name": "Voluntary routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [
@@ -292,6 +295,7 @@
                 },
                 {
                   "number": 2,
+                  "name": "Voluntary routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [
@@ -387,6 +391,7 @@
               "attempts": [
                 {
                   "number": 1,
+                  "name": "Compulsory routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [
@@ -467,6 +472,7 @@
                 },
                 {
                   "number": 2,
+                  "name": "Voluntary routine",
                   "status": "skipped",
                   "elementCount": 10,
                   "rows": [],
@@ -497,6 +503,7 @@
               "attempts": [
                 {
                   "number": 1,
+                  "name": "Voluntary routine",
                   "status": "scored",
                   "elementCount": 8,
                   "rows": [
@@ -593,6 +600,7 @@
               "attempts": [
                 {
                   "number": 1,
+                  "name": "Voluntary routine",
                   "status": "scored",
                   "elementCount": 10,
                   "rows": [

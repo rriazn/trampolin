@@ -17,7 +17,7 @@
   },
   "partial": "unvollständig",
   "modal": {
-    "attemptTitle": "{{name}} — Versuch {{number}}",
+    "attemptTitle": "{{name}} — {{attempt}}",
     "judge": "Kampfrichter",
     "landing": "Landung",
     "bonus": "Bonus",

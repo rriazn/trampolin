@@ -84,6 +84,67 @@ describe('runMigrations', () => {
   });
 });
 
+describe('attempt_names on an existing db', () => {
+  const schemaSql = fs.readFileSync(path.join(__dirname, '../../src/db/schema.sql'), 'utf8');
+  const attemptNamesBlock = /CREATE TABLE IF NOT EXISTS attempt_names \([\s\S]*?\n\);\n/;
+
+  // current schema without attempt_names, as an existing db file from before the feature
+  function makeDbWithoutAttemptNames() {
+    expect(schemaSql).toMatch(attemptNamesBlock);
+    const old = new Database(':memory:');
+    old.pragma('foreign_keys = ON');
+    old.exec(schemaSql.replace(attemptNamesBlock, ''));
+    old.exec(`
+      INSERT INTO competitions (name) VALUES ('Old Cup');
+      INSERT INTO groups (name, competition_id, abbreviation) VALUES ('Old Group', 1, 'OG');
+      INSERT INTO rounds (group_id, name) VALUES (1, 'Old Round');
+      INSERT INTO sportsmen (name, competition_id, group_id) VALUES ('Old Athlete', 1, 1);
+      INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (1, 1, 1);
+      INSERT INTO attempts (entry_id, attempt_number) VALUES (1, 1);
+    `);
+    return old;
+  }
+
+  function upgrade(database) {
+    database.exec(schemaSql);
+    runMigrations(database);
+  }
+
+  it('creates the table and keeps existing rows', () => {
+    const old = makeDbWithoutAttemptNames();
+    expect(columnNames(old, 'attempt_names')).toEqual([]);
+
+    upgrade(old);
+
+    expect(columnNames(old, 'attempt_names')).toEqual(['round_id', 'attempt_number', 'name']);
+    expect(old.prepare('SELECT name FROM rounds WHERE id=1').get().name).toBe('Old Round');
+    expect(old.prepare('SELECT attempt_number FROM attempts WHERE id=1').get().attempt_number).toBe(1);
+  });
+
+  it('enforces the primary key, the positive number and the cascade', () => {
+    const old = makeDbWithoutAttemptNames();
+    upgrade(old);
+    old.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (1, 1, 'Pflicht')").run();
+
+    expect(() => old.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (1, 1, 'Again')").run()).toThrow(/UNIQUE|PRIMARY/);
+    expect(() => old.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (1, 0, 'Zero')").run()).toThrow(/CHECK/);
+
+    old.prepare('DELETE FROM rounds WHERE id=1').run();
+
+    expect(old.prepare('SELECT COUNT(*) AS n FROM attempt_names').get().n).toBe(0);
+  });
+
+  it('is idempotent and keeps stored names', () => {
+    const old = makeDbWithoutAttemptNames();
+    upgrade(old);
+    old.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (1, 1, 'Pflicht')").run();
+
+    expect(() => upgrade(old)).not.toThrow();
+
+    expect(old.prepare('SELECT name FROM attempt_names WHERE round_id=1 AND attempt_number=1').get().name).toBe('Pflicht');
+  });
+});
+
 describe('schema.sql on a fresh db', () => {
   // schema only, so the columns must come from schema.sql and not from runMigrations
   function makeFreshDb() {
@@ -99,6 +160,10 @@ describe('schema.sql on a fresh db', () => {
     expect(columnNames(fresh, 'panel_templates')).toContain('competition_type');
     expect(columnNames(fresh, 'judge_roles')).toContain('has_landing');
     expect(columnNames(fresh, 'sportsmen')).toEqual(expect.arrayContaining(['partner_name', 'partner_club', 'partner_gender', 'partner_birth_year']));
+  });
+
+  it('creates the attempt_names table', () => {
+    expect(columnNames(makeFreshDb(), 'attempt_names')).toEqual(['round_id', 'attempt_number', 'name']);
   });
 
   it('rejects an unknown competition type', () => {

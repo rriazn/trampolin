@@ -216,7 +216,14 @@
     "startOrder": "Startnummer",
     "addAll": "Alle hinzufügen",
     "confirmAddAll": "Alle Athleten dieser Gruppe zur Runde hinzufügen?",
-    "errors": { "alreadyInRound": "Athlet ist bereits in dieser Runde." }
+    "errors": { "alreadyInRound": "Athlet ist bereits in dieser Runde." },
+    "attemptNames": {
+      "heading": "Namen der Versuche",
+      "hint": "Ein leeres Feld verwendet den Standardnamen.",
+      "locked": "Die Namen sind fest, sobald die Runde gestartet ist.",
+      "attempt": "Versuch {{number}}",
+      "save": "Namen speichern"
+    }
   },
   "errors": {
     "badStatus": "Ungültiger Status"
@@ -261,7 +268,11 @@
       "addedAll": "{{count}} Athleten zur Runde hinzugefügt.",
       "randomized": "Startreihenfolge zufällig angeordnet.",
       "removed": "Teilnahme entfernt.",
-      "attemptsCreated": "{{count}} Versuch(e) für alle Teilnahmen erstellt."
+      "attemptsCreated": "{{count}} Versuch(e) für alle Teilnahmen erstellt.",
+      "attemptNamesSaved": "Namen der Versuche gespeichert.",
+      "attemptNameTooLong": "Ein Name darf höchstens {{max}} Zeichen lang sein.",
+      "attemptNamesNoAttempts": "Diese Runde hat noch keine Versuche.",
+      "attemptsLocked": "Versuche und ihre Namen können nur vor dem Start der Runde geändert werden."
     }
   }
 }

@@ -21,7 +21,6 @@
     "completedBody": "Jeder Versuch in dieser Runde wurde bewertet.",
     "viewLeaderboard": "Wertungsliste anzeigen",
     "backToLastAttempt": "Zurück zum letzten Versuch",
-    "attemptNumber": "Versuch #{{number}}",
     "partialNote": "unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben",
     "checklistHeading": "Bewertungscheckliste",
     "submittedCount": "{{count}} von {{required}} haben abgegeben",
@@ -32,7 +31,7 @@
     "numberOfTricks": "Elementanzahl",
     "next": "Weiter",
     "skipAthlete": "Athleten überspringen",
-    "confirmSkip": "Versuch #{{number}} von {{name}} überspringen? Dies kann nicht rückgängig gemacht werden und keine Wertung wird eingetragen.",
+    "confirmSkip": "{{attempt}} von {{name}} überspringen? Dies kann nicht rückgängig gemacht werden und keine Wertung wird eingetragen.",
     "completeRound": "Runde beenden",
     "confirmComplete": "Runde beenden? Alle nicht bewerteten Versuche bleiben so, wie sie sind."
   },

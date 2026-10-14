@@ -187,7 +187,7 @@ test.describe('with scored athletes', () => {
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
     await bobRow.locator('td').nth(4).getByRole('button').click();
     const modal = page.locator('.modal.show');
-    await expect(modal.getByRole('heading', { name: 'Bob — Attempt 1' })).toBeVisible();
+    await expect(modal.getByRole('heading', { name: 'Bob — 1 · Voluntary routine' })).toBeVisible();
     await expect(modal.getByRole('row', { name: /Time of Flight\s+9\.20/ })).toBeVisible();
   });
 
@@ -196,7 +196,7 @@ test.describe('with scored athletes', () => {
     const bobRow = page.locator('table tbody tr').filter({ hasText: 'Bob' });
     await bobRow.locator('td').nth(4).getByRole('button').click();
     const modal = page.locator('.modal.show');
-    await expect(modal.getByRole('heading', { name: 'Bob — Attempt 1' })).toBeVisible();
+    await expect(modal.getByRole('heading', { name: 'Bob — 1 · Voluntary routine' })).toBeVisible();
     await modal.getByRole('button', { name: 'Close' }).click();
     await expect(page.locator('.modal.show')).toHaveCount(0);
     const charlieButton = page.locator('table tbody tr').filter({ hasText: 'Charlie' }).locator('td').nth(4).getByRole('button');
@@ -222,9 +222,9 @@ test.describe('with scored athletes', () => {
   test('renders one attempt column per attempt number in the round', async ({ page }) => {
     await page.goto(`/leaderboard/competitions/${scoredSeed.competitionId}/groups/${scoredSeed.groupId}/rounds/${scoredSeed.roundId}`);
     // scored seed: Bob and Charlie have 2 attempts, Alice has 1, so maxAttempts = 2
-    await expect(page.getByRole('columnheader', { name: 'Attempt 1' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: 'Attempt 2' })).toBeVisible();
-    await expect(page.getByRole('columnheader', { name: /Attempt \d+/ })).toHaveCount(2);
+    await expect(page.getByRole('columnheader', { name: '1 · Voluntary routine' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: '2 · Voluntary routine' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: /^\d · / })).toHaveCount(2);
   });
 
   test('shows "–" for attempt slots an athlete has not completed', async ({ page }) => {
@@ -247,6 +247,24 @@ test.describe('sum scoring mode', () => {
     await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
     await expect(page.getByRole('columnheader', { name: 'Total Score' })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: 'Best Score' })).not.toBeVisible();
+  });
+
+  test('names the first attempt compulsory and the second voluntary', async ({ page }) => {
+    await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
+    await expect(page.getByRole('columnheader', { name: '1 · Compulsory routine' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: '2 · Voluntary routine' })).toBeVisible();
+  });
+
+  test('shows a custom attempt name in the column header and the dialog title', async ({ page, request }) => {
+    await request.post('/test/attempt-name', { form: { roundId: sumSeed.roundId, number: 1, name: 'Warm-up & Co' } });
+    try {
+      await page.goto(`/leaderboard/competitions/${sumSeed.competitionId}/groups/${sumSeed.groupId}/rounds/${sumSeed.roundId}`);
+      await expect(page.getByRole('columnheader', { name: '1 · Warm-up & Co' })).toBeVisible();
+      await page.locator('table tbody tr').filter({ hasText: 'Ellie' }).locator('td').nth(4).getByRole('button').click();
+      await expect(page.locator('.modal.show').getByRole('heading', { name: 'Ellie — 1 · Warm-up & Co' })).toBeVisible();
+    } finally {
+      await request.post('/test/attempt-name', { form: { roundId: sumSeed.roundId, number: 1, name: '' } });
+    }
   });
 
   // Regression: ranking must use the summed total, not just each athlete's best single attempt

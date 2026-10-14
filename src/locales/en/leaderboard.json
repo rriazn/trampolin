@@ -17,7 +17,7 @@
   },
   "partial": "partial",
   "modal": {
-    "attemptTitle": "{{name}} — Attempt {{number}}",
+    "attemptTitle": "{{name}} — {{attempt}}",
     "judge": "Judge",
     "landing": "Landing",
     "bonus": "Bonus",

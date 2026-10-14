@@ -77,6 +77,25 @@
   </div>
   <% } %>
 
+  <% if (attemptNames.length > 0) { %>
+  <div class="card p-4 mb-4">
+    <h2 class="h5 fw-bold mb-3"><%= t('admin:entries.attemptNames.heading') %></h2>
+    <% const namesLocked = round.status !== 'not_started'; %>
+    <p class="text-muted small"><%= namesLocked ? t('admin:entries.attemptNames.locked') : t('admin:entries.attemptNames.hint') %></p>
+    <form method="POST" action="<%= baseUrl %>/attempts/names" class="row g-3 align-items-end">
+      <% attemptNames.forEach(a => { %>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold text-muted text-uppercase" for="f-attempt-name-<%= a.number %>"><%= t('admin:entries.attemptNames.attempt', { number: a.number }) %></label>
+        <input type="text" name="name_<%= a.number %>" id="f-attempt-name-<%= a.number %>" class="form-control" maxlength="<%= maxAttemptNameLength %>" value="<%= a.isCustom ? a.name : '' %>" placeholder="<%= a.defaultName %>"<%= namesLocked ? ' disabled' : '' %>>
+      </div>
+      <% }) %>
+      <div class="col-12 d-flex justify-content-end">
+        <button type="submit" class="btn btn-brand"<%= namesLocked ? ' disabled' : '' %>><%= t('admin:entries.attemptNames.save') %></button>
+      </div>
+    </form>
+  </div>
+  <% } %>
+
   <div class="card p-4">
     <h2 class="h5 fw-bold mb-3"><%= t('admin:entries.addEntry') %></h2>
     <% if (locals.flash && locals.flash.error) { %>

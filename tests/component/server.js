@@ -85,6 +85,7 @@ app.get('/test/throw', () => {
 
 // deletes all test data except the permanent admin account, called at the start of every seed
 function cleanupDb() {
+  db.prepare('DELETE FROM attempt_names').run();
   db.prepare('DELETE FROM scores').run();
   db.prepare('DELETE FROM attempts').run();
   db.prepare('DELETE FROM entries').run();
@@ -405,6 +406,21 @@ app.post('/test/seed/head-judge', (req, res) => {
     sportsman1Id: Number(sp1.lastInsertRowid),
     sportsman2Id: Number(sp2.lastInsertRowid),
   });
+});
+
+// stores a custom attempt name for a seeded round (empty name removes it), so specs can check the displayed label
+app.post('/test/attempt-name', (req, res) => {
+  const { roundId, number, name } = req.body;
+  if (name) db.prepare('INSERT OR REPLACE INTO attempt_names (round_id, attempt_number, name) VALUES (?, ?, ?)').run(roundId, number, name);
+  else db.prepare('DELETE FROM attempt_names WHERE round_id = ? AND attempt_number = ?').run(roundId, number);
+  res.json({ ok: true });
+});
+
+// sets the status of a seeded round, e.g. back to not_started so attempts and attempt names can be edited
+app.post('/test/round-status', (req, res) => {
+  const { roundId, status } = req.body;
+  db.prepare('UPDATE rounds SET status = ? WHERE id = ?').run(status, roundId);
+  res.json({ ok: true });
 });
 
 // Always ensure the test admin user exists so auth tests work without seeding

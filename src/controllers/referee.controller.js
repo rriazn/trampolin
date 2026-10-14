@@ -6,7 +6,7 @@ const { getAttemptContext } = require("../services/db/entries.crud");
 const { addAttemptScoreDB, addAllElementScoresDB } = require("../services/db/scores.crud");
 const { getRefereeRoundInfo } = require("../services/rounds.service");
 const { renderNotFound } = require("../services/errors.service");
-const { recomputeAttemptCompletion } = require("../services/attempts.service");
+const { recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
 const { isWithinRange, rangeErrorMessage, scoreDecimals, maxScoreFor } = require("../services/helpers/referee.helpers");
 const { parseAndValidateElementScores, parseAndValidate11thScore, parseMissingSkillDeduction } = require("../services/scoring.service");
 
@@ -40,7 +40,8 @@ exports.getRound = (req, res) => {
 
     const { attempt, inputs } = getRefereeRoundInfo(round, userId);
 
-    res.render('referee/round', { round, attempt, inputs, state: 'active' });
+    const attemptLabel = getAttemptLabel(round, attempt.attempt_number, req.t);
+    res.render('referee/round', { round, attempt, attemptLabel, inputs, state: 'active' });
 };
 
 

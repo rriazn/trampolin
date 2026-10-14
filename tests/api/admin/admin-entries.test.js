@@ -90,6 +90,23 @@ describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/attempts/bulk', 
     });
 });
 
+describe('POST attempts/bulk on a started round', () => {
+    it('does not create attempts and flashes an error', async () => {
+        const round = seedCompetitionData();
+        const url = `/admin/competitions/${round.competitionId}/groups/${round.groupId}/rounds/${round.roundId}`;
+        db.prepare("UPDATE rounds SET status='in_progress' WHERE id = ?").run(round.roundId);
+        const countAttempts = () => db.prepare('SELECT COUNT(*) AS n FROM attempts WHERE entry_id = ?').get(round.entryId).n;
+        const before = countAttempts();
+
+        const res = await agent.post(`${url}/attempts/bulk`).type('form').send({ attempt_count: 3 });
+
+        expect(res.status).toBe(302);
+        expect(countAttempts()).toBe(before);
+        const page = await agent.get(`${url}/entries`);
+        expect(page.text).toContain('can only be changed before the round starts');
+    });
+});
+
 describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/entries/randomize', () => {
     it('returns 403 when unauthenticated', async () => {
         const res = await request(app).post(`/admin/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/entries/randomize`);
@@ -165,5 +182,72 @@ describe('GET .../entries ranks athletes by their real panel-computed score from
         expect(res.text).toContain('ranked by Qualifications');
         expect(res.text).toMatch(/#1[^<]*·[^<]*Eve/);
         expect(res.text).toMatch(/#2[^<]*·[^<]*Frank/);
+    });
+});
+
+describe('POST /admin/competitions/:cid/groups/:gid/rounds/:rid/attempts/names', () => {
+    let round;
+    let url;
+    const storedNames = () => db.prepare('SELECT attempt_number, name FROM attempt_names WHERE round_id = ? ORDER BY attempt_number').all(round.roundId);
+
+    beforeAll(() => {
+        round = seedCompetitionData();
+        db.prepare('INSERT INTO attempts (entry_id, attempt_number) VALUES (?, ?)').run(round.entryId, 2);
+        url = `/admin/competitions/${round.competitionId}/groups/${round.groupId}/rounds/${round.roundId}`;
+    });
+
+    it('returns 403 when unauthenticated', async () => {
+        const res = await request(app).post(`${url}/attempts/names`).type('form').send({ name_1: 'Warm-up' });
+        expect(res.status).toBe(403);
+        expect(storedNames()).toEqual([]);
+    });
+
+    it('saves custom names, redirects and flashes success', async () => {
+        const res = await agent.post(`${url}/attempts/names`).type('form').send({ name_1: ' Warm-up ', name_2: 'Final' });
+        expect(res.status).toBe(302);
+        expect(res.headers.location).toBe(`${url}/entries`);
+        expect(storedNames()).toEqual([{ attempt_number: 1, name: 'Warm-up' }, { attempt_number: 2, name: 'Final' }]);
+        const page = await agent.get(`${url}/entries`);
+        expect(page.text).toContain('Attempt names saved.');
+    });
+
+    it('removes a stored name when the value is blank', async () => {
+        const res = await agent.post(`${url}/attempts/names`).type('form').send({ name_1: '', name_2: 'Final' });
+        expect(res.status).toBe(302);
+        expect(storedNames()).toEqual([{ attempt_number: 2, name: 'Final' }]);
+    });
+
+    it('rejects a name longer than 40 characters and keeps the stored names', async () => {
+        const res = await agent.post(`${url}/attempts/names`).type('form').send({ name_1: 'x'.repeat(41), name_2: 'Other' });
+        expect(res.status).toBe(302);
+        expect(res.headers.location).toBe(`${url}/entries`);
+        expect(storedNames()).toEqual([{ attempt_number: 2, name: 'Final' }]);
+        const page = await agent.get(`${url}/entries`);
+        expect(page.text).toContain('An attempt name can be at most 40 characters long.');
+    });
+
+    it('accepts a name of exactly 40 characters', async () => {
+        const res = await agent.post(`${url}/attempts/names`).type('form').send({ name_1: 'x'.repeat(40), name_2: '' });
+        expect(res.status).toBe(302);
+        expect(storedNames()).toEqual([{ attempt_number: 1, name: 'x'.repeat(40) }]);
+    });
+
+    it('refuses to change names once the round has started', async () => {
+        db.prepare("UPDATE rounds SET status='in_progress' WHERE id = ?").run(round.roundId);
+        const before = storedNames();
+
+        const res = await agent.post(`${url}/attempts/names`).type('form').send({ name_1: 'Changed', name_2: 'Changed' });
+
+        db.prepare("UPDATE rounds SET status='not_started' WHERE id = ?").run(round.roundId);
+        expect(res.status).toBe(302);
+        expect(storedNames()).toEqual(before);
+        const page = await agent.get(`${url}/entries`);
+        expect(page.text).toContain('can only be changed before the round starts');
+    });
+
+    it('returns 404 for an unknown round', async () => {
+        const res = await agent.post(`/admin/competitions/${round.competitionId}/groups/${round.groupId}/rounds/99999/attempts/names`).type('form').send({ name_1: 'A' });
+        expect(res.status).toBe(404);
+        expect(res.text).toContain('Round not found');
     });
 });

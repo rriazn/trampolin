@@ -54,6 +54,16 @@ exports.getAttemptForId = (attemptId) => {
     `).get(attemptId);
 };
 
+exports.getRoundAttemptCount = (roundId) => {
+    const row = db.prepare(`
+        SELECT MAX(a.attempt_number) AS max
+        FROM attempts a
+        JOIN entries e ON e.id = a.entry_id
+        WHERE e.round_id = ?
+    `).get(roundId);
+    return row?.max || 0;
+};
+
 exports.getEntryMaxOrder = (roundId) => {
     return db.prepare('SELECT MAX(start_order) AS max FROM entries WHERE round_id=?').get(roundId);
 };
