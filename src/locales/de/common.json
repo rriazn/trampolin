@@ -24,6 +24,11 @@
     "sum": "Summe",
     "best_attempt": "Bester Versuch"
   },
+  "attemptName": {
+    "voluntary": "Kür",
+    "compulsory": "Pflicht",
+    "label": "{{number}} · {{name}}"
+  },
   "roles": {
     "admin": "Admin",
     "referee": "Kampfrichter",

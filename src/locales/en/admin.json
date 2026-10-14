@@ -216,7 +216,14 @@
     "startOrder": "Start #",
     "addAll": "Add All",
     "confirmAddAll": "Add all athletes from this group to the round?",
-    "errors": { "alreadyInRound": "Athlete already in this round." }
+    "errors": { "alreadyInRound": "Athlete already in this round." },
+    "attemptNames": {
+      "heading": "Attempt names",
+      "hint": "Leave a field empty to use the default name.",
+      "locked": "The names are fixed once the round has started.",
+      "attempt": "Attempt {{number}}",
+      "save": "Save names"
+    }
   },
   "errors": {
     "badStatus": "Bad status"
@@ -261,7 +268,11 @@
       "addedAll": "{{count}} athlete(s) added to the round.",
       "randomized": "Start order randomized.",
       "removed": "Entry removed.",
-      "attemptsCreated": "{{count}} attempt(s) created for all entries."
+      "attemptsCreated": "{{count}} attempt(s) created for all entries.",
+      "attemptNamesSaved": "Attempt names saved.",
+      "attemptNameTooLong": "An attempt name can be at most {{max}} characters long.",
+      "attemptNamesNoAttempts": "This round has no attempts yet.",
+      "attemptsLocked": "Attempts and attempt names can only be changed before the round starts."
     }
   }
 }

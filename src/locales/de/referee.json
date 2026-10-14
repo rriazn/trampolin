@@ -11,7 +11,6 @@
     "notStartedBody": "Der Wettkampfleiter hat diese Runde noch nicht gestartet. Kommen Sie wieder, wenn das Werten startet.",
     "noAssignmentTitle": "Keine Kampfrichterrolle zugewiesen",
     "noAssignmentBody": "Ihnen wurde keine Rolle für diesen Wettkampf zugewiesen. Kontaktieren Sie einen Admin.",
-    "attemptNumber": "Versuch #{{number}}",
     "landing": "Landung",
     "bonus": "Bonus",
     "missingSkill": "Fehlendes Pflichtelement",

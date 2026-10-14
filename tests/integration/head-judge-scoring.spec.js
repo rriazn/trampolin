@@ -127,23 +127,23 @@ test('head judge skips an attempt and the round advances without the panel being
   await loginAsHeadJudge(page);
   await page.goto(roundUrl);
   await expect(page.getByText('Leon Weber')).toBeVisible();
-  await expect(page.getByText('Attempt #1')).toBeVisible();
+  await expect(page.getByText('1 · Compulsory routine')).toBeVisible();
 
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await acceptConfirm(page);
   // round-robin order is attempt_number then start_order, so this advances to Emma's attempt 1, not Leon's attempt 2
   await expect(page.getByText('Emma Fischer')).toBeVisible();
-  await expect(page.getByText('Attempt #1')).toBeVisible();
+  await expect(page.getByText('1 · Compulsory routine')).toBeVisible();
 
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await acceptConfirm(page);
   await expect(page.getByText('Leon Weber')).toBeVisible();
-  await expect(page.getByText('Attempt #2')).toBeVisible();
+  await expect(page.getByText('2 · Voluntary routine')).toBeVisible();
 
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await acceptConfirm(page);
   await expect(page.getByText('Emma Fischer')).toBeVisible();
-  await expect(page.getByText('Attempt #2')).toBeVisible();
+  await expect(page.getByText('2 · Voluntary routine')).toBeVisible();
 
   await page.getByRole('button', { name: /Skip Athlete/ }).click();
   await acceptConfirm(page);

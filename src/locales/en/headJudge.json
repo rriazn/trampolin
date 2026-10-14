@@ -21,7 +21,6 @@
     "completedBody": "Every attempt in this round has been judged.",
     "viewLeaderboard": "View Leaderboard",
     "backToLastAttempt": "Back to Last Attempt",
-    "attemptNumber": "Attempt #{{number}}",
     "partialNote": "partial — not every judge has submitted yet, total will change",
     "checklistHeading": "Judging checklist",
     "submittedCount": "{{count}} of {{required}} submitted",
@@ -32,7 +31,7 @@
     "numberOfTricks": "Number of tricks",
     "next": "Next",
     "skipAthlete": "Skip Athlete",
-    "confirmSkip": "Skip {{name}}'s attempt #{{number}}? This cannot be undone and no score will be recorded for it.",
+    "confirmSkip": "Skip {{attempt}} for {{name}}? This cannot be undone and no score will be recorded for it.",
     "completeRound": "Complete Round",
     "confirmComplete": "Mark this round as completed? Any un-judged attempts will be left as-is."
   },

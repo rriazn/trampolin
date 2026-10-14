@@ -35,6 +35,14 @@ Rounds support two ways of ranking athletes: summing every attempt's score, or t
 best attempt (with tiebreakers such as the next-best attempt score). Which one applies is set per
 round, so a club can run e.g. a summed qualification round followed by a best-attempt final.
 
+**Attempt names.** Every attempt has a name that is shown next to its number as "N · Name", to the
+judges, on the leaderboard and in the results PDF. The defaults are computed, not stored: a round with
+one attempt has a Voluntary routine (Kür), a summed round with several attempts starts with a
+Compulsory routine (Pflicht) followed by Voluntary routines, and a best-attempt round has only
+Voluntary routines. An admin can rename the attempts on the round's entries page, saving an empty name
+goes back to the default. The default depends on the number of attempts, so attempts can only be
+added and names only be changed while the round has not started.
+
 Everyone who needs to follow along can: leaderboards are public to anyone logged in, and per-trick
 detail is available for scores that need it, so athletes, coaches, and spectators can see exactly
 how a score was built up, not just the final number.
@@ -231,7 +239,7 @@ competition      { name, date (as entered, or null), type: "individual" | "synch
 groups[]         { name, abbreviation, competitors[] }              groups without athletes are omitted
   competitors[]  { place (number or "–"), name, club, rounds[] }    in placement order, a synchro pair is "A / B"
     rounds[]     { name, scoringMode: "sum" | "best_attempt", total, rank (number or "–"), attempts[] }
-      attempts[] { number, status: "scored" | "skipped" | "pending", elementCount,
+      attempts[] { number, name, status: "scored" | "skipped" | "pending", elementCount,
                    rows[], summary[], final, counted }
 judges[]         { label (role names, a shared assignment on one line), members[] { label, name } }
 ```
@@ -240,6 +248,7 @@ An attempt is shown in full only when its `status` is `scored`. For `skipped` an
 `rows` and `summary` are empty and `final` is `null`. `counted` tells whether the attempt counts towards
 the round total (see above), but is never true for an attempt that is not `scored`, as there is no total
 to mark. `elementCount` is the number of skills the attempt had.
+`name` is the name of the attempt, a custom one or the translated default, without the number.
 
 `rows[]` has one row per judged element role of the panel, in panel order, so new panels work without
 changes. The row comes in two kinds:

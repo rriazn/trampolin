@@ -57,8 +57,15 @@ test.describe('starting the round', () => {
   test('reveals the current athlete and judging checklist', async ({ page }) => {
     await expect(page.locator('.alert-success')).toContainText('Round started.');
     await expect(page.getByText('Leon Weber')).toBeVisible();
-    await expect(page.getByText('Attempt #1')).toBeVisible();
+    await expect(page.getByText('1 · Voluntary routine')).toBeVisible();
     await expect(page.getByText('Judging checklist')).toBeVisible();
+  });
+
+  test('shows a custom attempt name instead of the default', async ({ page }) => {
+    await page.request.post('/test/attempt-name', { form: { roundId: page.seed.roundId, number: 1, name: 'Warm-up & Co' } });
+    await page.reload();
+    await expect(page.getByText('1 · Warm-up & Co')).toBeVisible();
+    await expect(page.getByText('1 · Voluntary routine')).toHaveCount(0);
   });
 
   test('the checklist lists every assigned judge by name', async ({ page }) => {

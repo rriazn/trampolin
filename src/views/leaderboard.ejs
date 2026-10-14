@@ -1,3 +1,4 @@
+<% const attemptLabelFor = n => (attemptNames.find(a => a.number === n)?.label ?? t('leaderboard:table.attempt', { number: n })); -%>
 <%- include('partials/header', { title: t('leaderboard:pageTitle', { roundName: round.name }), wide: true }) %>
 
 <div class="lb-hero">
@@ -32,7 +33,7 @@
         <th scope="col" class="d-none d-md-table-cell"><%= t('leaderboard:table.club') %></th>
         <th scope="col" class="d-none d-md-table-cell"><%= t('leaderboard:table.group') %></th>
         <% for (let n = 1; n <= maxAttempts; n++) { %>
-        <th scope="col" class="text-center"><%= t('leaderboard:table.attempt', { number: n }) %></th>
+        <th scope="col" class="text-center"><%= attemptLabelFor(n) %></th>
         <% } %>
         <th scope="col" class="lb-col-total text-end"><%= round.scoring_mode === 'sum' ? t('leaderboard:table.totalScore') : t('leaderboard:table.bestScore') %></th>
       </tr>
@@ -93,7 +94,7 @@
 <% leaderboard.forEach(row => { %>
 <% row.attempts.forEach(a => { %>
 <% if (a.finalScore !== null) { %>
-<template id="pt-<%= row.sportsmanId %>-<%= a.number %>" data-title="<%= t('leaderboard:modal.attemptTitle', { name: row.name, number: a.number }) %>">
+<template id="pt-<%= row.sportsmanId %>-<%= a.number %>" data-title="<%= t('leaderboard:modal.attemptTitle', { name: row.name, attempt: attemptLabelFor(a.number), interpolation: { escapeValue: false } }) %>">
 
         <h3 class="h6 fw-bold"><%= t('leaderboard:modal.breakdownHeading') %></h3>
         <div class="table-responsive mb-3">

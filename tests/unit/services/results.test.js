@@ -150,6 +150,7 @@ describe('buildResultsData', () => {
     expect(r).toMatchObject({ name: 'Compulsory', scoringMode: 'sum', total: '4.3', rank: 1 });
     expect(r.attempts[0]).toEqual({
       number: 1,
+      name: 'Voluntary routine',
       status: 'scored',
       elementCount: 2,
       rows: [
@@ -445,5 +446,33 @@ describe('buildResultsData counted attempts', () => {
   it('does not flag an attempt that is not fully scored, even when it holds the best score', () => {
     expect(roundWithAttempts('best_attempt', [0.3, 'partial'])).toEqual([false, false]);
     expect(roundWithAttempts('sum', [0.3, 'partial'])).toEqual([true, false]);
+  });
+});
+
+describe('buildResultsData attempt names', () => {
+  function attemptsOf(mode, attemptCount, lng = 'en', customNames = {}) {
+    const comp = makeCompetition({ panelKey: 'test' });
+    const group = makeGroup(comp.id);
+    const round = makeRound(group.id, { scoringMode: mode });
+    const entry = makeEntry(round.id, makeSportsman(comp.id, group.id, 'Solo').id, 1);
+    for (let n = 1; n <= attemptCount; n++) makeAttempt(entry.id, n, 0);
+    for (const [number, name] of Object.entries(customNames)) {
+      db.prepare('INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (?, ?, ?)').run(round.id, number, name);
+    }
+    return buildResultsData(comp, makeT(lng), lng).groups[0].competitors[0].rounds[0].attempts.map(a => a.name);
+  }
+
+  it('names the first attempt of a sum round with several attempts compulsory', () => {
+    expect(attemptsOf('sum', 2)).toEqual(['Compulsory routine', 'Voluntary routine']);
+    expect(attemptsOf('sum', 2, 'de')).toEqual(['Pflicht', 'Kür']);
+  });
+
+  it('names every attempt voluntary in a best attempt round and in a single attempt round', () => {
+    expect(attemptsOf('best_attempt', 2)).toEqual(['Voluntary routine', 'Voluntary routine']);
+    expect(attemptsOf('sum', 1)).toEqual(['Voluntary routine']);
+  });
+
+  it('uses a custom name as plain text, only for the attempt it was stored for', () => {
+    expect(attemptsOf('sum', 2, 'en', { 2: 'Final & <b>"Kür"</b>' })).toEqual(['Compulsory routine', 'Final & <b>"Kür"</b>']);
   });
 });

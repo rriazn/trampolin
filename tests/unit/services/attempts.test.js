@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   db, require, makeCompetition, makeGroup, makeRound, makeSportsman, makeEntry, makeAttempt,
-  getJudgeRoleIds, makeUser, assignJudge, addScore, addElementScore,
+  getJudgeRoleIds, makeUser, assignJudge, addScore, addElementScore, makeT,
 } from './testHelpers.js';
 const {
   loadAttemptScoreMaps, loadJudgeSubmissionStatus, recomputeAttemptCompletion,
-  createAttempts, getPreviousAttemptIndex,
+  createAttempts, getPreviousAttemptIndex, defaultAttemptNameKey, getAttemptNames, getAttemptLabel,
+  saveAttemptNames, MAX_ATTEMPT_NAME_LENGTH,
 } = require('../../../src/services/attempts.service.js');
 const { loadPanelSlots } = require('../../../src/services/panels.service.js');
 const { computeAttemptScore } = require('../../../src/services/scoring.service.js');
@@ -190,5 +191,177 @@ describe('getPreviousAttemptIndex', () => {
 
     const { order, previousIndex } = getPreviousAttemptIndex(round.id, null);
     expect(order[previousIndex]).toBe(a2.id);
+  });
+});
+
+// stub translator that renders the key and the interpolated values, enough to see what the service asks for
+const stubT = (key, opts) => {
+  if (key === 'common:attemptName.label') return `${opts.number} | ${opts.name}`;
+  return key;
+};
+
+function setupRound(scoringMode, counts) {
+  const comp = makeCompetition();
+  const group = makeGroup(comp.id);
+  const round = makeRound(group.id, { scoringMode });
+  counts.forEach((count, i) => {
+    const entry = makeEntry(round.id, makeSportsman(comp.id, group.id).id, i + 1);
+    for (let n = 1; n <= count; n++) makeAttempt(entry.id, n);
+  });
+  return round;
+}
+
+function storedNames(roundId) {
+  return db.prepare('SELECT attempt_number, name FROM attempt_names WHERE round_id=? ORDER BY attempt_number').all(roundId);
+}
+
+describe('defaultAttemptNameKey', () => {
+  it.each([
+    ['sum', 1, [1], ['voluntary']],
+    ['sum', 2, [1, 2], ['compulsory', 'voluntary']],
+    ['sum', 3, [1, 2, 3], ['compulsory', 'voluntary', 'voluntary']],
+    ['best_attempt', 2, [1, 2], ['voluntary', 'voluntary']],
+    ['best_attempt', 1, [1], ['voluntary']],
+  ])('%s with %i attempts', (mode, count, numbers, expected) => {
+    expect(numbers.map(n => defaultAttemptNameKey(mode, count, n))).toEqual(expected);
+  });
+});
+
+describe('getAttemptNames', () => {
+  it('returns the translated defaults', () => {
+    const round = setupRound('sum', [2]);
+
+    expect(getAttemptNames(round, stubT)).toEqual([
+      { number: 1, name: 'common:attemptName.compulsory', label: '1 | common:attemptName.compulsory', isCustom: false, defaultName: 'common:attemptName.compulsory' },
+      { number: 2, name: 'common:attemptName.voluntary', label: '2 | common:attemptName.voluntary', isCustom: false, defaultName: 'common:attemptName.voluntary' },
+    ]);
+  });
+
+  it('uses a stored name instead of the default and still reports the default', () => {
+    const round = setupRound('sum', [2]);
+    db.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (?, 1, 'Warm-up')").run(round.id);
+
+    const [first, second] = getAttemptNames(round, stubT);
+
+    expect(first).toMatchObject({ name: 'Warm-up', label: '1 | Warm-up', isCustom: true, defaultName: 'common:attemptName.compulsory' });
+    expect(second.isCustom).toBe(false);
+  });
+
+  it('uses the highest attempt number when entries have different counts', () => {
+    const round = setupRound('sum', [1, 3]);
+
+    expect(getAttemptNames(round, stubT).map(n => n.number)).toEqual([1, 2, 3]);
+  });
+
+  it('returns an empty list when the round has no attempts', () => {
+    const round = setupRound('sum', []);
+
+    expect(getAttemptNames(round, stubT)).toEqual([]);
+  });
+
+  it('works with the real locale texts', () => {
+    const round = setupRound('sum', [2]);
+
+    expect(getAttemptNames(round, makeT('en')).map(n => n.name)).toEqual(['Compulsory routine', 'Voluntary routine']);
+  });
+});
+
+describe('getAttemptLabel', () => {
+  it('returns the label of one attempt', () => {
+    const round = setupRound('best_attempt', [2]);
+    db.prepare("INSERT INTO attempt_names (round_id, attempt_number, name) VALUES (?, 2, 'Final')").run(round.id);
+
+    expect(getAttemptLabel(round, 2, stubT)).toBe('2 | Final');
+    expect(getAttemptLabel(round, 1, stubT)).toBe('1 | common:attemptName.voluntary');
+  });
+
+  it('falls back to the voluntary name beyond the known attempts', () => {
+    const round = setupRound('sum', [2]);
+
+    expect(getAttemptLabel(round, 5, stubT)).toBe('5 | common:attemptName.voluntary');
+  });
+});
+
+describe('saveAttemptNames', () => {
+  it('stores trimmed names and reports the attempts processed', () => {
+    const round = setupRound('sum', [2]);
+
+    const result = saveAttemptNames(round, { name_1: '  Pflicht A  ', name_2: 'Kür B' });
+
+    expect(result).toEqual({ saved: 2 });
+    expect(storedNames(round.id)).toEqual([{ attempt_number: 1, name: 'Pflicht A' }, { attempt_number: 2, name: 'Kür B' }]);
+  });
+
+  it('removes a stored name when the field is blank or missing', () => {
+    const round = setupRound('sum', [2]);
+    saveAttemptNames(round, { name_1: 'One', name_2: 'Two' });
+
+    saveAttemptNames(round, { name_1: '   ' });
+
+    expect(storedNames(round.id)).toEqual([]);
+  });
+
+  it('updates an existing name', () => {
+    const round = setupRound('sum', [1]);
+    saveAttemptNames(round, { name_1: 'Old' });
+
+    saveAttemptNames(round, { name_1: 'New' });
+
+    expect(storedNames(round.id)).toEqual([{ attempt_number: 1, name: 'New' }]);
+  });
+
+  it('rejects a too long name and stores nothing', () => {
+    const round = setupRound('sum', [2]);
+
+    const result = saveAttemptNames(round, { name_1: 'Fine', name_2: 'x'.repeat(MAX_ATTEMPT_NAME_LENGTH + 1) });
+
+    expect(result).toEqual({ error: 'tooLong' });
+    expect(storedNames(round.id)).toEqual([]);
+  });
+
+  it('accepts a name of exactly the maximum length', () => {
+    const round = setupRound('sum', [1]);
+
+    expect(saveAttemptNames(round, { name_1: 'x'.repeat(MAX_ATTEMPT_NAME_LENGTH) })).toEqual({ saved: 1 });
+  });
+
+  it('ignores fields beyond the attempt count', () => {
+    const round = setupRound('sum', [1]);
+
+    saveAttemptNames(round, { name_1: 'One', name_2: 'Ghost' });
+
+    expect(storedNames(round.id)).toEqual([{ attempt_number: 1, name: 'One' }]);
+  });
+
+  it('drops stored names beyond the current attempt count', () => {
+    const round = setupRound('sum', [3]);
+    saveAttemptNames(round, { name_1: 'One', name_3: 'Three' });
+    db.prepare('DELETE FROM attempts WHERE attempt_number = 3').run();
+
+    saveAttemptNames(round, { name_1: 'One' });
+
+    expect(storedNames(round.id)).toEqual([{ attempt_number: 1, name: 'One' }]);
+  });
+
+  it('returns an error and stores nothing when the round has no attempts', () => {
+    const round = setupRound('sum', []);
+
+    expect(saveAttemptNames(round, { name_1: 'One' })).toEqual({ error: 'noAttempts' });
+    expect(storedNames(round.id)).toEqual([]);
+  });
+
+  it('turns line breaks and control characters into single spaces', () => {
+    const round = setupRound('sum', [1]);
+
+    saveAttemptNames(round, { name_1: 'Warm\n\r\tup\u2028 round' });
+
+    expect(storedNames(round.id)).toEqual([{ attempt_number: 1, name: 'Warm up round' }]);
+  });
+
+  it('counts characters instead of UTF-16 units for the length', () => {
+    const round = setupRound('sum', [1]);
+
+    expect(saveAttemptNames(round, { name_1: '😀'.repeat(MAX_ATTEMPT_NAME_LENGTH) })).toEqual({ saved: 1 });
+    expect(saveAttemptNames(round, { name_1: '😀'.repeat(MAX_ATTEMPT_NAME_LENGTH + 1) })).toEqual({ error: 'tooLong' });
   });
 });

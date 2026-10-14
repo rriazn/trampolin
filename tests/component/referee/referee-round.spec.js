@@ -48,7 +48,15 @@ test.describe('when logged in as referee', () => {
   });
 
   test('shows the attempt number badge', async ({ page }) => {
-    await expect(page.getByText('Attempt #1')).toBeVisible();
+    await expect(page.getByText('1 · Voluntary routine')).toBeVisible();
+  });
+
+  test('shows a custom attempt name instead of the default', async ({ page }) => {
+    await page.request.post('/test/attempt-name', { form: { roundId: seed.roundId, number: 1, name: 'Warm-up & Co' } });
+    await page.reload();
+    await expect(page.getByText('1 · Warm-up & Co')).toBeVisible();
+    await expect(page.getByText('1 · Voluntary routine')).toHaveCount(0);
+    await page.request.post('/test/attempt-name', { form: { roundId: seed.roundId, number: 1, name: '' } });
   });
 
   test('shows the assigned judge role\'s name as a heading', async ({ page }) => {

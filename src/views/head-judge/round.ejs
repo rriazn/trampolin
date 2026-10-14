@@ -70,7 +70,7 @@
         <%= competitorClub(attempt.club, attempt.partner_club) || '–' %><% if (attempt.routine) { %> &nbsp;·&nbsp; <%= attempt.routine %><% } %>
       </div>
     </div>
-    <span class="badge bg-primary ms-auto"><%= t('headJudge:round.attemptNumber', { number: attempt.attempt_number }) %></span>
+    <span class="badge bg-primary ms-auto"><%= attemptLabel %></span>
   </div>
   <% if (typeof attemptTotal !== 'undefined' && attemptTotal !== null && !attemptIsComplete) { %>
   <p class="text-muted small mb-0 mt-2"><sup>*</sup><%= t('headJudge:round.partialNote') %></p>
@@ -145,7 +145,7 @@
     <button class="btn btn-accent btn-touch px-4"><%= t('headJudge:round.next') %></button>
   </form>
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/skip"
-        data-confirm="<%= t('headJudge:round.confirmSkip', { name: competitorName(attempt.sportsman_name, attempt.partner_name), number: attempt.attempt_number }) %>">
+        data-confirm="<%= t('headJudge:round.confirmSkip', { name: competitorName(attempt.sportsman_name, attempt.partner_name), attempt: attemptLabel, interpolation: { escapeValue: false } }) %>">
     <button class="btn btn-outline-warning btn-touch px-4"><%= t('headJudge:round.skipAthlete') %></button>
   </form>
 </div>

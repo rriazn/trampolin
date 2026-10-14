@@ -2,7 +2,10 @@ const { getAssignmentForCompetition } = require("./db/panels.crud");
 const {
   getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getAttemptElementCount,
 } = require("./db/scores.crud");
-const { getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB } = require("./db/entries.crud");
+const {
+  getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB, getRoundAttemptCount,
+} = require("./db/entries.crud");
+const { getAttemptNamesForRound, getAttemptNameDB, saveAttemptNamesDB } = require("./db/attempt-names.crud");
 const { loadPanelSlots } = require("./panels.service");
 const { computeAttemptScore } = require("./scoring.service");
 
@@ -83,4 +86,56 @@ exports.getPreviousAttemptIndex = (roundId, currentAttemptId) => {
     const currentIndex = currentAttemptId ? order.indexOf(currentAttemptId) : order.length;
     const previousIndex = currentIndex - 1;
     return { order, previousIndex };
+};
+
+exports.MAX_ATTEMPT_NAME_LENGTH = 40;
+
+// labels are plain text, views and the PDF escape on output, so i18next must not escape a custom name a second time
+const LABEL_OPTIONS = { interpolation: { escapeValue: false } };
+
+// the first attempt of a multi-attempt sum round is the compulsory routine, every other one is voluntary
+exports.defaultAttemptNameKey = (scoringMode, attemptCount, number) => {
+    return scoringMode === 'sum' && attemptCount > 1 && number === 1 ? 'compulsory' : 'voluntary';
+};
+
+// the single place that builds a name entry, so the list and the one label lookup cannot drift apart
+function buildAttemptName(round, attemptCount, number, customName, t) {
+    const defaultName = t('common:attemptName.' + exports.defaultAttemptNameKey(round.scoring_mode, attemptCount, number));
+    const isCustom = customName !== undefined;
+    const name = isCustom ? customName : defaultName;
+    return { number, name, label: t('common:attemptName.label', { number, name, ...LABEL_OPTIONS }), isCustom, defaultName };
+}
+
+exports.getAttemptNames = (round, t) => {
+    const attemptCount = getRoundAttemptCount(round.id);
+    const custom = new Map(getAttemptNamesForRound(round.id).map(r => [r.attempt_number, r.name]));
+    const names = [];
+    for (let number = 1; number <= attemptCount; number++) {
+        names.push(buildAttemptName(round, attemptCount, number, custom.get(number), t));
+    }
+    return names;
+};
+
+exports.getAttemptLabel = (round, number, t) => {
+    const customName = getAttemptNameDB(round.id, number);
+    return buildAttemptName(round, getRoundAttemptCount(round.id), number, customName, t).label;
+};
+
+// a name is one line of plain text, control characters and line breaks become spaces
+exports.normalizeAttemptName = (value) => {
+    return String(value ?? '').replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+};
+
+exports.saveAttemptNames = (round, body) => {
+    const attemptCount = getRoundAttemptCount(round.id);
+    if (attemptCount === 0) return { error: 'noAttempts' };
+    const names = [];
+    for (let number = 1; number <= attemptCount; number++) {
+        const name = exports.normalizeAttemptName(body?.['name_' + number]);
+        // count characters, not UTF-16 units, so an emoji is one
+        if (Array.from(name).length > exports.MAX_ATTEMPT_NAME_LENGTH) return { error: 'tooLong' };
+        names.push({ number, name });
+    }
+    saveAttemptNamesDB(round.id, names, attemptCount);
+    return { saved: attemptCount };
 };

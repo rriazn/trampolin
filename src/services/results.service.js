@@ -4,6 +4,7 @@ const { buildLeaderboard } = require("./leaderboard.service");
 const { keptIndices } = require("./scoring.service");
 const { getGroupsByCompetition } = require("./db/groups.crud");
 const { getRoundsByGroup } = require("./db/rounds.crud");
+const { getAttemptNames } = require("./attempts.service");
 
 const RESULTS_VERSION = 1;
 // short role letters in the judge labels and the summary line, the same in every language
@@ -105,8 +106,8 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
     };
 }
 
-function buildAttempt(attempt, panelSlots, labelByAssignment, t, lng) {
-    const base = { number: attempt.number, status: attempt.status, elementCount: attempt.elementCount, rows: [], summary: [], final: null };
+function buildAttempt(attempt, name, panelSlots, labelByAssignment, t, lng) {
+    const base = { number: attempt.number, name, status: attempt.status, elementCount: attempt.elementCount, rows: [], summary: [], final: null };
     if (attempt.status !== 'scored') return base;
 
     const summary = new Map();
@@ -152,11 +153,16 @@ exports.rankGroupCompetitors = (competition, group) => {
 };
 
 function buildGroup(competition, group, labelByAssignment, t, lng) {
+    // the attempt names of a round are the same for every competitor, read them once
+    const namesByRound = new Map();
     const competitors = exports.rankGroupCompetitors(competition, group).map(c => ({
         place: c.place === null ? '–' : c.place,
         name: c.name,
         club: c.club,
         rounds: c.rounds.map(({ round, row, panelSlots }) => {
+            const attemptNames = namesByRound.get(round.id) || getAttemptNames(round, t);
+            namesByRound.set(round.id, attemptNames);
+            const nameFor = number => attemptNames.find(n => n.number === number)?.name ?? t('common:attemptName.voluntary');
             // the first attempt that reaches the round total is the one counting in a best attempt round
             const bestIndex = row.attempts.findIndex(a => a.finalScore !== null && a.finalScore === row.total);
             return {
@@ -165,7 +171,7 @@ function buildGroup(competition, group, labelByAssignment, t, lng) {
                 total: exports.formatScore(row.total, lng),
                 rank: row.rank,
                 attempts: row.attempts.map((a, i) => ({
-                    ...buildAttempt(a, panelSlots, labelByAssignment, t, lng),
+                    ...buildAttempt(a, nameFor(a.number), panelSlots, labelByAssignment, t, lng),
                     // only a fully scored attempt has a total cell the template can mark
                     counted: a.status === 'scored' && a.finalScore !== null && (round.scoring_mode !== 'best_attempt' || i === bestIndex),
                 })),

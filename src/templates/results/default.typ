@@ -52,10 +52,11 @@
 
 #let attempt-rows(a, best-only) = {
   let span = skill-columns + 3
-  // small header: attempt label, skill numbers, landing, bonus, missing skill, sum
+  // small header: attempt label on its own line, then skill numbers, landing, bonus, missing skill, sum
   let header = (
     table.hline(stroke: 0.5pt),
-    table.cell[#text(size: 7pt, weight: "bold")[#l.attempt #a.number]],
+    table.cell(colspan: total-columns, align: left + horizon)[#text(size: 7pt, weight: "bold")[#a.number~·~#a.name]],
+    [],
     ..range(1, skill-columns + 1).map(n => text(size: 7pt)[#n]),
     text(size: 7pt)[L],
     text(size: 7pt)[+],

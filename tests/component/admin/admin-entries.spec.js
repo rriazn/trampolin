@@ -172,6 +172,62 @@ test.describe('when logged in as admin', () => {
   });
 });
 
+test.describe('attempt names card', () => {
+  let namesSeed;
+
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post('/test/seed');
+    namesSeed = await res.json();
+    // the seeded round is running, attempts and names can only change before the start
+    await request.post('/test/round-status', { form: { roundId: namesSeed.roundId, status: 'not_started' } });
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto(`/admin/competitions/${namesSeed.competitionId}/groups/${namesSeed.groupId}/rounds/${namesSeed.roundId}/entries`);
+  });
+
+  test('is hidden while the round has no attempts', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Attempt names' })).toHaveCount(0);
+  });
+
+  test('shows one input per attempt with the default name as placeholder', async ({ page }) => {
+    await page.getByRole('button', { name: /Create All Attempts/ }).click();
+    await acceptConfirm(page);
+    await expect(page.getByRole('heading', { name: 'Attempt names' })).toBeVisible();
+    await expect(page.getByLabel('Attempt 1')).toHaveAttribute('placeholder', 'Compulsory routine');
+    await expect(page.getByLabel('Attempt 2')).toHaveAttribute('placeholder', 'Voluntary routine');
+    await expect(page.getByLabel('Attempt 1')).toHaveValue('');
+    await expect(page.getByLabel('Attempt 1')).toHaveAttribute('maxlength', '40');
+  });
+
+  test('saving a custom name shows the flash and keeps the name in the input', async ({ page }) => {
+    await page.getByLabel('Attempt 1').fill('Warm-up');
+    await page.getByRole('button', { name: 'Save names' }).click();
+    await expect(page.getByText('Attempt names saved.')).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Attempt 1')).toHaveValue('Warm-up');
+    await expect(page.getByLabel('Attempt 2')).toHaveValue('');
+  });
+
+  test('emptying a custom name restores the default placeholder', async ({ page }) => {
+    await page.getByLabel('Attempt 1').fill('');
+    await page.getByRole('button', { name: 'Save names' }).click();
+    await expect(page.getByText('Attempt names saved.')).toBeVisible();
+    await expect(page.getByLabel('Attempt 1')).toHaveValue('');
+    await expect(page.getByLabel('Attempt 1')).toHaveAttribute('placeholder', 'Compulsory routine');
+  });
+
+  test('is read only once the round has started', async ({ page, request }) => {
+    await request.post('/test/round-status', { form: { roundId: namesSeed.roundId, status: 'in_progress' } });
+    await page.reload();
+    await expect(page.getByText('The names are fixed once the round has started.')).toBeVisible();
+    await expect(page.getByLabel('Attempt 1')).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Save names' })).toBeDisabled();
+    await request.post('/test/round-status', { form: { roundId: namesSeed.roundId, status: 'not_started' } });
+  });
+});
+
 // regression: getAvailableSportsmen used to select from the whole competition instead of scoping to the round's group
 test.describe('available athletes are scoped to the round\'s group', () => {
   let multiGroupSeed;

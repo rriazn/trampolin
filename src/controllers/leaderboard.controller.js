@@ -2,6 +2,7 @@ const { getCompetitionById } = require("../services/db/competitions.crud");
 const { getGroupById } = require("../services/db/groups.crud");
 const { getRoundByIdWithCompGroupInfo } = require("../services/db/rounds.crud");
 const { buildLeaderboard } = require("../services/leaderboard.service");
+const { getAttemptNames } = require("../services/attempts.service");
 const { renderNotFound } = require("../services/errors.service");
 
 exports.getLeaderboard = (req, res) => {
@@ -22,6 +23,7 @@ exports.getLeaderboard = (req, res) => {
         round,
         leaderboard,
         maxAttempts,
+        attemptNames: getAttemptNames(round, req.t),
         panelConfigured: panelSlots.length > 0,
     });
 };

@@ -11,7 +11,7 @@ const { createUser, updateUser } = require("../services/users.service");
 const { parseSportsmanInput } = require("../services/sportsmen.service");
 const { competitorName } = require("../services/helpers/competitor.helpers");
 const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries.service");
-const { createAttempts } = require("../services/attempts.service");
+const { createAttempts, getAttemptNames, saveAttemptNames, MAX_ATTEMPT_NAME_LENGTH } = require("../services/attempts.service");
 const { getRoundsByGroup, addRoundDB, deleteRoundDB, getRoundByIdWithCompGroupInfo, getPreviousRoundInfo, getRoundById } = require("../services/db/rounds.crud");
 const { getEntriesWithAttemptsInfo, addEntryDB, getEntryMaxOrder, addAllEntriesDB, deleteEntryDB } = require("../services/db/entries.crud");
 const { renderNotFound } = require("../services/errors.service");
@@ -460,7 +460,9 @@ exports.getEntries = async (req, res) => {
         available = orderAvailableByPreviousRound(competition, prevRound, available)
     }
 
-    res.render('admin/entries', { round, entries, available, prevRound: prevRound || null });
+    const attemptNames = getAttemptNames(round, req.t);
+
+    res.render('admin/entries', { round, entries, available, prevRound: prevRound || null, attemptNames, maxAttemptNameLength: MAX_ATTEMPT_NAME_LENGTH });
 };
 
 exports.addEntry = async (req, res) => {
@@ -508,7 +510,33 @@ exports.removeEntry = async (req, res) => {
 };
 
 exports.addAttempts = async (req, res) => {
-    const count = createAttempts(req.params.rid, req.body.attempt_count);
+    const { cid, gid, rid } = req.params;
+    const round = getRoundById(rid);
+    // the default attempt names depend on the attempt count, so it stays fixed once the round has started
+    if (round && round.status !== 'not_started') {
+        req.session.flash = { error: req.t('admin:flash.entries.attemptsLocked') };
+        return res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+    }
+    const count = createAttempts(rid, req.body.attempt_count);
     req.session.flash = { success: req.t('admin:flash.entries.attemptsCreated', { count }) };
-    res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds/${req.params.rid}/entries`);
+    res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+};
+
+exports.saveAttemptNames = async (req, res) => {
+    const { cid, gid, rid } = req.params;
+    const round = getRoundByIdWithCompGroupInfo(rid, gid);
+    if (!round || String(round.competition_id) !== String(cid))
+        return renderNotFound(res, req.t('errors:notFound.round'));
+
+    const redirectUrl = `/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`;
+    if (round.status !== 'not_started') {
+        req.session.flash = { error: req.t('admin:flash.entries.attemptsLocked') };
+        return res.redirect(redirectUrl);
+    }
+
+    const result = saveAttemptNames(round, req.body);
+    if (result.error === 'tooLong') req.session.flash = { error: req.t('admin:flash.entries.attemptNameTooLong', { max: MAX_ATTEMPT_NAME_LENGTH }) };
+    else if (result.error) req.session.flash = { error: req.t('admin:flash.entries.attemptNamesNoAttempts') };
+    else req.session.flash = { success: req.t('admin:flash.entries.attemptNamesSaved') };
+    res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
 };
