@@ -1,0 +1,108 @@
+<%- include('../partials/header', { title: t('admin:startingGroups.pageTitle', { name: competition.name }), activePage: 'admin' }) %>
+<div class="page-hero">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-2">
+        <li class="breadcrumb-item"><a href="/admin/competitions"><%= t('admin:competitionForm.breadcrumbCompetitions') %></a></li>
+        <li class="breadcrumb-item"><a href="/admin/competitions/<%= competition.id %>/groups"><%= competition.name %></a></li>
+        <li class="breadcrumb-item active"><%= t('admin:startingGroups.heading') %></li>
+      </ol>
+    </nav>
+    <h1><%= t('admin:startingGroups.heading') %></h1>
+    <p><%= competition.name %> &nbsp;·&nbsp; <span class="badge status-<%= competition.status %>"><%= t('common:status.' + competition.status) %></span></p>
+  </div>
+</div>
+
+<div class="container">
+  <p class="text-muted"><%= t('admin:startingGroups.intro') %></p>
+
+  <% if (startingGroups.length === 0) { %>
+  <div class="card p-4 text-center text-muted mb-4"><%= t('admin:startingGroups.noStartingGroups') %></div>
+  <% } %>
+
+  <% startingGroups.forEach(sg => { %>
+  <div class="card p-4 mb-4" data-testid="starting-group-<%= sg.id %>">
+    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-3">
+      <h2 class="h5 fw-bold mb-0"><%= sg.name %></h2>
+      <form method="POST" action="/admin/competitions/<%= competition.id %>/starting-groups/<%= sg.id %>/delete"
+            data-confirm="<%= t('admin:startingGroups.confirmDelete') %>">
+        <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
+      </form>
+    </div>
+
+    <% if (sg.locked) { %>
+    <div class="alert alert-warning small"><%= t('admin:startingGroups.lockedNote') %></div>
+    <% } %>
+
+    <% if (sg.groups.length === 0) { %>
+    <p class="text-muted small"><%= t('admin:startingGroups.noGroups') %></p>
+    <% } else { %>
+    <div class="table-card card mb-3">
+      <table class="table mb-0">
+        <thead><tr>
+          <th scope="col"><%= t('admin:startingGroups.order') %></th>
+          <th scope="col"><%= t('admin:groups.table.groupName') %></th>
+          <th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th>
+        </tr></thead>
+        <tbody>
+        <% sg.groups.forEach((g, i) => { %>
+        <tr>
+          <td class="text-muted"><%= i + 1 %></td>
+          <td class="fw-semibold"><%= g.name %> <span class="text-muted font-monospace small"><%= g.abbreviation %></span></td>
+          <td class="text-end">
+            <% ['up', 'down'].forEach(direction => { %>
+            <form method="POST" action="/admin/competitions/<%= competition.id %>/starting-groups/<%= sg.id %>/groups/<%= g.id %>/move" class="d-inline">
+              <input type="hidden" name="direction" value="<%= direction %>">
+              <% const label = t(direction === 'up' ? 'admin:startingGroups.moveUp' : 'admin:startingGroups.moveDown'); %>
+              <button class="btn btn-sm btn-outline-secondary" aria-label="<%= label %>" title="<%= label %>"
+                      <%= sg.locked || (direction === 'up' && i === 0) || (direction === 'down' && i === sg.groups.length - 1) ? 'disabled' : '' %>>
+                <i class="bi bi-arrow-<%= direction %>"></i>
+              </button>
+            </form>
+            <% }) %>
+            <form method="POST" action="/admin/competitions/<%= competition.id %>/starting-groups/<%= sg.id %>/groups/<%= g.id %>/delete" class="d-inline">
+              <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('admin:startingGroups.remove') %>" title="<%= t('admin:startingGroups.remove') %>" <%= sg.locked ? 'disabled' : '' %>><i class="bi bi-x-lg"></i></button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <% if (availableGroups.length === 0) { %>
+    <p class="text-muted small mb-0"><%= t('admin:startingGroups.noGroupsAvailable') %></p>
+    <% } else { %>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/starting-groups/<%= sg.id %>/groups" class="row g-2 align-items-end">
+      <div class="col-md-8">
+        <label class="form-label small fw-semibold text-muted text-uppercase" for="add-group-<%= sg.id %>"><%= t('admin:startingGroups.addGroupLabel') %></label>
+        <select name="group_id" id="add-group-<%= sg.id %>" class="form-select" required <%= sg.locked ? 'disabled' : '' %>>
+          <option value=""><%= t('admin:startingGroups.selectGroup') %></option>
+          <% availableGroups.forEach(g => { %>
+          <option value="<%= g.id %>"><%= g.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-accent w-100" <%= sg.locked ? 'disabled' : '' %>><%= t('common:actions.add') %></button>
+      </div>
+    </form>
+    <% } %>
+  </div>
+  <% }) %>
+
+  <div class="card p-4">
+    <h2 class="h5 fw-bold mb-3"><%= t('admin:startingGroups.createHeading') %></h2>
+    <form method="POST" action="/admin/competitions/<%= competition.id %>/starting-groups" class="row g-3 align-items-end">
+      <div class="col-md-8">
+        <label class="form-label small fw-semibold text-muted text-uppercase" for="sg-name"><%= t('admin:startingGroups.nameLabel') %></label>
+        <input type="text" name="name" id="sg-name" class="form-control" placeholder="<%= t('admin:startingGroups.namePlaceholder') %>" required>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-accent w-100"><%= t('common:actions.add') %></button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

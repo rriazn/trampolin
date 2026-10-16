@@ -20,6 +20,7 @@
     "groups": "Gruppen",
     "judges": "Kampfrichter",
     "documents": "Dokumente",
+    "startingGroups": "Startgruppen",
     "activate": "Aktivieren",
     "close": "Beenden",
     "confirmDelete": "Wettkampf mit allen Daten löschen?"
@@ -161,9 +162,10 @@
     "heading": "Gruppen",
     "athletes": "Athleten",
     "noGroups": "Noch keine Gruppen. Fügen Sie sie unten hinzu.",
-    "table": { "groupName": "Gruppenname", "abbreviation": "Abkürzung", "rounds": "Runden" },
+    "table": { "groupName": "Gruppenname", "abbreviation": "Abkürzung", "rounds": "Runden", "startingGroup": "Startgruppe" },
     "roundsCount_one": "{{count}} Runde",
     "roundsCount_other": "{{count}} Runden",
+    "configureStartingGroups": "Startgruppen einrichten",
     "roundsButton": "Runden",
     "confirmDelete": "Gruppe mit allen Runden und Wertungen löschen?",
     "addGroup": "Gruppe hinzufügen",
@@ -273,6 +275,45 @@
       "attemptNameTooLong": "Ein Name darf höchstens {{max}} Zeichen lang sein.",
       "attemptNamesNoAttempts": "Diese Runde hat noch keine Versuche.",
       "attemptsLocked": "Versuche und ihre Namen können nur vor dem Start der Runde geändert werden."
+    }
+  },
+  "startingGroups": {
+    "pageTitle": "Startgruppen – {{name}}",
+    "heading": "Startgruppen",
+    "intro": "Fassen Sie kleine Gruppen zu einer Startgruppe zusammen. Sie turnen sich gemeinsam ein und starten in einer Reihenfolge, jede Gruppe wird aber weiterhin getrennt gewertet und platziert.",
+    "noStartingGroups": "Noch keine Startgruppen. Gruppen ohne Startgruppe starten allein.",
+    "createHeading": "Startgruppe anlegen",
+    "nameLabel": "Name",
+    "namePlaceholder": "z. B. Block 1",
+    "confirmDelete": "Diese Startgruppe löschen? Ihre Gruppen starten danach wieder allein.",
+    "noGroups": "Noch keine Gruppen in dieser Startgruppe.",
+    "order": "Reihenfolge",
+    "addGroupLabel": "Gruppe hinzufügen",
+    "selectGroup": "Gruppe auswählen",
+    "noGroupsAvailable": "Alle Gruppen sind bereits in einer Startgruppe.",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "remove": "Aus der Startgruppe entfernen",
+    "lockedNote": "Eine Runde dieser Startgruppe läuft gerade. Gruppen und Reihenfolge können zwischen den Runden wieder geändert werden.",
+    "errors": {
+      "nameRequired": "Der Name der Startgruppe ist erforderlich.",
+      "nameInUse": "In diesem Wettkampf gibt es bereits eine Startgruppe „{{name}}“.",
+      "groupRequired": "Bitte wählen Sie eine Gruppe aus.",
+      "noRounds": "Diese Gruppe hat keine Runden. Legen Sie zuerst mindestens eine Runde an.",
+      "noAttempts": "Jede Runde der Gruppe braucht zuerst Versuche, mindestens eine Runde hat noch keine.",
+      "notMatching": "Die Gruppe braucht gleich viele Runden und gleich viele Versuche pro Runde wie die Gruppen, die schon in der Startgruppe sind.",
+      "statusMismatch": "Die Runden dieser Gruppe haben einen anderen Status als die Runden der Startgruppe.",
+      "inProgress": "Eine Runde dieser Startgruppe läuft gerade. Änderungen sind zwischen den Runden möglich.",
+      "alreadyGrouped": "Diese Gruppe ist bereits in einer Startgruppe.",
+      "otherCompetition": "Diese Gruppe gehört zu einem anderen Wettkampf.",
+      "locked": "Entfernen Sie die Gruppe zuerst aus ihrer Startgruppe."
+    },
+    "flash": {
+      "created": "Startgruppe „{{name}}“ angelegt.",
+      "deleted": "Startgruppe gelöscht.",
+      "groupAdded": "Gruppe zur Startgruppe hinzugefügt.",
+      "groupRemoved": "Gruppe aus der Startgruppe entfernt.",
+      "moved": "Reihenfolge geändert."
     }
   }
 }

@@ -3,7 +3,7 @@ const {
   getScoresForAttempt, getScoresForAssignment, getElementScoresForAttempt, getAttemptElementCount,
 } = require("./db/scores.crud");
 const {
-  getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIds, updateAttemptStatusDB, getRoundAttemptCount,
+  getEntryIdsForRound, addAttemptsDB, getOrderedAttemptIdsForRounds, updateAttemptStatusDB, getRoundAttemptCount,
 } = require("./db/entries.crud");
 const { getAttemptNamesForRound, getAttemptNameDB, saveAttemptNamesDB } = require("./db/attempt-names.crud");
 const { loadPanelSlots } = require("./panels.service");
@@ -74,15 +74,18 @@ exports.recomputeAttemptCompletion = (attemptId, panelTemplateId) => {
   return result;
 };
 
+exports.normalizeAttemptCount = (attemptCount) => Math.min(Math.max(parseInt(attemptCount) || 2, 1), 20);
+
 exports.createAttempts = (rid, attemptCount) => {
-    const count = Math.min(Math.max(parseInt(attemptCount) || 2, 1), 20);
+    const count = exports.normalizeAttemptCount(attemptCount);
     const entries = getEntryIdsForRound(rid);
     addAttemptsDB(entries, count);
     return count;
 };
 
-exports.getPreviousAttemptIndex = (roundId, currentAttemptId) => {
-    const order = getOrderedAttemptIds(roundId);
+// roundIds are the rounds that run together, a single round is a list of one
+exports.getPreviousAttemptIndex = (roundIds, currentAttemptId) => {
+    const order = getOrderedAttemptIdsForRounds(roundIds);
     const currentIndex = currentAttemptId ? order.indexOf(currentAttemptId) : order.length;
     const previousIndex = currentIndex - 1;
     return { order, previousIndex };

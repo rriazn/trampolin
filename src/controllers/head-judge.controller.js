@@ -2,11 +2,16 @@ const { getRoundOverview, getRoundSelectionOverview, loadRound } = require("../s
 const { rosterReadiness } = require("../services/panels.service");
 const { getPreviousAttemptIndex, recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
 const { parseAndValidateScore } = require("../services/scoring.service");
-const { getNextPendingAttemptId, updateAttemptSkippedDB } = require("../services/db/entries.crud");
-const { updateRoundStartedDB, updateRoundCurrentAttemptDB, updateRoundCompletedDB } = require("../services/db/rounds.crud");
+const { getNextPendingAttemptIdForRounds, updateAttemptSkippedDB } = require("../services/db/entries.crud");
+const { updateRoundsStartedDB, updateRoundsCurrentAttemptDB, updateRoundsCompletedDB } = require("../services/db/rounds.crud");
+const { getRunRounds, getCurrentRound, getStartingGroupInfo, collapseByStartingGroup } = require("../services/starting-groups.service");
 const { getHeadJudgeAssignment } = require("../services/db/panels.crud");
 const { addAttemptScoreDB, updateAttemptElementCount } = require("../services/db/scores.crud");
 
+const roundUrl = (r) => `/head-judge/competitions/${r.competition_id}/groups/${r.group_id}/rounds/${r.id}`;
+
+// after an action the page of the round that owns the current athlete, so the header matches the athlete
+const currentRoundUrl = (round) => roundUrl(getCurrentRound(round));
 
 // Dashboard
 exports.getDashboard = (req, res) => {
@@ -16,7 +21,7 @@ exports.getDashboard = (req, res) => {
         r.isReady = rosterReadiness(r.competition_id, r.panel_template_id).isReady;
     });
 
-    res.render('head-judge/dashboard', { rounds });
+    res.render('head-judge/dashboard', { rounds: collapseByStartingGroup(rounds) });
 };
 
 exports.getRound = (req, res) => {
@@ -24,24 +29,31 @@ exports.getRound = (req, res) => {
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
 
+    // a starting group shares one current athlete, so the page of that athlete's group is the one to show
+    const current = getCurrentRound(round);
+    if (current.id !== round.id) return res.redirect(roundUrl(current));
+
     const readiness = rosterReadiness(round.competition_id, round.panel_template_id);
+    const startingGroup = getStartingGroupInfo(round);
 
     if (round.status !== 'in_progress') {
-        return res.render('head-judge/round', { round, readiness, attempt: null, checklist: [] });
+        return res.render('head-judge/round', { round, readiness, attempt: null, checklist: [], startingGroup });
     }
 
     const roundOverview = getRoundOverview(round, req.session.user.id, readiness);
     const attemptLabel = getAttemptLabel(round, roundOverview.attempt.attempt_number, req.t);
-    res.render('head-judge/round', { ...roundOverview, attemptLabel });
+    res.render('head-judge/round', { ...roundOverview, attemptLabel, startingGroup });
 };
 
 exports.startRound = (req, res) => {
     const { cid, gid, rid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
+    const runRounds = getRunRounds(round);
+    const runIds = runRounds.map(r => r.id);
 
-    if (round.status !== 'not_started') {
+    if (runRounds.some(r => r.status !== 'not_started')) {
         req.session.flash = { error: req.t('headJudge:flash.alreadyStarted') };
         return res.redirect(backUrl);
     }
@@ -50,44 +62,46 @@ exports.startRound = (req, res) => {
         return res.redirect(backUrl);
     }
 
-    const firstAttemptId = getNextPendingAttemptId(rid);
+    const firstAttemptId = getNextPendingAttemptIdForRounds(runIds);
     if (!firstAttemptId) {
         req.session.flash = { error: req.t('headJudge:flash.noAttempts') };
         return res.redirect(backUrl);
     }
 
-    updateRoundStartedDB(rid, firstAttemptId);
+    updateRoundsStartedDB(runIds, firstAttemptId);
     req.session.flash = { success: req.t('headJudge:flash.started') };
-    res.redirect(backUrl);
+    res.redirect(currentRoundUrl(round));
 };
 
 exports.backAttempt = (req, res) => {
     const { cid, gid, rid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
+    const runIds = getRunRounds(round).map(r => r.id);
 
     if (round.status !== 'in_progress' && round.status !== 'completed') {
         req.session.flash = { error: req.t('headJudge:flash.notStartedYet') };
         return res.redirect(backUrl);
     }
 
-    const { order, previousIndex } = getPreviousAttemptIndex(rid, round.current_attempt_id);
+    const { order, previousIndex } = getPreviousAttemptIndex(runIds, round.current_attempt_id);
     if (previousIndex < 0) {
         req.session.flash = { error: req.t('headJudge:flash.alreadyAtFirst') };
         return res.redirect(backUrl);
     }
 
-    updateRoundCurrentAttemptDB(rid, order[previousIndex]);
+    updateRoundsCurrentAttemptDB(runIds, order[previousIndex]);
     req.session.flash = { success: req.t('headJudge:flash.movedBack') };
-    res.redirect(backUrl);
+    res.redirect(currentRoundUrl(round));
 };
 
 exports.nextAttempt = (req, res) => {
     const { cid, gid, rid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
+    const runIds = getRunRounds(round).map(r => r.id);
 
     if (round.status !== 'in_progress' || !round.current_attempt_id) {
         req.session.flash = { error: req.t('headJudge:flash.notInProgress') };
@@ -97,25 +111,26 @@ exports.nextAttempt = (req, res) => {
     const { isComplete } = recomputeAttemptCompletion(round.current_attempt_id, round.panel_template_id);
     if (!isComplete) {
         req.session.flash = { error: req.t('headJudge:flash.notAllSubmitted') };
-        return res.redirect(backUrl);
+        return res.redirect(currentRoundUrl(round));
     }
 
-    const nextId = getNextPendingAttemptId(rid);
+    const nextId = getNextPendingAttemptIdForRounds(runIds);
     if (nextId) {
-        updateRoundCurrentAttemptDB(rid, nextId);
+        updateRoundsCurrentAttemptDB(runIds, nextId);
         req.session.flash = { success: req.t('headJudge:flash.advanced') };
     } else {
-        updateRoundCompletedDB(rid);
+        updateRoundsCompletedDB(runIds);
         req.session.flash = { success: req.t('headJudge:flash.completed') };
     }
-    res.redirect(backUrl);
+    res.redirect(currentRoundUrl(round));
 };
 
 exports.skipAttempt = (req, res) => {
     const { cid, gid, rid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
+    const runIds = getRunRounds(round).map(r => r.id);
 
     if (round.status !== 'in_progress' || !round.current_attempt_id) {
         req.session.flash = { error: req.t('headJudge:flash.notInProgress') };
@@ -124,22 +139,22 @@ exports.skipAttempt = (req, res) => {
 
     updateAttemptSkippedDB(round.current_attempt_id);
 
-    const nextId = getNextPendingAttemptId(rid);
+    const nextId = getNextPendingAttemptIdForRounds(runIds);
     if (nextId) {
-        updateRoundCurrentAttemptDB(rid, nextId);
+        updateRoundsCurrentAttemptDB(runIds, nextId);
         req.session.flash = { success: req.t('headJudge:flash.skippedAdvanced') };
     } else {
-        updateRoundCompletedDB(rid);
+        updateRoundsCompletedDB(runIds);
         req.session.flash = { success: req.t('headJudge:flash.skippedCompleted') };
     }
-    res.redirect(backUrl);
+    res.redirect(currentRoundUrl(round));
 };
 
 exports.penaltyDeduction = (req, res) => {
     const { cid, gid, rid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
 
     if (round.status !== 'in_progress' || !round.current_attempt_id) {
         req.session.flash = { error: req.t('headJudge:flash.notInProgress') };
@@ -177,19 +192,19 @@ exports.penaltyDeduction = (req, res) => {
 
 exports.completeRound = (req, res) => {
     const { cid, gid, rid } = req.params;
-    const { error } = loadRound(cid, gid, rid, req.t);
+    const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
 
-    updateRoundCompletedDB(rid);
+    updateRoundsCompletedDB(getRunRounds(round).map(r => r.id));
     req.session.flash = { success: req.t('headJudge:flash.markedCompleted') };
-    res.redirect(`/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`);
+    res.redirect(roundUrl(round));
 };
 
 exports.updateElementCount = (req, res) => {
     const { cid, gid, rid, aid } = req.params;
     const { round, error } = loadRound(cid, gid, rid, req.t);
     if (error) return error(res);
-    const backUrl = `/head-judge/competitions/${cid}/groups/${gid}/rounds/${rid}`;
+    const backUrl = roundUrl(round);
 
     if (String(round.current_attempt_id) !== String(aid)) {
         req.session.flash = { error: req.t('headJudge:flash.notCurrentAttempt') };

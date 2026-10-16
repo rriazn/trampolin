@@ -15,9 +15,10 @@ exports.getGroupByCompetitionAbbreviation = (competitionId, abbreviation) => {
 
 exports.getGroupsRoundCount = (competitionId) => {
     return db.prepare(`
-        SELECT g.*, COUNT(r.id) AS round_count
+        SELECT g.*, COUNT(r.id) AS round_count, sg.name AS starting_group_name
         FROM groups g
         LEFT JOIN rounds r ON r.group_id = g.id
+        LEFT JOIN starting_groups sg ON sg.id = g.starting_group_id
         WHERE g.competition_id = ?
         GROUP BY g.id
         ORDER BY g.name

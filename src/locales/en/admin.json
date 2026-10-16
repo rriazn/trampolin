@@ -20,6 +20,7 @@
     "groups": "Groups",
     "judges": "Judges",
     "documents": "Documents",
+    "startingGroups": "Starting groups",
     "activate": "Activate",
     "close": "Close",
     "confirmDelete": "Delete competition and ALL its data?"
@@ -161,9 +162,10 @@
     "heading": "Groups",
     "athletes": "Athletes",
     "noGroups": "No groups yet. Add one below.",
-    "table": { "groupName": "Group Name", "abbreviation": "Abbreviation", "rounds": "Rounds" },
+    "table": { "groupName": "Group Name", "abbreviation": "Abbreviation", "rounds": "Rounds", "startingGroup": "Starting group" },
     "roundsCount_one": "{{count}} round",
     "roundsCount_other": "{{count}} rounds",
+    "configureStartingGroups": "Configure starting groups",
     "roundsButton": "Rounds",
     "confirmDelete": "Delete group and all its rounds and scores?",
     "addGroup": "Add Group",
@@ -273,6 +275,45 @@
       "attemptNameTooLong": "An attempt name can be at most {{max}} characters long.",
       "attemptNamesNoAttempts": "This round has no attempts yet.",
       "attemptsLocked": "Attempts and attempt names can only be changed before the round starts."
+    }
+  },
+  "startingGroups": {
+    "pageTitle": "Starting groups – {{name}}",
+    "heading": "Starting groups",
+    "intro": "Bundle small groups into one starting group. They warm up and compete as one sequence (round 1 of every group, then round 2, and so on), while each group is still scored and ranked separately.",
+    "noStartingGroups": "No starting groups yet. Groups without one run alone.",
+    "createHeading": "Create starting group",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Block 1",
+    "confirmDelete": "Delete this starting group? Its groups will run alone again.",
+    "noGroups": "No groups in this starting group yet.",
+    "order": "Order",
+    "addGroupLabel": "Add group",
+    "selectGroup": "Select a group",
+    "noGroupsAvailable": "All groups are already in a starting group.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove from starting group",
+    "lockedNote": "A round of this starting group is in progress. Members and order can be changed again between rounds.",
+    "errors": {
+      "nameRequired": "Starting group name is required.",
+      "nameInUse": "A starting group named \"{{name}}\" already exists in this competition.",
+      "groupRequired": "Select a group.",
+      "noRounds": "This group has no rounds. Add at least one round first.",
+      "noAttempts": "Every round of the group needs attempts first, but at least one round has no attempts yet.",
+      "notMatching": "The group needs the same number of rounds and the same number of attempts per round as the groups already in the starting group.",
+      "statusMismatch": "The rounds of this group have a different status than the rounds of the starting group.",
+      "inProgress": "A round of this starting group is in progress. Changes are possible between rounds.",
+      "alreadyGrouped": "This group is already in a starting group.",
+      "otherCompetition": "This group belongs to another competition.",
+      "locked": "Remove the group from its starting group first."
+    },
+    "flash": {
+      "created": "Starting group \"{{name}}\" created.",
+      "deleted": "Starting group deleted.",
+      "groupAdded": "Group added to the starting group.",
+      "groupRemoved": "Group removed from the starting group.",
+      "moved": "Order changed."
     }
   }
 }

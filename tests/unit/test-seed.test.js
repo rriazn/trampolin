@@ -57,4 +57,34 @@ describe('seedTestData', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM competitions').get().n).toBe(1);
     expect(competition(result.competitionId).type).toBe('individual');
   });
+
+  it('seeds two groups of one starting group with the rounds not started', async () => {
+    const result = await seedTestData({ type: 'startingGroup' });
+
+    expect(competition(result.competitionId)).toMatchObject({ type: 'individual', template_key: 'test' });
+    const groups = db.prepare('SELECT id, name, starting_group_id, starting_group_position FROM groups WHERE competition_id=? ORDER BY starting_group_position').all(result.competitionId);
+    expect(groups.map(g => g.id)).toEqual([result.groupId, result.groupBId]);
+    expect(new Set(groups.map(g => g.starting_group_id)).size).toBe(1);
+    expect(groups.map(g => g.starting_group_position)).toEqual([1, 2]);
+    expect(result.startingGroupId).toBe(groups[0].starting_group_id);
+    for (const roundId of [result.roundId, result.roundBId]) {
+      expect(db.prepare('SELECT status, current_attempt_id FROM rounds WHERE id=?').get(roundId)).toEqual({ status: 'not_started', current_attempt_id: null });
+      expect(db.prepare('SELECT COUNT(*) AS n FROM entries WHERE round_id=?').get(roundId).n).toBe(2);
+      expect(db.prepare('SELECT COUNT(*) AS n FROM attempts a JOIN entries e ON e.id=a.entry_id WHERE e.round_id=?').get(roundId).n).toBe(4);
+    }
+  });
+
+  it('staffs the starting group fixture so the head judge can start it', async () => {
+    const result = await seedTestData({ type: 'startingGroup' });
+    const roles = db.prepare(`
+      SELECT jr.key, u.email FROM panel_assignments pa
+      JOIN judge_roles jr ON jr.id = pa.judge_role_id JOIN users u ON u.id = pa.user_id
+      WHERE pa.competition_id=? ORDER BY jr.key, u.email
+    `).all(result.competitionId);
+    expect(roles).toEqual([
+      { key: 'difficulty', email: 'maria@example.com' },
+      { key: 'execution', email: 'maria@example.com' },
+      { key: 'head_judge', email: 'petra@example.com' },
+    ]);
+  });
 });

@@ -58,11 +58,20 @@ CREATE TABLE IF NOT EXISTS competitions (
     created_at        TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS starting_groups (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
+    name           TEXT    NOT NULL,
+    UNIQUE(competition_id, name)
+);
+
 CREATE TABLE IF NOT EXISTS groups (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     name           TEXT    NOT NULL,
     competition_id INTEGER NOT NULL REFERENCES competitions(id) ON DELETE CASCADE,
     abbreviation   TEXT    NOT NULL,
+    starting_group_id       INTEGER REFERENCES starting_groups(id) ON DELETE SET NULL,
+    starting_group_position INTEGER,
     UNIQUE(competition_id, abbreviation)
 );
 

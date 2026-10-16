@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { requireAdmin } = require('../middleware/auth');
 const adminController = require('../controllers/admin.controller');
 const documentsController = require('../controllers/documents.controller');
+const startingGroupsController = require('../controllers/starting-groups.controller');
 const { receiveUpload } = require('../middleware/upload');
 
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
@@ -68,6 +69,21 @@ router.post('/competitions/:id/documents/certificates', documentsController.rece
 router.post('/competitions/:id/documents/certificates/preview', documentsController.receiveCertificateTemplate, documentsController.previewCertificates);
 
 router.get('/competitions/:id/documents/certificates/template', documentsController.downloadCertificatesTemplate);
+
+
+// Starting groups
+
+router.get('/competitions/:id/starting-groups', startingGroupsController.getStartingGroups);
+
+router.post('/competitions/:id/starting-groups', startingGroupsController.addStartingGroup);
+
+router.post('/competitions/:id/starting-groups/:sgid/delete', startingGroupsController.deleteStartingGroup);
+
+router.post('/competitions/:id/starting-groups/:sgid/groups', startingGroupsController.addGroup);
+
+router.post('/competitions/:id/starting-groups/:sgid/groups/:gid/delete', startingGroupsController.removeGroup);
+
+router.post('/competitions/:id/starting-groups/:sgid/groups/:gid/move', startingGroupsController.moveGroup);
 
 
 // Judges

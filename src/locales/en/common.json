@@ -88,5 +88,8 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "column": "Actions"
+  },
+  "startingGroup": {
+    "label": "Starting group"
   }
 }

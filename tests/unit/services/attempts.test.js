@@ -163,7 +163,7 @@ describe('getPreviousAttemptIndex', () => {
     const a1 = makeAttempt(entry.id, 1);
     const a2 = makeAttempt(entry.id, 2);
 
-    const { order, previousIndex } = getPreviousAttemptIndex(round.id, a2.id);
+    const { order, previousIndex } = getPreviousAttemptIndex([round.id], a2.id);
     expect(order).toEqual([a1.id, a2.id]);
     expect(previousIndex).toBe(0);
   });
@@ -176,7 +176,7 @@ describe('getPreviousAttemptIndex', () => {
     const entry = makeEntry(round.id, sp.id, 1);
     const a1 = makeAttempt(entry.id, 1);
 
-    const { previousIndex } = getPreviousAttemptIndex(round.id, a1.id);
+    const { previousIndex } = getPreviousAttemptIndex([round.id], a1.id);
     expect(previousIndex).toBe(-1);
   });
 
@@ -189,7 +189,7 @@ describe('getPreviousAttemptIndex', () => {
     makeAttempt(entry.id, 1);
     const a2 = makeAttempt(entry.id, 2);
 
-    const { order, previousIndex } = getPreviousAttemptIndex(round.id, null);
+    const { order, previousIndex } = getPreviousAttemptIndex([round.id], null);
     expect(order[previousIndex]).toBe(a2.id);
   });
 });
