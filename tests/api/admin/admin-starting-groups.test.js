@@ -86,6 +86,13 @@ describe('POST /admin/competitions/:id/starting-groups', () => {
     expect(await follow(res)).toContain('name is required');
   });
 
+  it('refuses a name that is too long', async () => {
+    const { comp } = seedCompetition([[1]]);
+    const res = await agent.post(base(comp)).type('form').send({ name: 'x'.repeat(61) });
+    expect(db.prepare('SELECT COUNT(*) AS n FROM starting_groups WHERE competition_id=?').get(comp).n).toBe(0);
+    expect(await follow(res)).toContain('at most 60 characters');
+  });
+
   it('refuses a name that is already used in the competition', async () => {
     const { comp } = seedCompetition([[1]]);
     await create(comp, 'Block 1');
@@ -197,8 +204,15 @@ describe('POST .../starting-groups/:sgid/groups/:gid/delete and move', () => {
 
   it('ignores an unknown direction', async () => {
     const { comp, groups, sg } = await setupThree();
-    await agent.post(`${base(comp)}/${sg.id}/groups/${groups[1].id}/move`).type('form').send({ direction: 'sideways' });
+    const res = await agent.post(`${base(comp)}/${sg.id}/groups/${groups[1].id}/move`).type('form').send({ direction: 'sideways' });
     expect(groups.map(g => groupRow(g.id).starting_group_position)).toEqual([1, 2, 3]);
+    expect(await follow(res)).toContain('cannot be moved further');
+  });
+
+  it('says so when the group is already at the end', async () => {
+    const { comp, groups, sg } = await setupThree();
+    const res = await agent.post(`${base(comp)}/${sg.id}/groups/${groups[0].id}/move`).type('form').send({ direction: 'up' });
+    expect(await follow(res)).toContain('cannot be moved further');
   });
 
   it('refuses to remove or move while a member round is in progress', async () => {
@@ -300,6 +314,35 @@ describe('locks on a group in a starting group', () => {
     await agent.post(`${roundsUrl}/${group.rounds[0]}/attempts/bulk`).type('form').send({ attempt_count: 2 });
 
     expect(db.prepare('SELECT COUNT(*) AS n FROM attempts WHERE entry_id=?').get(entry).n).toBe(2);
+  });
+
+  it('refuses to delete the group', async () => {
+    const { comp, group } = await grouped();
+
+    const res = await agent.post(`/admin/competitions/${comp}/groups/${group.id}/delete`);
+
+    expect(db.prepare('SELECT COUNT(*) AS n FROM groups WHERE id=?').get(group.id).n).toBe(1);
+    expect(await follow(res)).toContain('Remove the group from its starting group first');
+  });
+
+  it('refuses a different attempt count posted through the url of another group', async () => {
+    const { comp, group } = await grouped();
+    const other = seedCompetition([[1]]).groups[0];
+    const otherUrl = `/admin/competitions/${comp}/groups/${other.id}/rounds`;
+
+    await agent.post(`${otherUrl}/${group.rounds[0]}/attempts/bulk`).type('form').send({ attempt_count: 3 });
+
+    expect(db.prepare('SELECT MAX(a.attempt_number) AS n FROM attempts a JOIN entries e ON e.id=a.entry_id WHERE e.round_id=?').get(group.rounds[0]).n).toBe(2);
+  });
+
+  it('gives an athlete added to the round all attempts', async () => {
+    const { comp, roundsUrl, group } = await grouped();
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Late', comp, group.id).lastInsertRowid;
+
+    await agent.post(`${roundsUrl}/${group.rounds[0]}/entries`).type('form').send({ sportsman_id: sp, start_order: 3 });
+
+    const entry = db.prepare('SELECT id FROM entries WHERE round_id=? AND sportsman_id=?').get(group.rounds[0], sp);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM attempts WHERE entry_id=?').get(entry.id).n).toBe(2);
   });
 
   it('allows adding and removing entries', async () => {

@@ -5,7 +5,7 @@ const {
     getStartingGroupsByCompetition, getStartingGroupById, addStartingGroupDB, deleteStartingGroupDB,
     addGroupToStartingGroupDB, removeGroupFromStartingGroupDB, moveGroupInStartingGroupDB,
 } = require('../services/db/starting-groups.crud');
-const { checkCanJoin, isMembershipLocked } = require('../services/starting-groups.service');
+const { checkCanJoin, isMembershipLocked, MAX_NAME_LENGTH } = require('../services/starting-groups.service');
 
 const pageUrl = (req) => `/admin/competitions/${req.params.id}/starting-groups`;
 
@@ -42,9 +42,11 @@ exports.addStartingGroup = (req, res) => {
         return renderNotFound(res, req.t('errors:notFound.competition'));
     const name = String(req.body.name ?? '').trim();
     if (!name) return flashAndReturn(req, res, 'admin:startingGroups.errors.nameRequired');
+    if (name.length > MAX_NAME_LENGTH) return flashAndReturn(req, res, 'admin:startingGroups.errors.nameTooLong', { max: MAX_NAME_LENGTH });
     try {
         addStartingGroupDB(competition.id, name);
-    } catch {
+    } catch (err) {
+        if (err.code !== 'SQLITE_CONSTRAINT_UNIQUE') throw err;
         return flashAndReturn(req, res, 'admin:startingGroups.errors.nameInUse', { name });
     }
     req.session.flash = { success: req.t('admin:startingGroups.flash.created', { name }) };
@@ -100,7 +102,8 @@ exports.moveGroup = (req, res) => {
     if (isMembershipLocked(startingGroup)) return flashAndReturn(req, res, LOCKED_KEY);
 
     const { direction } = req.body;
-    if (['up', 'down'].includes(direction) && moveGroupInStartingGroupDB(group.id, direction))
-        req.session.flash = { success: req.t('admin:startingGroups.flash.moved') };
+    if (!['up', 'down'].includes(direction) || !moveGroupInStartingGroupDB(group.id, direction))
+        return flashAndReturn(req, res, 'admin:startingGroups.errors.cannotMove');
+    req.session.flash = { success: req.t('admin:startingGroups.flash.moved') };
     res.redirect(pageUrl(req));
 };

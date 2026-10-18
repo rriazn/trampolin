@@ -14,7 +14,7 @@ function makeGroupWithRounds(comp, attemptCounts, { name } = {}) {
   const group = makeGroup(comp.id, name);
   const athletes = [makeSportsman(comp.id, group.id), makeSportsman(comp.id, group.id)];
   const rounds = attemptCounts.map((count, i) => {
-    const round = makeRound(group.id, { order: i + 1 });
+    const round = makeRound(group.id, { order: i + 1, name: `R${i + 1}` });
     const attempts = [];
     athletes.forEach((sp, k) => {
       const entry = makeEntry(round.id, sp.id, k + 1);
@@ -239,6 +239,21 @@ describe('checkCanJoin', () => {
   it('refuses a different attempt count at the same position', () => {
     const { sg, candidate } = setup([[1, 2]], [1, 1]);
     expect(checkCanJoin(groupRow(candidate.group.id), sg)).toBe(KEY + 'notMatching');
+  });
+
+  it('refuses rounds with other names at the same position', () => {
+    const { sg, candidate } = setup();
+    db.prepare("UPDATE rounds SET name='Final' WHERE id=?").run(candidate.rounds[0].id);
+    expect(checkCanJoin(groupRow(candidate.group.id), sg)).toBe(KEY + 'roundNames');
+  });
+
+  it('refuses a group where an athlete has fewer attempts than the round', () => {
+    const { sg, comp } = setup();
+    const candidate = makeGroupWithRounds(comp, [2]);
+    const late = makeSportsman(comp.id, candidate.group.id);
+    const entry = makeEntry(candidate.rounds[0].id, late.id, 3);
+    makeAttempt(entry.id, 1);
+    expect(checkCanJoin(groupRow(candidate.group.id), sg)).toBe(KEY + 'incompleteAttempts');
   });
 
   it('refuses paired rounds with a different status', () => {

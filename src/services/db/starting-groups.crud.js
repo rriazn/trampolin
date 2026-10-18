@@ -25,6 +25,18 @@ exports.getStartingGroupRoundStatuses = (startingGroupId) => {
     `).all(startingGroupId).map(r => r.status);
 };
 
+// rounds of grouped groups with their group and starting group, one starting group or all of them
+exports.getGroupedRounds = (startingGroupId) => {
+    return db.prepare(`
+        SELECT r.*, g.name AS group_name, g.starting_group_id, g.starting_group_position, sg.name AS starting_group_name
+        FROM rounds r
+        JOIN groups g ON g.id = r.group_id
+        JOIN starting_groups sg ON sg.id = g.starting_group_id
+        WHERE (? IS NULL OR g.starting_group_id = ?)
+        ORDER BY g.starting_group_position, g.id, r.round_order, r.id
+    `).all(startingGroupId ?? null, startingGroupId ?? null);
+};
+
 exports.addStartingGroupDB = (competitionId, name) => {
     return db.prepare('INSERT INTO starting_groups (competition_id, name) VALUES (?, ?)').run(competitionId, name.trim());
 };

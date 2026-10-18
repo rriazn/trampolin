@@ -83,6 +83,12 @@ exports.createAttempts = (rid, attemptCount) => {
     return count;
 };
 
+// gives every entry all attempts the round already has, so a late athlete is not skipped
+exports.fillMissingAttempts = (rid) => {
+    const count = getRoundAttemptCount(rid);
+    if (count > 0) addAttemptsDB(getEntryIdsForRound(rid), count);
+};
+
 // roundIds are the rounds that run together, a single round is a list of one
 exports.getPreviousAttemptIndex = (roundIds, currentAttemptId) => {
     const order = getOrderedAttemptIdsForRounds(roundIds);
