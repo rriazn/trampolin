@@ -11,9 +11,10 @@ const { createUser, updateUser } = require("../services/users.service");
 const { parseSportsmanInput } = require("../services/sportsmen.service");
 const { competitorName } = require("../services/helpers/competitor.helpers");
 const { orderAvailableByPreviousRound, randomizeEntryOrder } = require("../services/entries.service");
-const { createAttempts, getAttemptNames, saveAttemptNames, MAX_ATTEMPT_NAME_LENGTH } = require("../services/attempts.service");
+const { isGroupStructureLocked } = require("../services/starting-groups.service");
+const { createAttempts, fillMissingAttempts, normalizeAttemptCount, getAttemptNames, saveAttemptNames, MAX_ATTEMPT_NAME_LENGTH } = require("../services/attempts.service");
 const { getRoundsByGroup, addRoundDB, deleteRoundDB, getRoundByIdWithCompGroupInfo, getPreviousRoundInfo, getRoundById } = require("../services/db/rounds.crud");
-const { getEntriesWithAttemptsInfo, addEntryDB, getEntryMaxOrder, addAllEntriesDB, deleteEntryDB } = require("../services/db/entries.crud");
+const { getEntriesWithAttemptsInfo, getRoundAttemptCount, addEntryDB, getEntryMaxOrder, addAllEntriesDB, deleteEntryDB } = require("../services/db/entries.crud");
 const { renderNotFound } = require("../services/errors.service");
 
 // Dashboard
@@ -387,6 +388,10 @@ exports.addGroup = async (req, res) => {
 };
 
 exports.deleteGroup = async (req, res) => {
+    if (isGroupStructureLocked(req.params.gid)) {
+        req.session.flash = { error: req.t('admin:startingGroups.errors.locked') };
+        return res.redirect(`/admin/competitions/${req.params.id}/groups`);
+    }
     deleteGroupDB(req.params.gid, req.params.id);
     req.session.flash = { success: req.t('admin:flash.groups.deleted') };
     res.redirect(`/admin/competitions/${req.params.id}/groups`);
@@ -414,6 +419,12 @@ exports.addRound = async (req, res) => {
     if (!group) 
         return renderNotFound(res, req.t('errors:notFound.generic'));
 
+    const roundsUrl = `/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`;
+    if (isGroupStructureLocked(group.id)) {
+        req.session.flash = { error: req.t('admin:startingGroups.errors.locked') };
+        return res.redirect(roundsUrl);
+    }
+
     const renderWithError = (error) => {
         const rounds = getRoundsByGroup(req.params.gid);
         return res.status(400).render('admin/rounds', { competition, group, rounds, error });
@@ -429,6 +440,11 @@ exports.addRound = async (req, res) => {
 };
 
 exports.deleteRound = async (req, res) => {
+    const round = getRoundById(req.params.rid);
+    if (round && isGroupStructureLocked(round.group_id)) {
+        req.session.flash = { error: req.t('admin:startingGroups.errors.locked') };
+        return res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
+    }
     deleteRoundDB(req.params.rid, req.params.gid);
     req.session.flash = { success: req.t('admin:flash.rounds.deleted') };
     res.redirect(`/admin/competitions/${req.params.cid}/groups/${req.params.gid}/rounds`);
@@ -465,10 +481,17 @@ exports.getEntries = async (req, res) => {
     res.render('admin/entries', { round, entries, available, prevRound: prevRound || null, attemptNames, maxAttemptNameLength: MAX_ATTEMPT_NAME_LENGTH });
 };
 
+// a round in a starting group runs paired with the others, so a late athlete gets the attempts right away
+const fillAttemptsInGroupedRound = (rid) => {
+    const round = getRoundById(rid);
+    if (round && isGroupStructureLocked(round.group_id)) fillMissingAttempts(rid);
+};
+
 exports.addEntry = async (req, res) => {
     const { sportsman_id, start_order } = req.body;
     try {
         addEntryDB(req.params.rid, sportsman_id, start_order);
+        fillAttemptsInGroupedRound(req.params.rid);
         req.session.flash = { success: req.t('admin:flash.entries.added') };
     } catch {
         req.session.flash = { error: req.t('admin:entries.errors.alreadyInRound') };
@@ -487,6 +510,7 @@ exports.addAllEntries = async (req, res) => {
     const maxOrder = getEntryMaxOrder(rid);
 
     addAllEntriesDB(available, rid, maxOrder);
+    fillAttemptsInGroupedRound(rid);
     req.session.flash = { success: req.t('admin:flash.entries.addedAll', { count: available.length }) };
     res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
 };
@@ -515,6 +539,11 @@ exports.addAttempts = async (req, res) => {
     // the default attempt names depend on the attempt count, so it stays fixed once the round has started
     if (round && round.status !== 'not_started') {
         req.session.flash = { error: req.t('admin:flash.entries.attemptsLocked') };
+        return res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
+    }
+    // a grouped round keeps its attempt count, because it is paired with the other groups by it
+    if (round && isGroupStructureLocked(round.group_id) && normalizeAttemptCount(req.body.attempt_count) !== getRoundAttemptCount(rid)) {
+        req.session.flash = { error: req.t('admin:startingGroups.errors.locked') };
         return res.redirect(`/admin/competitions/${cid}/groups/${gid}/rounds/${rid}/entries`);
     }
     const count = createAttempts(rid, req.body.attempt_count);

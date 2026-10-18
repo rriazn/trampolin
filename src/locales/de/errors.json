@@ -6,7 +6,8 @@
     "round": "Runde nicht gefunden",
     "sportsman": "Athlet nicht gefunden",
     "assignment": "Zuweisung nicht gefunden",
-    "attempt": "Versuch nicht gefunden"
+    "attempt": "Versuch nicht gefunden",
+    "startingGroup": "Startgruppe nicht gefunden"
   },
   "pageTitle403": "Zugriff verweigert",
   "heading403": "Zugriff verweigert",

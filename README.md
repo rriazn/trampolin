@@ -43,6 +43,28 @@ Voluntary routines. An admin can rename the attempts on the round's entries page
 goes back to the default. The default depends on the number of attempts, so attempts can only be
 added and names only be changed while the round has not started.
 
+**Starting groups.** Small groups do not need their own warm-up and competition phase. An admin can
+bundle several groups of a competition into a **starting group** (Startgruppe, page "Starting groups"
+of the competition). The groups are still scored, ranked and certified separately, but the panel runs
+round 1 of all member groups as one sequence, then round 2, and so on. Inside one such round the
+order is attempt by attempt across the groups, in the order the admin set for the groups, then by
+start order: attempt 1 of A1, A2, B1, B2, then attempt 2 of A1, A2, B1, B2. Rounds are paired by their
+position (first round with first round, ...). A group runs alone when it has no starting group.
+
+- A group may join when it has at least one round, every round already has attempts, its rounds
+  match the rounds of the members (same number of rounds, same number of attempts at each position
+  and the same status), and no round of the starting group or of the group is in progress.
+- While a group is in a starting group, rounds cannot be added or deleted and the attempt count of a
+  round cannot change. Running the bulk "attempts" action again with the same count still gives new
+  athletes their attempts, and entries stay editable. Remove the group from its starting group first
+  to change its structure.
+- Members and their order can be changed between rounds, not while a round of the starting group is
+  in progress.
+- The head judge starts, advances, skips, goes back and completes all member rounds at once, from the
+  page of any member round. The page always shows the round of the current athlete, so it switches to
+  the next group when the athletes do. Referees see the current athlete whichever member round they
+  opened, and both dashboards show one card per starting group round.
+
 Everyone who needs to follow along can: leaderboards are public to anyone logged in, and per-trick
 detail is available for scores that need it, so athletes, coaches, and spectators can see exactly
 how a score was built up, not just the final number.
@@ -111,6 +133,7 @@ writable by uid 1000.
 
 ```
 competitions -> groups -> rounds -> entries -> attempts -> scores
+competitions -> starting_groups <- groups (optional, with a position inside the starting group)
 sportsmen (competition_id, group_id) -> entries    (a synchro pair is one sportsmen row)
 users (referee_id) -> scores
 ```

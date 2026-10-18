@@ -47,6 +47,16 @@ export function makeGroup(competitionId, name) {
   return { id: info.lastInsertRowid };
 }
 
+// puts the groups into a new starting group in the given order and returns its id
+export function makeStartingGroup(competitionId, groupIds, name) {
+  const n = nextSeq();
+  const info = db.prepare('INSERT INTO starting_groups (competition_id, name) VALUES (?, ?)')
+    .run(competitionId, name || `Start ${n}`);
+  const update = db.prepare('UPDATE groups SET starting_group_id=?, starting_group_position=? WHERE id=?');
+  groupIds.forEach((gid, i) => update.run(info.lastInsertRowid, i + 1, gid));
+  return { id: info.lastInsertRowid };
+}
+
 // returns the real round row so scoring_mode etc are populated, a bare {id} reads as undefined downstream
 export function makeRound(groupId, { name, order = 1, status = 'not_started', currentAttemptId = null, scoringMode = 'best_attempt' } = {}) {
   const n = nextSeq();

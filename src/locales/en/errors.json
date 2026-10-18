@@ -6,7 +6,8 @@
     "round": "Round not found",
     "sportsman": "Sportsman not found",
     "assignment": "Assignment not found",
-    "attempt": "Attempt not found"
+    "attempt": "Attempt not found",
+    "startingGroup": "Starting group not found"
   },
   "pageTitle403": "Access Denied",
   "heading403": "Access Denied",

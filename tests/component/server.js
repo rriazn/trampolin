@@ -408,6 +408,54 @@ app.post('/test/seed/head-judge', (req, res) => {
   });
 });
 
+// like the head-judge seed, but Group A and Group B (one round each) form the starting group "Block 1", Group C is ungrouped but would fit, ?start=1 starts the starting group on its first athlete
+app.post('/test/seed/starting-group', (req, res) => {
+  cleanupDb();
+
+  const localPanel = db.prepare("SELECT id FROM panel_templates WHERE key='local'").get();
+  const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
+    .run('SG Cup', 'active', localPanel.id).lastInsertRowid;
+  const sg = db.prepare('INSERT INTO starting_groups (competition_id, name) VALUES (?, ?)').run(comp, 'Block 1').lastInsertRowid;
+
+  const seedGroup = (tag, athleteNames, position) => {
+    const group = db.prepare('INSERT INTO groups (competition_id, name, abbreviation, starting_group_id, starting_group_position) VALUES (?, ?, ?, ?, ?)')
+      .run(comp, `Group ${tag}`, tag, position ? sg : null, position || null).lastInsertRowid;
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, 1)').run(group, 'Finals').lastInsertRowid;
+    const attempts = athleteNames.map((name, i) => {
+      const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run(name, comp, group).lastInsertRowid;
+      const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round, sp, i + 1).lastInsertRowid;
+      return Number(db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 1)').run(entry).lastInsertRowid);
+    });
+    return { groupId: Number(group), roundId: Number(round), attempts };
+  };
+  const a = seedGroup('A', ['Leon Weber', 'Emma Fischer'], 1);
+  const b = seedGroup('B', ['Anna Klein', 'Mia Braun'], 2);
+  const c = seedGroup('C', ['Noah Becker'], null);
+
+  const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+  const insertAssignment = db.prepare('INSERT INTO panel_assignments (competition_id, judge_role_id, user_id) VALUES (?, ?, ?)');
+  const insertUser = db.prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
+  insertUser.run('HJ Head Judge', 'hjhead@test.com', bcrypt.hashSync('hj123', 10), 'head_judge');
+  insertAssignment.run(comp, roleIds.head_judge, db.prepare("SELECT id FROM users WHERE email='hjhead@test.com'").get().id);
+  for (let i = 1; i <= 4; i++) {
+    insertUser.run(`Exec Judge ${i}`, `hjexec${i}@test.com`, bcrypt.hashSync('ref123', 10), 'referee');
+    insertAssignment.run(comp, roleIds.execution, db.prepare('SELECT id FROM users WHERE email=?').get(`hjexec${i}@test.com`).id);
+  }
+  insertUser.run('Diff Judge', 'hjdiff@test.com', bcrypt.hashSync('ref123', 10), 'referee');
+  insertAssignment.run(comp, roleIds.difficulty, db.prepare("SELECT id FROM users WHERE email='hjdiff@test.com'").get().id);
+
+  if (req.query.start) {
+    db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id IN (?, ?)").run(a.attempts[0], a.roundId, b.roundId);
+  }
+
+  res.json({
+    competitionId: Number(comp), startingGroupId: Number(sg),
+    groupAId: a.groupId, groupBId: b.groupId, groupCId: c.groupId,
+    roundAId: a.roundId, roundBId: b.roundId, roundCId: c.roundId,
+    attemptA1Id: a.attempts[0], attemptA2Id: a.attempts[1], attemptB1Id: b.attempts[0],
+  });
+});
+
 // stores a custom attempt name for a seeded round (empty name removes it), so specs can check the displayed label
 app.post('/test/attempt-name', (req, res) => {
   const { roundId, number, name } = req.body;

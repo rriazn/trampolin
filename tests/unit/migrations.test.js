@@ -18,6 +18,7 @@ function makeOldDb() {
     CREATE TABLE panel_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, name TEXT NOT NULL);
     CREATE TABLE competitions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
     CREATE TABLE sportsmen (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, competition_id INTEGER NOT NULL);
+    CREATE TABLE groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, competition_id INTEGER NOT NULL, abbreviation TEXT NOT NULL);
     INSERT INTO judge_roles (key, name) VALUES ('execution', 'Execution');
     INSERT INTO panel_templates (key, name) VALUES ('fig', 'FIG Panel');
     INSERT INTO competitions (name) VALUES ('Old Cup');
@@ -145,6 +146,57 @@ describe('attempt_names on an existing db', () => {
   });
 });
 
+describe('starting groups on an existing db', () => {
+  const schemaSql = fs.readFileSync(path.join(__dirname, '../../src/db/schema.sql'), 'utf8');
+
+  const startingGroupsBlock = /CREATE TABLE IF NOT EXISTS starting_groups \([\s\S]*?\n\);\n\n/;
+
+  // current schema without starting groups, as an existing db file from before the feature
+  function makeDbWithoutStartingGroups() {
+    const old = new Database(':memory:');
+    old.pragma('foreign_keys = ON');
+    old.exec(schemaSql.replace(startingGroupsBlock, '').replace(/\n\s+starting_group_(id|position) .*/g, ''));
+    old.exec(`
+      INSERT INTO competitions (name) VALUES ('Old Cup');
+      INSERT INTO groups (name, competition_id, abbreviation) VALUES ('Old Group', 1, 'OG');
+    `);
+    return old;
+  }
+
+  function upgrade(database) {
+    database.exec(schemaSql);
+    runMigrations(database);
+  }
+
+  it('adds the columns, creates the table and keeps existing groups', () => {
+    const old = makeDbWithoutStartingGroups();
+    expect(columnNames(old, 'groups')).not.toContain('starting_group_id');
+
+    upgrade(old);
+
+    expect(columnNames(old, 'starting_groups')).toEqual(['id', 'competition_id', 'name']);
+    expect(columnNames(old, 'groups')).toEqual(expect.arrayContaining(['starting_group_id', 'starting_group_position']));
+    expect(old.prepare('SELECT starting_group_id, starting_group_position FROM groups WHERE id=1').get())
+      .toEqual({ starting_group_id: null, starting_group_position: null });
+  });
+
+  it('sets the group free when its starting group is deleted', () => {
+    const old = makeDbWithoutStartingGroups();
+    upgrade(old);
+    old.exec("INSERT INTO starting_groups (competition_id, name) VALUES (1, 'S'); UPDATE groups SET starting_group_id=1, starting_group_position=1");
+
+    old.prepare('DELETE FROM starting_groups WHERE id=1').run();
+
+    expect(old.prepare('SELECT starting_group_id FROM groups WHERE id=1').get().starting_group_id).toBeNull();
+  });
+
+  it('is idempotent', () => {
+    const old = makeDbWithoutStartingGroups();
+    upgrade(old);
+    expect(() => upgrade(old)).not.toThrow();
+  });
+});
+
 describe('schema.sql on a fresh db', () => {
   // schema only, so the columns must come from schema.sql and not from runMigrations
   function makeFreshDb() {
@@ -160,6 +212,12 @@ describe('schema.sql on a fresh db', () => {
     expect(columnNames(fresh, 'panel_templates')).toContain('competition_type');
     expect(columnNames(fresh, 'judge_roles')).toContain('has_landing');
     expect(columnNames(fresh, 'sportsmen')).toEqual(expect.arrayContaining(['partner_name', 'partner_club', 'partner_gender', 'partner_birth_year']));
+  });
+
+  it('creates the starting groups table and columns', () => {
+    const fresh = makeFreshDb();
+    expect(columnNames(fresh, 'starting_groups')).toEqual(['id', 'competition_id', 'name']);
+    expect(columnNames(fresh, 'groups')).toEqual(expect.arrayContaining(['starting_group_id', 'starting_group_position']));
   });
 
   it('creates the attempt_names table', () => {

@@ -14,6 +14,8 @@ function runMigrations(db) {
   addColumnIfMissing(db, 'sportsmen', 'partner_club', 'TEXT');
   addColumnIfMissing(db, 'sportsmen', 'partner_gender', "TEXT CHECK(partner_gender IN ('m','f'))");
   addColumnIfMissing(db, 'sportsmen', 'partner_birth_year', 'INTEGER');
+  addColumnIfMissing(db, 'groups', 'starting_group_id', 'INTEGER REFERENCES starting_groups(id) ON DELETE SET NULL');
+  addColumnIfMissing(db, 'groups', 'starting_group_position', 'INTEGER');
 }
 
 module.exports = { addColumnIfMissing, runMigrations };

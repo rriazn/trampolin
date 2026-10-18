@@ -4,6 +4,9 @@
     <div>
       <h1><%= round.name %></h1>
       <p><%= round.competition_name %> &nbsp;·&nbsp; <%= round.group_name %></p>
+      <% if (startingGroup) { %>
+      <p data-testid="starting-group"><%= t('common:startingGroup.label') %>: <%= startingGroup.name %> &nbsp;·&nbsp; <%= startingGroup.groups.map(g => g.name).join(', ') %></p>
+      <% } %>
     </div>
     <a href="/head-judge" class="btn btn-outline-secondary btn-touch"><%= t('common:actions.back') %></a>
   </div>

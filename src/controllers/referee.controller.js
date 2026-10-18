@@ -7,13 +7,14 @@ const { addAttemptScoreDB, addAllElementScoresDB } = require("../services/db/sco
 const { getRefereeRoundInfo } = require("../services/rounds.service");
 const { renderNotFound } = require("../services/errors.service");
 const { recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
+const { getCurrentRound, getStartingGroupInfo, collapseByStartingGroup } = require("../services/starting-groups.service");
 const { isWithinRange, rangeErrorMessage, scoreDecimals, maxScoreFor } = require("../services/helpers/referee.helpers");
 const { parseAndValidateElementScores, parseAndValidate11thScore, parseMissingSkillDeduction } = require("../services/scoring.service");
 
 exports.getRefereeDashboard = (req, res) => {
     const userId = req.session.user.id;
     const rounds = getInProgressRoundsForUser(userId);
-    res.render('referee/dashboard', { rounds });
+    res.render('referee/dashboard', { rounds: collapseByStartingGroup(rounds) });
 };
 
 exports.getRound = (req, res) => {
@@ -26,22 +27,26 @@ exports.getRound = (req, res) => {
     const group = getGroupById(gid);
     if (!group) return renderNotFound(res, req.t('errors:notFound.group'));
 
-    const round = getRoundByIdWithCompGroupInfo(rid, gid);
-    if (!round) return renderNotFound(res, req.t('errors:notFound.round'));
+    const urlRound = getRoundByIdWithCompGroupInfo(rid, gid);
+    if (!urlRound) return renderNotFound(res, req.t('errors:notFound.round'));
+
+    // in a starting group the current athlete can belong to another member round, whose group names the header
+    const round = getCurrentRound(urlRound);
+    const startingGroup = getStartingGroupInfo(round);
 
     const assignments = getAssignmentsForUser(round.competition_id, userId);
 
     if (round.status !== 'in_progress' || !round.current_attempt_id) {
-        return res.render('referee/round', { round, attempt: null, inputs: [], state: 'not_started' });
+        return res.render('referee/round', { round, startingGroup, attempt: null, inputs: [], state: 'not_started' });
     }
     if (assignments.length === 0) {
-        return res.render('referee/round', { round, attempt: null, inputs: [], state: 'no_assignment' });
+        return res.render('referee/round', { round, startingGroup, attempt: null, inputs: [], state: 'no_assignment' });
     }
 
     const { attempt, inputs } = getRefereeRoundInfo(round, userId);
 
     const attemptLabel = getAttemptLabel(round, attempt.attempt_number, req.t);
-    res.render('referee/round', { round, attempt, attemptLabel, inputs, state: 'active' });
+    res.render('referee/round', { round, startingGroup, attempt, attemptLabel, inputs, state: 'active' });
 };
 
 

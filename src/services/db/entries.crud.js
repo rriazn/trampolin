@@ -68,23 +68,30 @@ exports.getEntryMaxOrder = (roundId) => {
     return db.prepare('SELECT MAX(start_order) AS max FROM entries WHERE round_id=?').get(roundId);
 };
 
-exports.getNextPendingAttemptId = (roundId) => {
+// the combined run of several rounds is attempt-major, groups in starting group order, then start order
+const COMBINED_ORDER = 'ORDER BY a.attempt_number, g.starting_group_position, r.id, e.start_order';
+
+exports.getNextPendingAttemptIdForRounds = (roundIds) => {
   return db.prepare(`
     SELECT a.id FROM attempts a
     JOIN entries e ON e.id = a.entry_id
-    WHERE e.round_id = ? AND a.status = 'pending'
-    ORDER BY a.attempt_number, e.start_order
+    JOIN rounds r ON r.id = e.round_id
+    JOIN groups g ON g.id = r.group_id
+    WHERE e.round_id IN (${roundIds.map(() => '?').join(',')}) AND a.status = 'pending'
+    ${COMBINED_ORDER}
     LIMIT 1
-  `).get(roundId)?.id ?? null;
+  `).get(...roundIds)?.id ?? null;
 };
 
-exports.getOrderedAttemptIds = (roundId) => {
+exports.getOrderedAttemptIdsForRounds = (roundIds) => {
   return db.prepare(`
     SELECT a.id FROM attempts a
     JOIN entries e ON e.id = a.entry_id
-    WHERE e.round_id = ?
-    ORDER BY a.attempt_number, e.start_order
-  `).all(roundId).map(r => r.id);
+    JOIN rounds r ON r.id = e.round_id
+    JOIN groups g ON g.id = r.group_id
+    WHERE e.round_id IN (${roundIds.map(() => '?').join(',')})
+    ${COMBINED_ORDER}
+  `).all(...roundIds).map(r => r.id);
 };
 
 exports.getAttemptContext = (attemptId) => {

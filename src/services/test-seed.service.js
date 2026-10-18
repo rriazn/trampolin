@@ -3,7 +3,8 @@ const { getUserByEmail, deleteAllUsersDB } = require('./db/users.crud');
 const { getPanels, getJudgeRoles, addAssignment, getAssignmentWithInfo, deleteAllPanelAssignmentsDB } = require('./db/panels.crud');
 const { createCompetitionDB, updateCompetitionStatusDB, deleteAllCompetitionsDB } = require('./db/competitions.crud');
 const { addGroupDB, deleteAllGroupsDB } = require('./db/groups.crud');
-const { addRoundDB, updateRoundStartedDB, deleteAllRoundsDB } = require('./db/rounds.crud');
+const { addStartingGroupDB, addGroupToStartingGroupDB } = require('./db/starting-groups.crud');
+const { addRoundDB, updateRoundsStartedDB, deleteAllRoundsDB } = require('./db/rounds.crud');
 const { addSportsmanDB, deleteAllSportsmenDB } = require('./db/sportsmen.crud');
 const { addEntryDB, addAttemptDB, deleteAllEntriesDB, deleteAllAttemptsDB } = require('./db/entries.crud');
 const { deleteAllScoresDB, deleteAllElementScoresDB, addAttemptScoreDB, addAllElementScoresDB, updateAttemptElementCount } = require('./db/scores.crud');
@@ -34,6 +35,18 @@ const FIXTURES = {
     roleIdKey: 'executionRoleId',
     scoreFirstAttempt: true,
   },
+  // two groups with one round each, run as one starting group and not started, staffed like the scored fixture
+  startingGroup: {
+    competitionType: 'individual',
+    panelKey: 'test',
+    athletes: [
+      { name: 'Leon Weber', club: 'TSV München' },
+      { name: 'Emma Fischer', club: 'SV Hamburg' },
+    ],
+    refereeRoleKey: 'execution',
+    roleIdKey: 'executionRoleId',
+    startingGroup: true,
+  },
   synchro: {
     panelKey: 'test_synchro',
     athletes: [
@@ -54,6 +67,28 @@ function scoreAttempt(attemptId, panelId, competitionId, judgeScores) {
     else addAttemptScoreDB(attemptId, assignmentId, roleId, score);
   }
   recomputeAttemptCompletion(attemptId, panelId);
+}
+
+// a second group with one round, two athletes and two attempts each, put behind the first group in a new starting group
+function seedSecondGroup(competitionId, firstGroupId) {
+  const groupBId = addGroupDB('Youth', 'YT', competitionId).lastInsertRowid;
+  const roundBId = addRoundDB(groupBId, 'Qualifications', 1, 'sum').lastInsertRowid;
+  const [spB1Id, spB2Id] = [['Anna Klein', 'TSV München'], ['Mia Braun', 'SV Hamburg']].map(([name, club]) =>
+    addSportsmanDB(name, club, null, null, null, competitionId, groupBId).lastInsertRowid);
+  const attemptIds = [spB1Id, spB2Id].flatMap((spId, i) => {
+    const entryId = addEntryDB(roundBId, spId, i + 1).lastInsertRowid;
+    return [1, 2].map(n => Number(addAttemptDB(entryId, n).lastInsertRowid));
+  });
+
+  const startingGroupId = addStartingGroupDB(competitionId, 'Block 1').lastInsertRowid;
+  addGroupToStartingGroupDB(firstGroupId, startingGroupId);
+  addGroupToStartingGroupDB(groupBId, startingGroupId);
+
+  const [attemptB1Id, attemptB2Id, attemptB3Id, attemptB4Id] = attemptIds;
+  return {
+    startingGroupId: Number(startingGroupId), groupBId: Number(groupBId), roundBId: Number(roundBId),
+    spB1Id: Number(spB1Id), spB2Id: Number(spB2Id), attemptB1Id, attemptB2Id, attemptB3Id, attemptB4Id,
+  };
 }
 
 // resets all tables and creates a fixed, small fixture for integration tests, staffed just enough to reach the turn-based scoring UI without going through head-judge.js
@@ -118,10 +153,18 @@ exports.seedTestData = async ({ type = 'individual' } = {}) => {
     ]);
   }
 
-  // round starts on Leon's first attempt, advancing turns is head-judge.js's job and isn't exercised here
-  updateRoundStartedDB(roundId, attempt1Id);
+  let startingGroupResult = {};
+  if (fixture.startingGroup) {
+    const difficultyRoleId = judgeRoles.find(r => r.key === 'difficulty').id;
+    addAssignment(competitionId, maria.id, [difficultyRoleId]);
+    startingGroupResult = seedSecondGroup(competitionId, groupId);
+  } else {
+    // round starts on Leon's first attempt, advancing turns is head-judge.js's job and isn't exercised here
+    updateRoundsStartedDB([roundId], attempt1Id);
+  }
 
   return {
+    ...startingGroupResult,
     ok: true,
     competitionId: Number(competitionId),
     groupId: Number(groupId),

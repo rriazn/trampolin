@@ -2,7 +2,7 @@ const db = require('../../db/database');
 
 
 exports.getRoundsByGroup = (groupId) => {
-    return db.prepare('SELECT * FROM rounds WHERE group_id=? ORDER BY round_order').all(groupId);
+    return db.prepare('SELECT * FROM rounds WHERE group_id=? ORDER BY round_order, id').all(groupId);
 };
  
 exports.getRoundById = (roundId) => {
@@ -78,17 +78,19 @@ exports.addRoundDB = (groupId, name, roundOrder, scoringMode) => {
     return db.prepare('INSERT INTO rounds (group_id,name,round_order,scoring_mode) VALUES (?,?,?,?)').run(groupId, name.trim(), parseInt(roundOrder) || 0, scoringMode);
 };
 
-exports.updateRoundStartedDB = (roundId, attemptId) => {
-    db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?").run(attemptId, roundId);
+const placeholders = (ids) => ids.map(() => '?').join(',');
+
+exports.updateRoundsStartedDB = (roundIds, attemptId) => {
+    db.prepare(`UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id IN (${placeholders(roundIds)})`).run(attemptId, ...roundIds);
 };
 
-exports.updateRoundCurrentAttemptDB = (roundId, attemptId) => {
-    db.prepare("UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id=?").run(attemptId, roundId);
+exports.updateRoundsCurrentAttemptDB = (roundIds, attemptId) => {
+    db.prepare(`UPDATE rounds SET status='in_progress', current_attempt_id=? WHERE id IN (${placeholders(roundIds)})`).run(attemptId, ...roundIds);
 };
 
-exports.updateRoundCompletedDB = (roundId) => {
-    db.prepare("UPDATE rounds SET status='completed', current_attempt_id=NULL WHERE id=?").run(roundId);
-}
+exports.updateRoundsCompletedDB = (roundIds) => {
+    db.prepare(`UPDATE rounds SET status='completed', current_attempt_id=NULL WHERE id IN (${placeholders(roundIds)})`).run(...roundIds);
+};
 
 exports.deleteRoundDB = (roundId, groupId) => {
     db.prepare('DELETE FROM rounds WHERE id=? AND group_id=?').run(roundId, groupId);

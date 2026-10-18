@@ -12,9 +12,14 @@
         <h1><%= t('admin:groups.heading') %></h1>
         <p><%= competition.name %> &nbsp;·&nbsp; <span class="badge status-<%= competition.status %>"><%= t('common:status.' + competition.status) %></span></p>
       </div>
-      <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-secondary">
-        <%= t('admin:groups.athletes') %>
-      </a>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/admin/competitions/<%= competition.id %>/starting-groups" class="btn btn-outline-secondary">
+          <%= t('admin:groups.configureStartingGroups') %>
+        </a>
+        <a href="/admin/competitions/<%= competition.id %>/sportsmen" class="btn btn-outline-secondary">
+          <%= t('admin:groups.athletes') %>
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -27,7 +32,7 @@
   <% } else { %>
   <div class="table-card card mb-4">
     <table class="table mb-0">
-      <thead><tr><th scope="col"><%= t('admin:groups.table.groupName') %></th><th scope="col"><%= t('admin:groups.table.abbreviation') %></th><th scope="col"><%= t('admin:groups.table.rounds') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr></thead>
+      <thead><tr><th scope="col"><%= t('admin:groups.table.groupName') %></th><th scope="col"><%= t('admin:groups.table.abbreviation') %></th><th scope="col"><%= t('admin:groups.table.rounds') %></th><th scope="col"><%= t('admin:groups.table.startingGroup') %></th><th scope="col"><span class="visually-hidden"><%= t('common:actions.column') %></span></th></tr></thead>
       <tbody>
       <% groups.forEach(g => { %>
       <tr>
@@ -38,6 +43,7 @@
             <%= t('admin:groups.roundsCount', { count: g.round_count }) %>
           </span>
         </td>
+        <td class="text-muted"><%= g.starting_group_name || '–' %></td>
         <td class="text-end">
           <a href="/admin/competitions/<%= competition.id %>/groups/<%= g.id %>/rounds" class="btn btn-sm btn-brand me-1">
             <%= t('admin:groups.roundsButton') %>

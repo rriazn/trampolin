@@ -88,5 +88,8 @@
     "delete": "Löschen",
     "confirm": "Bestätigen",
     "column": "Aktionen"
+  },
+  "startingGroup": {
+    "label": "Startgruppe"
   }
 }
