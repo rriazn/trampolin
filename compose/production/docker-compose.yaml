@@ -1,0 +1,12 @@
+services:
+  app:
+    image: tramposcore:local
+    ports:
+      - "80:3000"                   # tramposcore.local without a port
+    environment:
+      SESSION_SECRET: change-me-to-something-long
+    volumes:
+      - trampolin-data:/app/src/data
+    restart: unless-stopped
+volumes:
+  trampolin-data:
