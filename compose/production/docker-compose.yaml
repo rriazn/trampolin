@@ -1,12 +1,23 @@
 services:
+  init-data:
+    image: tramposcore:latest
+    user: root
+    command: chown -R 1000:1000 /app/src/data
+    volumes:
+      - ./data:/app/src/data
+    restart: "no"
   app:
-    image: tramposcore:local
+    image: tramposcore:latest
     ports:
-      - "80:3000"                   # tramposcore.local without a port
+      - "80:3000"
     environment:
       SESSION_SECRET: change-me-to-something-long
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: change-me
+    command: sh -c "node src/init-admin.js && exec npm start"
     volumes:
-      - trampolin-data:/app/src/data
+      - ./data:/app/src/data
+    depends_on:
+      init-data:
+        condition: service_completed_successfully
     restart: unless-stopped
-volumes:
-  trampolin-data:

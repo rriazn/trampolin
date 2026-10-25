@@ -150,3 +150,9 @@ DESIGN.md
 PRODUCT.md
 
 *.pdf
+
+# Production compose database and sessions
+compose/production/data/
+
+# VERSION file
+VERSION
