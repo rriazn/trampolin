@@ -1,7 +1,8 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../helpers/english-session');
 const { acceptConfirm } = require('../helpers/confirm-modal');
 
 async function loginAs(page, email, password, landing) {
+  await page.request.post('/language/en', { form: { from: '/' } });
   await page.goto('/login');
   await page.locator('input[name=email]').fill(email);
   await page.locator('input[name=password]').fill(password);

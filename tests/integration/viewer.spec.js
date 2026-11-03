@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../helpers/english-session');
 
 test.beforeAll(async ({ request }) => {
   const res = await request.post('/test/seed');

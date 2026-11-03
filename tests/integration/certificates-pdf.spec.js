@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../helpers/english-session');
 const fs = require('fs');
 const { acceptConfirm } = require('../helpers/confirm-modal');
 
