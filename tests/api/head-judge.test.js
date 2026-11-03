@@ -396,7 +396,7 @@ describe('POST .../score (inline head_judge penalty)', () => {
 
   it('rejects a score for an attempt that is not the round\'s current attempt', async () => {
     const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt2Id, score: '0.2' });
+      .type('form').send({ attemptId: data.attempt2Id, score: '2' });
     expect(res.status).toBe(302);
     const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt2Id, staff.headJudgeAssignmentId);
     expect(saved).toBeUndefined();
@@ -410,9 +410,16 @@ describe('POST .../score (inline head_judge penalty)', () => {
     expect(follow.text).toContain('Score must be');
   });
 
+  it('rejects an empty score instead of saving it as 0', async () => {
+    await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
+      .type('form').send({ attemptId: data.attempt1Id, score: '' });
+    const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
+    expect(saved).toBeUndefined();
+  });
+
   it('saves a valid score and redirects back to the head-judge control page, not /referee', async () => {
     const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt1Id, score: '0.3' });
+      .type('form').send({ attemptId: data.attempt1Id, score: '3' });
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
     const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
@@ -421,7 +428,7 @@ describe('POST .../score (inline head_judge penalty)', () => {
 
   it('resubmitting overwrites the previous score, not duplicating it', async () => {
     await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt1Id, score: '0.5' });
+      .type('form').send({ attemptId: data.attempt1Id, score: '5' });
     const rows = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').all(data.attempt1Id, staff.headJudgeAssignmentId);
     expect(rows).toHaveLength(1);
     expect(rows[0].score).toBe(0.5);

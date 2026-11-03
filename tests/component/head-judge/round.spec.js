@@ -113,10 +113,10 @@ test.describe('scoring and advancing', () => {
 
   test('submitting the head judge penalty saves it and shows a flash message', async ({ page }) => {
     const input = page.locator('.card:has-text("Your head judge penalty") input[name=score]');
-    await input.fill('0.2');
+    await input.fill('2');
     await page.locator('.card:has-text("Your head judge penalty") button').click();
     await expect(page.locator('.alert-success')).toContainText('Head judge penalty 0.2 saved.');
-    await expect(input).toHaveValue('0.2');
+    await expect(input).toHaveValue('2');
   });
 
   test('"Skip Athlete" shows a confirm dialog and advances to the next athlete', async ({ page }) => {

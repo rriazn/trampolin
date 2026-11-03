@@ -176,8 +176,8 @@ exports.penaltyDeduction = (req, res) => {
     if (!inRange) {
         req.session.flash = {
         error: assignment.score_max !== null
-            ? req.t('headJudge:rangeError.max', { min: assignment.score_min, max: assignment.score_max })
-            : req.t('headJudge:rangeError.min', { min: assignment.score_min }),
+            ? req.t('headJudge:rangeError.max', { min: assignment.score_min * 10, max: assignment.score_max * 10 })
+            : req.t('headJudge:rangeError.min', { min: assignment.score_min * 10 }),
         };
         return res.redirect(backUrl);
     }

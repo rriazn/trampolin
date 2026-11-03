@@ -287,7 +287,7 @@ test('head judge sets trick count to 0 and the round advances on an otherwise-un
   await trickCountCard.getByRole('button', { name: /Save/ }).click();
 
   const penaltyCard = page.locator('.card').filter({ hasText: 'head judge penalty' });
-  await penaltyCard.locator('input[name=score]').fill('2');
+  await penaltyCard.locator('input[name=score]').fill('20');
   await penaltyCard.getByRole('button', { name: /Save/ }).click();
   await logout(page);
 
