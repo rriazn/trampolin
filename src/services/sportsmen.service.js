@@ -5,9 +5,10 @@ const optionalInt = (value) => {
     return Number.isInteger(parsed) ? parsed : null;
 };
 
-// the gender column only accepts m or f, so anything else is stored as unset
+// the gender column only accepts m or f (german w maps to f), so anything else is stored as unset
 exports.normalizeGender = (value) => {
     const gender = String(value ?? '').trim().toLowerCase();
+    if (gender === 'w') return 'f';
     return gender === 'm' || gender === 'f' ? gender : null;
 };
 

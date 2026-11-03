@@ -12,6 +12,11 @@ describe('normalizeGender', () => {
     expect(normalizeGender(' f ')).toBe('f');
   });
 
+  it('maps the german w (weiblich) to f', () => {
+    expect(normalizeGender('w')).toBe('f');
+    expect(normalizeGender(' W ')).toBe('f');
+  });
+
   it('turns anything else into null so the CHECK constraint cannot fail', () => {
     expect(normalizeGender('')).toBeNull();
     expect(normalizeGender('x')).toBeNull();

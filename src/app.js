@@ -43,6 +43,8 @@ i18next.use(i18nextMiddleware.LanguageDetector).init({
   preload: ['en', 'de'],
   ns: NAMESPACES,
   defaultNS: 'common',
+  // views escape with <%= %>, so i18next must not escape a second time
+  interpolation: { escapeValue: false },
   resources: {
     en: loadNamespaces('en'),
     de: loadNamespaces('de'),
