@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../helpers/english-session');
 
 async function loginAsReferee(page) {
   await page.goto('/login');

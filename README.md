@@ -86,8 +86,8 @@ of participation, one page per athlete (see [Certificates](#certificates)).
 - **Viewers** get read-only access to leaderboards for all active rounds - useful for a screen at
   the venue, or for coaches and athletes following along without needing judging permissions.
 
-The interface is available in English and German, switchable at any time from the top of the page,
-with the choice remembered across sessions.
+The interface is available in German (the default) and English, switchable at any time from the top
+of the page, with the choice remembered across sessions.
 
 ## Stack
 

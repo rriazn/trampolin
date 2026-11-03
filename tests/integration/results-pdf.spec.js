@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../helpers/english-session');
 const fs = require('fs');
 
 async function login(page, email, password, landing) {
@@ -56,6 +56,7 @@ test('admin closes a scored competition and downloads the results PDF', async ({
 
   // a logged in user is redirected away from /login, so end the referee session first
   await page.context().clearCookies();
+  await page.request.post('/language/en', { form: { from: '/' } });
   await login(page, 'admin@example.com', 'admin123', '/admin');
   await page.goto('/admin/competitions');
   const closing = page.getByRole('row').filter({ hasText: 'Spring Championship' });

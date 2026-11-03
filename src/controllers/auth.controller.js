@@ -27,5 +27,10 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-    req.session.destroy(() => res.redirect('/login'));
+    const lng = req.session.lng;
+    req.session.regenerate((err) => {
+        if (err) throw err;
+        if (lng) req.session.lng = lng;
+        res.redirect('/login');
+    });
 };
