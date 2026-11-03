@@ -268,7 +268,8 @@ judges[]         { label (role names, a shared assignment on one line), members[
 ```
 
 An attempt is shown in full only when its `status` is `scored`. For `skipped` and `pending` attempts
-`rows` and `summary` are empty and `final` is `null`. `counted` tells whether the attempt counts towards
+`rows` and `summary` are empty. `final` is `null` for `pending` and the formatted 0 for `skipped`, as a
+skipped athlete did not compete. `counted` tells whether the attempt counts towards
 the round total (see above), but is never true for an attempt that is not `scored`, as there is no total
 to mark. `elementCount` is the number of skills the attempt had.
 `name` is the name of the attempt, a custom one or the translated default, without the number.

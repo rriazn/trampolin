@@ -377,6 +377,42 @@ describe('POST .../skip', () => {
   });
 });
 
+describe('POST .../skip then a late score for the skipped attempt', () => {
+  let data, staff, agent;
+  const hjUrl = (d, action) => `/head-judge/competitions/${d.competitionId}/groups/${d.groupId}/rounds/${d.roundId}/${action}`;
+
+  beforeAll(async () => {
+    data = seedLocalPanelRound();
+    staff = staffLocalPanel(data.competitionId, data.roleIds);
+    agent = await loginAs(staff.headJudge);
+    await agent.post(hjUrl(data, 'start')).type('form').send({});
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+  });
+
+  it('keeps the attempt skipped when a stale referee form is submitted for it', async () => {
+    const refAgent = await loginAs(staff.diffUser);
+    const res = await refAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: data.attempt1Id, judgeRoleId: data.roleIds.difficulty, element_1: '10' });
+    expect(res.status).toBe(302);
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
+  });
+
+  it('keeps the attempt skipped when the head judge goes back and saves a penalty', async () => {
+    await agent.post(hjUrl(data, 'back')).type('form').send({});
+    await agent.post(hjUrl(data, 'score')).type('form').send({ attemptId: data.attempt1Id, score: '3' });
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
+  });
+
+  it('does not offer the skipped attempt again after the following athlete', async () => {
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+    expect(db.prepare('SELECT current_attempt_id FROM rounds WHERE id=?').get(data.roundId).current_attempt_id).toBe(data.attempt2Id);
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+    const round = db.prepare('SELECT status, current_attempt_id FROM rounds WHERE id=?').get(data.roundId);
+    expect(round.status).toBe('completed');
+    expect(round.current_attempt_id).toBeNull();
+  });
+});
+
 describe('POST .../score (inline head_judge penalty)', () => {
   let data, staff, agent;
 

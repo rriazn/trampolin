@@ -63,10 +63,17 @@
     text(size: 7pt)[−],
     text(size: 7pt)[Σ],
   )
+  if a.status == "skipped" {
+    return (
+      ..header,
+      table.cell(colspan: total-columns - 1)[#text(style: "italic")[#l.skipped]],
+      table.cell(stroke: 0.9pt)[#text(weight: "bold")[#a.final]],
+    )
+  }
   if a.status != "scored" {
     return (
       ..header,
-      table.cell(colspan: total-columns)[#text(style: "italic")[#if a.status == "skipped" [#l.skipped] else [#l.pending]]],
+      table.cell(colspan: total-columns)[#text(style: "italic")[#l.pending]],
     )
   }
   let rows = ()

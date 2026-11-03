@@ -108,6 +108,8 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
 
 function buildAttempt(attempt, name, panelSlots, labelByAssignment, t, lng) {
     const base = { number: attempt.number, name, status: attempt.status, elementCount: attempt.elementCount, rows: [], summary: [], final: null };
+    // a skipped athlete did not compete, so the attempt shows a total of 0
+    if (attempt.status === 'skipped') base.final = exports.formatScore(attempt.finalScore, lng);
     if (attempt.status !== 'scored') return base;
 
     const summary = new Map();
