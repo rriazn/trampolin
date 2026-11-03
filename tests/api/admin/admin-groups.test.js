@@ -51,6 +51,13 @@ describe('POST /admin/competitions/:id/groups', () => {
     expect(listRes.text).toContain('Group B');
   });
 
+  it('shows a slash in the group name unescaped in the created notification', async () => {
+    await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: 'Boys U12/U14', abbreviation: 'BS' });
+    const listRes = await agent.get(`/admin/competitions/${data.competitionId}/groups`);
+    expect(listRes.text).toContain('Group &#34;Boys U12/U14&#34; created.');
+    expect(listRes.text).not.toContain('&#x2F;');
+  });
+
   it('returns 400 when name is empty', async () => {
     const res = await agent.post(`/admin/competitions/${data.competitionId}/groups`).type('form').send({ name: '', abbreviation: 'GB' });
     expect(res.status).toBe(400);
