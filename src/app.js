@@ -39,7 +39,7 @@ const loadNamespaces = (lng) => Object.fromEntries(
 );
 
 i18next.use(i18nextMiddleware.LanguageDetector).init({
-  fallbackLng: 'en',
+  fallbackLng: 'de',
   preload: ['en', 'de'],
   ns: NAMESPACES,
   defaultNS: 'common',
