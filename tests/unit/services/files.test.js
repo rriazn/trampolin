@@ -199,6 +199,22 @@ describe('individual sportsmen xlsx layout', () => {
     expect(sheetRows(createSportsmenXlsx(comp.id, 'de'))[0]).toEqual(headers);
   });
 
+  it('exports the gender as the abbreviation of the language and imports it again', () => {
+    const comp = makeCompetition();
+    parseSportsmenXlsx(comp.id, xlsxBufferFromRows([['Name', 'Gender'], ['Anna', 'f'], ['Max', 'm']]));
+
+    const german = sheetRows(createSportsmenXlsx(comp.id, 'de'));
+    const english = sheetRows(createSportsmenXlsx(comp.id, 'en'));
+
+    expect(german.find(r => r[0] === 'Anna')[2]).toBe('w');
+    expect(german.find(r => r[0] === 'Max')[2]).toBe('m');
+    expect(english.find(r => r[0] === 'Anna')[2]).toBe('f');
+
+    const target = makeCompetition();
+    parseSportsmenXlsx(target.id, createSportsmenXlsx(comp.id, 'de'));
+    expect(pairByName(target.id, 'Anna').gender).toBe('f');
+  });
+
   it('still imports the old Birthyear header', () => {
     const comp = makeCompetition();
     parseSportsmenXlsx(comp.id, xlsxBufferFromRows([['Name', 'Birthyear'], ['Old Header', 2005]]));
