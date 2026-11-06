@@ -29,36 +29,42 @@
         <td><span class="badge text-bg-light border px-3 competition-type-<%= c.type %>"><%= t('common:competitionTypes.' + c.type) %></span></td>
         <td><span class="badge status-<%= c.status %> px-3"><%= t('common:status.' + c.status) %></span></td>
         <td class="text-end">
-          <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand me-1">
-            <%= t('admin:competitions.groups') %>
-          </a>
-          <a href="/admin/competitions/<%= c.id %>/starting-groups" class="btn btn-sm btn-brand me-1">
-            <%= t('admin:competitions.startingGroups') %>
-          </a>
-          <a href="/admin/competitions/<%= c.id %>/judges" class="btn btn-sm btn-brand me-1">
-            <%= t('admin:competitions.judges') %>
-          </a>
-          <a href="/admin/competitions/<%= c.id %>/documents" class="btn btn-sm btn-brand me-1">
-            <%= t('admin:competitions.documents') %>
-          </a>
-          <a href="/admin/competitions/<%= c.id %>/edit" class="btn btn-sm btn-outline-secondary me-1" aria-label="<%= t('common:actions.edit') %>" title="<%= t('common:actions.edit') %>">
-            <i class="bi bi-pencil"></i>
-          </a>
-          <% if (c.status === 'planned') { %>
-          <form method="POST" action="/admin/competitions/<%= c.id %>/status" class="d-inline">
-            <input type="hidden" name="status" value="active">
-            <button class="btn btn-sm btn-outline-secondary me-1"><%= t('admin:competitions.activate') %></button>
-          </form>
-          <% } else if (c.status === 'active') { %>
-          <form method="POST" action="/admin/competitions/<%= c.id %>/status" class="d-inline">
-            <input type="hidden" name="status" value="closed">
-            <button class="btn btn-sm btn-outline-secondary me-1"><%= t('admin:competitions.close') %></button>
-          </form>
-          <% } %>
-          <form method="POST" action="/admin/competitions/<%= c.id %>/delete" class="d-inline"
-                data-confirm="<%= t('admin:competitions.confirmDelete') %>">
-            <button class="btn btn-sm btn-outline-danger" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
-          </form>
+          <div class="competition-actions">
+            <div class="competition-actions-grid">
+              <a href="/admin/competitions/<%= c.id %>/groups" class="btn btn-sm btn-brand">
+                <%= t('admin:competitions.groups') %>
+              </a>
+              <a href="/admin/competitions/<%= c.id %>/starting-groups" class="btn btn-sm btn-brand">
+                <%= t('admin:competitions.startingGroups') %>
+              </a>
+              <a href="/admin/competitions/<%= c.id %>/judges" class="btn btn-sm btn-brand">
+                <%= t('admin:competitions.judges') %>
+              </a>
+              <a href="/admin/competitions/<%= c.id %>/documents" class="btn btn-sm btn-brand">
+                <%= t('admin:competitions.documents') %>
+              </a>
+              <% if (c.status === 'planned') { %>
+              <form method="POST" action="/admin/competitions/<%= c.id %>/status">
+                <input type="hidden" name="status" value="active">
+                <button class="btn btn-sm btn-outline-secondary w-100"><%= t('admin:competitions.activate') %></button>
+              </form>
+              <% } else if (c.status === 'active') { %>
+              <form method="POST" action="/admin/competitions/<%= c.id %>/status">
+                <input type="hidden" name="status" value="closed">
+                <button class="btn btn-sm btn-outline-secondary w-100"><%= t('admin:competitions.close') %></button>
+              </form>
+              <% } %>
+            </div>
+            <div class="competition-actions-icons">
+              <a href="/admin/competitions/<%= c.id %>/edit" class="btn btn-sm btn-outline-secondary" aria-label="<%= t('common:actions.edit') %>" title="<%= t('common:actions.edit') %>">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="POST" action="/admin/competitions/<%= c.id %>/delete"
+                    data-confirm="<%= t('admin:competitions.confirmDelete') %>">
+                <button class="btn btn-sm btn-outline-danger w-100" aria-label="<%= t('common:actions.delete') %>" title="<%= t('common:actions.delete') %>"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </div>
         </td>
       </tr>
       <% }) %>
