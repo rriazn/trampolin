@@ -14,7 +14,7 @@ const { addColumnIfMissing, runMigrations } = require('../../src/db/migrations.j
 function makeOldDb() {
   const old = new Database(':memory:');
   old.exec(`
-    CREATE TABLE judge_roles (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, name TEXT NOT NULL);
+    CREATE TABLE judge_roles (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, name TEXT NOT NULL, score_max REAL);
     CREATE TABLE panel_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, key TEXT NOT NULL UNIQUE, name TEXT NOT NULL);
     CREATE TABLE competitions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);
     CREATE TABLE sportsmen (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, competition_id INTEGER NOT NULL);
@@ -75,6 +75,16 @@ describe('runMigrations', () => {
     expect(() => old.prepare("INSERT INTO competitions (name, type) VALUES ('Bad', 'team')").run()).toThrow();
     expect(() => old.prepare("INSERT INTO panel_templates (key, name, competition_type) VALUES ('bad', 'Bad', 'team')").run()).toThrow();
     expect(() => old.prepare("INSERT INTO sportsmen (name, competition_id, partner_gender) VALUES ('X', 1, 'x')").run()).toThrow();
+  });
+
+  it('removes the old maximum of the head judge penalty and leaves other roles alone', () => {
+    const old = makeOldDb();
+    old.exec("INSERT INTO judge_roles (key, name, score_max) VALUES ('head_judge', 'Head Judge', 10), ('time_of_flight', 'Time of Flight', 10)");
+
+    runMigrations(old);
+
+    expect(old.prepare("SELECT score_max FROM judge_roles WHERE key='head_judge'").get().score_max).toBeNull();
+    expect(old.prepare("SELECT score_max FROM judge_roles WHERE key='time_of_flight'").get().score_max).toBe(10);
   });
 
   it('is idempotent', () => {

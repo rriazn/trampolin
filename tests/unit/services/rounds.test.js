@@ -227,12 +227,12 @@ describe('getRefereeRoundInfo', () => {
     expect(getRefereeRoundInfo(round, tofJudge.id).inputs[0].score_max).toBe(10);
   });
 
-  it('keeps the head judge maximum when the routine is shortened', () => {
+  it('keeps the head judge penalty without a maximum when the routine is shortened', () => {
     const { comp, round, roleIds } = setupInProgressAttempt('fig_synchro', 6);
     const headJudge = makeUser('head_judge');
     assignJudge(comp.id, roleIds.head_judge, headJudge.id);
 
-    expect(getRefereeRoundInfo(round, headJudge.id).inputs[0].score_max).toBe(10);
+    expect(getRefereeRoundInfo(round, headJudge.id).inputs[0].score_max).toBeNull();
   });
 
   describe("a judge's own value", () => {

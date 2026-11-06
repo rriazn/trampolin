@@ -377,6 +377,48 @@ describe('POST .../skip', () => {
   });
 });
 
+describe('POST .../skip then a late score for the skipped attempt', () => {
+  let data, staff, agent;
+  const hjUrl = (d, action) => `/head-judge/competitions/${d.competitionId}/groups/${d.groupId}/rounds/${d.roundId}/${action}`;
+
+  beforeAll(async () => {
+    data = seedLocalPanelRound();
+    staff = staffLocalPanel(data.competitionId, data.roleIds);
+    agent = await loginAs(staff.headJudge);
+    await agent.post(hjUrl(data, 'start')).type('form').send({});
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+  });
+
+  it('keeps the attempt skipped when a stale referee form is submitted for it', async () => {
+    const refAgent = await loginAs(staff.diffUser);
+    const res = await refAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: data.attempt1Id, judgeRoleId: data.roleIds.difficulty, element_1: '10' });
+    expect(res.status).toBe(302);
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
+  });
+
+  it('removes the skipped flag when the head judge goes back to the attempt', async () => {
+    await agent.post(hjUrl(data, 'back')).type('form').send({});
+    expect(db.prepare('SELECT current_attempt_id FROM rounds WHERE id=?').get(data.roundId).current_attempt_id).toBe(data.attempt1Id);
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('pending');
+  });
+
+  it('keeps counting a penalty saved after the skipped flag was removed', async () => {
+    await agent.post(hjUrl(data, 'score')).type('form').send({ attemptId: data.attempt1Id, score: '3' });
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('pending');
+  });
+
+  it('skipping the attempt again marks it skipped and does not offer it after the following athlete', async () => {
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
+    expect(db.prepare('SELECT current_attempt_id FROM rounds WHERE id=?').get(data.roundId).current_attempt_id).toBe(data.attempt2Id);
+    await agent.post(hjUrl(data, 'skip')).type('form').send({});
+    const round = db.prepare('SELECT status, current_attempt_id FROM rounds WHERE id=?').get(data.roundId);
+    expect(round.status).toBe('completed');
+    expect(round.current_attempt_id).toBeNull();
+  });
+});
+
 describe('POST .../score (inline head_judge penalty)', () => {
   let data, staff, agent;
 
@@ -396,7 +438,7 @@ describe('POST .../score (inline head_judge penalty)', () => {
 
   it('rejects a score for an attempt that is not the round\'s current attempt', async () => {
     const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt2Id, score: '0.2' });
+      .type('form').send({ attemptId: data.attempt2Id, score: '2' });
     expect(res.status).toBe(302);
     const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt2Id, staff.headJudgeAssignmentId);
     expect(saved).toBeUndefined();
@@ -410,9 +452,24 @@ describe('POST .../score (inline head_judge penalty)', () => {
     expect(follow.text).toContain('Score must be');
   });
 
+  it('rejects an empty score instead of saving it as 0', async () => {
+    await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
+      .type('form').send({ attemptId: data.attempt1Id, score: '' });
+    const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
+    expect(saved).toBeUndefined();
+  });
+
+  it('accepts a penalty above 10 points because there is no maximum', async () => {
+    const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
+      .type('form').send({ attemptId: data.attempt1Id, score: '150' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
+    expect(saved.score).toBe(15);
+  });
+
   it('saves a valid score and redirects back to the head-judge control page, not /referee', async () => {
     const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt1Id, score: '0.3' });
+      .type('form').send({ attemptId: data.attempt1Id, score: '3' });
     expect(res.status).toBe(302);
     expect(res.headers.location).toBe(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}`);
     const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
@@ -421,7 +478,7 @@ describe('POST .../score (inline head_judge penalty)', () => {
 
   it('resubmitting overwrites the previous score, not duplicating it', async () => {
     await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
-      .type('form').send({ attemptId: data.attempt1Id, score: '0.5' });
+      .type('form').send({ attemptId: data.attempt1Id, score: '5' });
     const rows = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').all(data.attempt1Id, staff.headJudgeAssignmentId);
     expect(rows).toHaveLength(1);
     expect(rows[0].score).toBe(0.5);

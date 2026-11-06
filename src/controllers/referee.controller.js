@@ -8,7 +8,7 @@ const { getRefereeRoundInfo } = require("../services/rounds.service");
 const { renderNotFound } = require("../services/errors.service");
 const { recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
 const { getCurrentRound, getStartingGroupInfo, collapseByStartingGroup } = require("../services/starting-groups.service");
-const { isWithinRange, rangeErrorMessage, scoreDecimals, maxScoreFor } = require("../services/helpers/referee.helpers");
+const { isWithinRange, rangeErrorMessage, scoreDecimals, maxScoreFor, isJudgeDone } = require("../services/helpers/referee.helpers");
 const { parseAndValidateElementScores, parseAndValidate11thScore, parseMissingSkillDeduction } = require("../services/scoring.service");
 
 exports.getRefereeDashboard = (req, res) => {
@@ -43,12 +43,53 @@ exports.getRound = (req, res) => {
         return res.render('referee/round', { round, startingGroup, attempt: null, inputs: [], state: 'no_assignment' });
     }
 
+    // the judge pressed Next for this athlete, a different current attempt means the head judge moved on
+    if (req.session.refereeNextAttemptId === round.current_attempt_id) {
+        return res.render('referee/round', { round, startingGroup, attempt: null, inputs: [], state: 'waiting', attemptId: round.current_attempt_id });
+    }
+    delete req.session.refereeNextAttemptId;
+
     const { attempt, inputs } = getRefereeRoundInfo(round, userId);
 
     const attemptLabel = getAttemptLabel(round, attempt.attempt_number, req.t);
-    res.render('referee/round', { round, startingGroup, attempt, attemptLabel, inputs, state: 'active' });
+    res.render('referee/round', { round, startingGroup, attempt, attemptLabel, inputs, state: 'active', canNext: isJudgeDone(inputs) });
 };
 
+const roundUrlFor = (ctx) => `/referee/competitions/${ctx.competitionId}/groups/${ctx.groupId}/rounds/${ctx.roundId}`;
+
+exports.postNext = (req, res) => {
+    const userId = req.session.user.id;
+    const ctx = getAttemptContext(req.body.attemptId);
+    if (!ctx)
+        return renderNotFound(res, req.t('errors:notFound.attempt'));
+
+    if (getAssignmentsForUser(ctx.competitionId, userId).length === 0)
+        return res.status(403).send(req.t('referee:errors.forbidden'));
+
+    const round = getRoundByIdWithCompGroupInfo(ctx.roundId, ctx.groupId);
+    if (round.status !== 'in_progress' || round.current_attempt_id !== ctx.attemptId) {
+        req.session.flash = { error: req.t('referee:errors.notCurrentAttempt') };
+        return res.redirect(roundUrlFor(ctx));
+    }
+
+    const { inputs } = getRefereeRoundInfo(round, userId);
+    if (!isJudgeDone(inputs)) {
+        req.session.flash = { error: req.t('referee:errors.scoresMissing') };
+        return res.redirect(roundUrlFor(ctx));
+    }
+
+    req.session.refereeNextAttemptId = ctx.attemptId;
+    res.redirect(roundUrlFor(ctx));
+};
+
+exports.postBack = (req, res) => {
+    const ctx = getAttemptContext(req.body.attemptId);
+    if (!ctx)
+        return renderNotFound(res, req.t('errors:notFound.attempt'));
+
+    delete req.session.refereeNextAttemptId;
+    res.redirect(roundUrlFor(ctx));
+};
 
 exports.postScore = (req, res) => {
     const { attemptId, judgeRoleId, score } = req.body;

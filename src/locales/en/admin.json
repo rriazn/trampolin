@@ -131,6 +131,7 @@
     "noAthletes": "No athletes yet.",
     "addOne": "Add one",
     "table": { "athlete": "Athlete", "club": "Club", "group": "Group", "gender": "Gender", "birthYear": "Birth Year", "routine": "Routine" },
+    "genderAbbr": { "m": "m", "f": "f" },
     "excel": { "name": "Name", "club": "Club", "gender": "Gender", "yearOfBirth": "Year of Birth", "routine": "Routine", "group": "Group" },
     "confirmDelete": "Delete {{name}}?"
   },

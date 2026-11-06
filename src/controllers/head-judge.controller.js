@@ -2,7 +2,7 @@ const { getRoundOverview, getRoundSelectionOverview, loadRound } = require("../s
 const { rosterReadiness } = require("../services/panels.service");
 const { getPreviousAttemptIndex, recomputeAttemptCompletion, getAttemptLabel } = require("../services/attempts.service");
 const { parseAndValidateScore } = require("../services/scoring.service");
-const { getNextPendingAttemptIdForRounds, updateAttemptSkippedDB } = require("../services/db/entries.crud");
+const { getNextPendingAttemptIdForRounds, updateAttemptSkippedDB, clearAttemptSkippedDB } = require("../services/db/entries.crud");
 const { updateRoundsStartedDB, updateRoundsCurrentAttemptDB, updateRoundsCompletedDB } = require("../services/db/rounds.crud");
 const { getRunRounds, getCurrentRound, getStartingGroupInfo, collapseByStartingGroup } = require("../services/starting-groups.service");
 const { getHeadJudgeAssignment } = require("../services/db/panels.crud");
@@ -92,6 +92,7 @@ exports.backAttempt = (req, res) => {
     }
 
     updateRoundsCurrentAttemptDB(runIds, order[previousIndex]);
+    clearAttemptSkippedDB(order[previousIndex]);
     req.session.flash = { success: req.t('headJudge:flash.movedBack') };
     res.redirect(currentRoundUrl(round));
 };
@@ -176,8 +177,8 @@ exports.penaltyDeduction = (req, res) => {
     if (!inRange) {
         req.session.flash = {
         error: assignment.score_max !== null
-            ? req.t('headJudge:rangeError.max', { min: assignment.score_min, max: assignment.score_max })
-            : req.t('headJudge:rangeError.min', { min: assignment.score_min }),
+            ? req.t('headJudge:rangeError.max', { min: assignment.score_min * 10, max: assignment.score_max * 10 })
+            : req.t('headJudge:rangeError.min', { min: assignment.score_min * 10 }),
         };
         return res.redirect(backUrl);
     }

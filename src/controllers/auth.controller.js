@@ -2,7 +2,11 @@ const { getUserByEmail } = require("../services/db/users.crud");
 const { APP_EPOCH } = require("../middleware/auth");
 const bcrypt = require('bcryptjs');
 
+// the login page is never cached, so Back does not bring typed credentials back
+const noStore = (res) => res.set('Cache-Control', 'no-store');
+
 exports.getLoginForm = (req, res) => {
+    noStore(res);
     if (req.session.user) return res.redirect('/');
     const error = req.query.reason === 'expired' ? req.t('login:sessionExpired') : null;
     res.render('login', { error });
@@ -12,6 +16,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = getUserByEmail(email);
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+        noStore(res);
         return res.render('login', { error: req.t('login:invalidCredentials') });
     }
     const lng = req.session.lng;

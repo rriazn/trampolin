@@ -111,12 +111,16 @@ test.describe('scoring and advancing', () => {
     await expect(input).toHaveAttribute('placeholder', /–/);
   });
 
+  test('the penalty input starts at 0 before a penalty is saved', async ({ page }) => {
+    await expect(page.getByRole('spinbutton', { name: 'Your head judge penalty' })).toHaveValue('0');
+  });
+
   test('submitting the head judge penalty saves it and shows a flash message', async ({ page }) => {
     const input = page.locator('.card:has-text("Your head judge penalty") input[name=score]');
-    await input.fill('0.2');
+    await input.fill('2');
     await page.locator('.card:has-text("Your head judge penalty") button').click();
     await expect(page.locator('.alert-success')).toContainText('Head judge penalty 0.2 saved.');
-    await expect(input).toHaveValue('0.2');
+    await expect(input).toHaveValue('2');
   });
 
   test('"Skip Athlete" shows a confirm dialog and advances to the next athlete', async ({ page }) => {

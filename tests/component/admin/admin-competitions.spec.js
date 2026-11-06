@@ -40,6 +40,39 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('columnheader', { name: 'Status' })).toBeVisible();
   });
 
+  // Action buttons layout
+
+  test('the action buttons form a grid of equally sized buttons, three in the first row', async ({ page }) => {
+    const row = page.getByRole('row').filter({ hasText: 'Autumn Open' });
+    const boxes = [];
+    for (const name of [/Groups/, /Starting groups/, /Judges/, /Documents/]) {
+      boxes.push(await row.getByRole('link', { name }).boundingBox());
+    }
+    const activate = await row.getByRole('button', { name: /Activate/ }).boundingBox();
+    const [groups, startingGroups, judges, documents] = boxes;
+
+    for (const box of [...boxes, activate]) {
+      expect(Math.round(box.width)).toBe(Math.round(groups.width));
+      expect(Math.round(box.height)).toBe(Math.round(groups.height));
+    }
+    expect(Math.round(startingGroups.y)).toBe(Math.round(groups.y));
+    expect(Math.round(judges.y)).toBe(Math.round(groups.y));
+    expect(documents.y).toBeGreaterThan(groups.y + groups.height - 1);
+    expect(Math.round(documents.x)).toBe(Math.round(groups.x));
+    expect(Math.round(activate.x)).toBe(Math.round(startingGroups.x));
+  });
+
+  test('edit and delete are stacked to the right of the grid', async ({ page }) => {
+    const row = page.getByRole('row').filter({ hasText: 'Autumn Open' });
+    const judges = await row.getByRole('link', { name: /Judges/ }).boundingBox();
+    const edit = await row.getByRole('link', { name: 'Edit' }).boundingBox();
+    const remove = await row.getByRole('button', { name: 'Delete' }).boundingBox();
+
+    expect(edit.x).toBeGreaterThan(judges.x + judges.width - 1);
+    expect(Math.round(remove.x)).toBe(Math.round(edit.x));
+    expect(remove.y).toBeGreaterThan(edit.y + edit.height - 1);
+  });
+
   // Competition list
 
   test('shows seeded planned competition in the list', async ({ page }) => {

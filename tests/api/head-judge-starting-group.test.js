@@ -212,7 +212,7 @@ describe('head judge actions on a starting group', () => {
     await post(agent, roundUrl(d, 'A') + '/start');
     const attemptId = order()[0];
 
-    await agent.post(roundUrl(d, 'B') + '/score').type('form').send({ attemptId, score: '0.2' });
+    await agent.post(roundUrl(d, 'B') + '/score').type('form').send({ attemptId, score: '2' });
     await agent.post(`${roundUrl(d, 'B')}/attempts/${attemptId}/element-count`).type('form').send({ element_count: '5' });
 
     expect(db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(attemptId, staff.headJudgeAssignmentId).score).toBe(0.2);

@@ -64,6 +64,19 @@ describe('buildLeaderboard', () => {
     expect(leaderboard[0].attempts.map(a => [a.status, a.elementCount])).toEqual([['scored', 8], ['skipped', 10]]);
   });
 
+  it('counts a skipped attempt as a score of 0', () => {
+    const { comp, group, round } = setupRoundWithHeadJudge('test', 'sum');
+    const sportsman = makeSportsman(comp.id, group.id, 'Anna');
+    const entry = makeEntry(round.id, sportsman.id, 1);
+    const skipped = makeAttempt(entry.id, 1, 0);
+    db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(skipped.id);
+
+    const { leaderboard } = buildLeaderboard(comp, round);
+    expect(leaderboard[0].attempts[0].finalScore).toBe(0);
+    expect(leaderboard[0].attempts[0].isComplete).toBe(true);
+    expect(leaderboard[0].total).toBe(0);
+  });
+
   it('gives tied best scores the same rank', () => {
     const { comp, group, round, roleIds, hjAssignment } = setupRoundWithHeadJudge();
     scoreAttempt(round, group, comp, roleIds, hjAssignment, 'A', [2]);

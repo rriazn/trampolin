@@ -88,13 +88,15 @@ function buildSportsmenAttempts(entryRows, panelSlots, scoresByAttempt, elementS
 
         const roleDetail = detailByAttempt.get(row.attempt_id) || new Map();
 
+        // a skipped athlete did not compete, so the attempt counts as 0
+        const skipped = row.attempt_status === 'skipped';
         sp.attempts.push({
             number: row.attempt_number,
             status: row.attempt_status,
             elementCount: row.element_count,
-            finalScore: hasAnyScore ? result.total : null,
-            breakdown: result.breakdown,
-            isComplete: result.isComplete,
+            finalScore: skipped ? 0 : (hasAnyScore ? result.total : null),
+            breakdown: skipped ? [] : result.breakdown,
+            isComplete: skipped || result.isComplete,
             perTrickDetail: buildPerTrickDetail(panelSlots, roleDetail),
         });
     }

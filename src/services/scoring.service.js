@@ -170,7 +170,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
 };
 
 exports.parseAndValidateScore = (score, assignment) => {
-    const parsed = parseFloat(score);
+    const parsed = parseFloat(score) / 10;
     const inRange = !isNaN(parsed) && parsed >= assignment.score_min && (assignment.score_max === null || parsed <= assignment.score_max);
     return { parsed, inRange };
 };

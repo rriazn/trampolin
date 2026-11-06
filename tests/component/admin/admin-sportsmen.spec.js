@@ -60,6 +60,12 @@ test.describe('when logged in as admin', () => {
     await expect(row.locator('button.btn-outline-danger')).toBeVisible(); // delete button
   });
 
+  test('shows the German gender abbreviation "w" for a female athlete', async ({ page }) => {
+    await page.getByRole('button', { name: 'DE', exact: true }).click();
+    const row = page.getByRole('row').filter({ hasText: 'Alice' });
+    await expect(row.getByRole('cell', { name: 'w', exact: true })).toBeVisible();
+  });
+
   // Buttons
 
   test('Import Excel button is present', async ({ page }) => {

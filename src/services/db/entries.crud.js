@@ -140,11 +140,17 @@ exports.updateEntryStartOrderDB = (entries) => {
 };
 
 exports.updateAttemptStatusDB = (isComplete, attemptId) => {
-    db.prepare("UPDATE attempts SET status=? WHERE id=?").run(isComplete ? 'scored' : 'pending', attemptId);
+    // a skipped attempt stays skipped, a late score must not put it back in the queue
+    db.prepare("UPDATE attempts SET status=? WHERE id=? AND status != 'skipped'").run(isComplete ? 'scored' : 'pending', attemptId);
 };
 
 exports.updateAttemptSkippedDB = (attemptId) => {
     db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(attemptId);
+};
+
+// the head judge went back to a skipped attempt, so it is scored again
+exports.clearAttemptSkippedDB = (attemptId) => {
+    db.prepare("UPDATE attempts SET status='pending' WHERE id=? AND status='skipped'").run(attemptId);
 };
 
 exports.deleteEntryDB = (entryId, roundId) => {

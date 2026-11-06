@@ -61,7 +61,7 @@
           <span class="badge bg-light text-dark border"><%= s.group_name %></span>
           <% } else { %><span class="text-muted">–</span><% } %>
         </td>
-        <td><%= [s.gender, s.partner_name ? s.partner_gender : null].filter(Boolean).join(' / ') || '–' %></td>
+        <td><%= [s.gender, s.partner_name ? s.partner_gender : null].filter(Boolean).map(g => t('admin:sportsmen.genderAbbr.' + g)).join(' / ') || '–' %></td>
         <td><%= [s.birth_year, s.partner_name ? s.partner_birth_year : null].filter(Boolean).join(' / ') || '–' %></td>
         <td><%- s.routine || '<span class="text-muted">–</span>' %></td>
         <td class="text-end">

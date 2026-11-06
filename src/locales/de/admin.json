@@ -131,6 +131,7 @@
     "noAthletes": "Noch keine Athleten verfügbar.",
     "addOne": "Einen hinzufügen",
     "table": { "athlete": "Athlet", "club": "Verein", "group": "Gruppe", "gender": "Geschlecht", "birthYear": "Geburtsjahr", "routine": "Übung" },
+    "genderAbbr": { "m": "m", "f": "w" },
     "excel": { "name": "Name", "club": "Verein", "gender": "Geschlecht", "yearOfBirth": "Geburtsjahr", "routine": "Übung", "group": "Gruppe" },
     "confirmDelete": "{{name}} löschen?"
   },

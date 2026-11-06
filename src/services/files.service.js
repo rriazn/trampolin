@@ -6,8 +6,9 @@ const { addSportsmanDB, getSportsmenWithGroup } = require("./db/sportsmen.crud")
 const { createOrIgnoreUserDB } = require("./db/users.crud");
 const { getGroupByCompetitionAbbreviation } = require("./db/groups.crud");
 const { getCompetitionById } = require("./db/competitions.crud");
-const { parseSportsmanInput } = require("./sportsmen.service");
+const { parseSportsmanInput, genderAbbreviation } = require("./sportsmen.service");
 const { normalizeRole } = require("./users.service");
+const { LANGUAGES, loadNamespace } = require("../locales");
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -81,10 +82,7 @@ exports.parseUsersXlsx = async (buffer) => {
     return { created, skipped, truncated };
 };
 
-const EXCEL_LOCALES = {
-    en: require("../locales/en/admin.json").sportsmen.excel,
-    de: require("../locales/de/admin.json").sportsmen.excel,
-};
+const EXCEL_LOCALES = Object.fromEntries(LANGUAGES.map(lng => [lng, loadNamespace(lng, 'admin').sportsmen.excel]));
 const LEGACY_YEAR_HEADERS = ['birthyear', 'birth year', 'birth_year'];
 
 const excelLabels = (lng) => EXCEL_LOCALES[lng] || EXCEL_LOCALES.en;
@@ -106,9 +104,11 @@ exports.createSportsmenXlsx = (competitionId, lng = 'en') => {
     const sportsmen = getSportsmenWithGroup(competitionId);
     const columns = sportsmenColumns(excelLabels(lng), isSynchro);
     const rows = sportsmen.map(s => {
+        const gender = genderAbbreviation(s.gender, lng);
+        const partnerGender = genderAbbreviation(s.partner_gender, lng);
         const values = isSynchro
-            ? [s.name, s.club, s.gender, s.birth_year, s.partner_name, s.partner_club, s.partner_gender, s.partner_birth_year, s.routine, s.group_abbreviation]
-            : [s.name, s.club, s.gender, s.birth_year, s.routine, s.group_abbreviation];
+            ? [s.name, s.club, gender, s.birth_year, s.partner_name, s.partner_club, partnerGender, s.partner_birth_year, s.routine, s.group_abbreviation]
+            : [s.name, s.club, gender, s.birth_year, s.routine, s.group_abbreviation];
         return Object.fromEntries(columns.map((column, i) => [column, values[i] || '']));
     });
     const ws = XLSX.utils.json_to_sheet(rows, { header: columns });

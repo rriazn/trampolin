@@ -343,7 +343,7 @@ describe('buildResultsData rows per panel', () => {
     expect(attempt.final).toBe('12.1');
   });
 
-  it('keeps skipped and pending attempts without rows and shows no final value', () => {
+  it('keeps skipped and pending attempts without rows and shows 0 for a skipped one only', () => {
     const comp = makeCompetition({ panelKey: 'test' });
     const group = makeGroup(comp.id);
     const entry = makeEntry(makeRound(group.id).id, makeSportsman(comp.id, group.id, 'Solo').id, 1);
@@ -357,7 +357,7 @@ describe('buildResultsData rows per panel', () => {
 
     const attempts = attemptsOf(buildResultsData(comp, makeT('en'), 'en'));
     expect(attempts.map(x => [x.number, x.status, x.rows.length, x.summary.length, x.final])).toEqual([
-      [1, 'scored', 2, 3, '-0.2'], [2, 'skipped', 0, 0, null], [3, 'pending', 0, 0, null],
+      [1, 'scored', 2, 3, '-0.2'], [2, 'skipped', 0, 0, '0.0'], [3, 'pending', 0, 0, null],
     ]);
   });
 });

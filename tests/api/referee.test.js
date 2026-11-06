@@ -603,3 +603,114 @@ describe('horizontal displacement mark on a shortened routine', () => {
   });
 });
 
+
+describe('POST /referee/next and /referee/back (wait for the head judge)', () => {
+  let nextData, nextAgent;
+
+  const roundUrl = () => `/referee/competitions/${nextData.competitionId}/groups/${nextData.groupId}/rounds/${nextData.roundId}`;
+  const saveAllScores = async () => {
+    await nextAgent.post('/referee/score').type('form')
+      .send({ attemptId: nextData.attemptId, judgeRoleId: nextData.roleIds.time_of_flight, score: '8.0' });
+    await nextAgent.post('/referee/score/elements').type('form')
+      .send({ attemptId: nextData.attemptId, judgeRoleId: nextData.roleIds.difficulty, element_1: '10', element_2: '10', element_3: '10' });
+  };
+
+  beforeAll(async () => {
+    const panelTemplate = db.prepare("SELECT id FROM panel_templates WHERE key='fig'").get();
+    const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)').run('Next Cup', 'active', panelTemplate.id);
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('G', comp.lastInsertRowid, 'NX');
+    const round = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'R', 1);
+    const makeAttempt = (name, order) => {
+      const sp = db.prepare('INSERT INTO sportsmen (name, competition_id) VALUES (?, ?)').run(name, comp.lastInsertRowid);
+      const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(round.lastInsertRowid, sp.lastInsertRowid, order);
+      return db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, 1, 3)').run(entry.lastInsertRowid).lastInsertRowid;
+    };
+    const attemptId = makeAttempt('First Athlete', 1);
+    const secondAttemptId = makeAttempt('Second Athlete', 2);
+    const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
+
+    nextData = { competitionId: comp.lastInsertRowid, groupId: group.lastInsertRowid, roundId: round.lastInsertRowid, attemptId, secondAttemptId, roleIds };
+    startRound(nextData.roundId, attemptId);
+
+    const hash = bcrypt.hashSync('secret', 10);
+    db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run('Next Judge', 'nextjudge@test.com', hash, 'referee');
+    const userId = getUserIdByEmail('nextjudge@test.com');
+    assignJudge(comp.lastInsertRowid, roleIds.time_of_flight, userId);
+    assignJudge(comp.lastInsertRowid, roleIds.difficulty, userId);
+
+    nextAgent = request.agent(app);
+    await nextAgent.post('/login').type('form').send({ email: 'nextjudge@test.com', password: 'secret' });
+  });
+
+  it('returns 403 when unauthenticated', async () => {
+    const res = await request(app).post('/referee/next').type('form').send({ attemptId: nextData.attemptId });
+    expect(res.status).toBe(403);
+    const back = await request(app).post('/referee/back').type('form').send({ attemptId: nextData.attemptId });
+    expect(back.status).toBe(403);
+  });
+
+  it('rejects Next while a role still has no saved score', async () => {
+    await nextAgent.post('/referee/score').type('form')
+      .send({ attemptId: nextData.attemptId, judgeRoleId: nextData.roleIds.time_of_flight, score: '8.0' });
+
+    const res = await nextAgent.post('/referee/next').type('form').send({ attemptId: nextData.attemptId });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(roundUrl());
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).toContain('Please save all your scores first');
+    expect(page.text).not.toContain('Wait for the head judge');
+  });
+
+  it('rejects Next for an attempt that is not the current one', async () => {
+    await saveAllScores();
+    const res = await nextAgent.post('/referee/next').type('form').send({ attemptId: nextData.secondAttemptId });
+    expect(res.status).toBe(302);
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).not.toContain('Wait for the head judge');
+  });
+
+  it('returns 404 for an unknown attempt', async () => {
+    const res = await nextAgent.post('/referee/next').type('form').send({ attemptId: 99999 });
+    expect(res.status).toBe(404);
+  });
+
+  it('shows the waiting message after Next, and keeps showing it on refresh', async () => {
+    const res = await nextAgent.post('/referee/next').type('form').send({ attemptId: nextData.attemptId });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(roundUrl());
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).toContain('Wait for the head judge to unlock the next athlete, then refresh');
+    const again = await nextAgent.get(roundUrl());
+    expect(again.text).toContain('Wait for the head judge to unlock the next athlete, then refresh');
+  });
+
+  it('Back returns to the scoring form of the same athlete', async () => {
+    const res = await nextAgent.post('/referee/back').type('form').send({ attemptId: nextData.attemptId });
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe(roundUrl());
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).not.toContain('Wait for the head judge');
+    expect(page.text).toContain('First Athlete');
+  });
+
+  it('shows the next athlete once the head judge has unlocked them', async () => {
+    await nextAgent.post('/referee/next').type('form').send({ attemptId: nextData.attemptId });
+    startRound(nextData.roundId, nextData.secondAttemptId);
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).not.toContain('Wait for the head judge');
+    expect(page.text).toContain('Second Athlete');
+  });
+
+  it('does not show the waiting message again if the head judge steps back to that athlete', async () => {
+    startRound(nextData.roundId, nextData.attemptId);
+
+    const page = await nextAgent.get(roundUrl());
+    expect(page.text).not.toContain('Wait for the head judge');
+    expect(page.text).toContain('First Athlete');
+  });
+});

@@ -26,3 +26,12 @@ exports.maxScoreFor = (roleKey, scoreMax, elementCount) => {
   return scoreMax === null ? elementCount : Math.min(scoreMax, elementCount);
 };
 
+
+// a judge is done when every role card has a saved score, the optional bonus and missing skill lines do not count
+exports.isJudgeDone = (inputs) => inputs.every(input => {
+  if (input.notApplicable) return true;
+  if (input.granularity === 'element') {
+    return input.elements.filter(el => el.kind === 'trick' || el.kind === 'landing').every(el => el.value !== null);
+  }
+  return input.score !== null;
+});
