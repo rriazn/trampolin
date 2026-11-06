@@ -28,6 +28,25 @@ describe('GET /login', () => {
   });
 });
 
+describe('login page caching', () => {
+  it('is sent with no-store so the browser does not keep typed credentials', async () => {
+    const res = await request(app).get('/login');
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+
+  it('is sent with no-store after a failed login too', async () => {
+    const res = await request(app).post('/login').type('form').send({ email: 'admin@test.com', password: 'wrong' });
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+
+  it('does not put no-store on other pages', async () => {
+    const agent = request.agent(app);
+    await agent.post('/login').type('form').send({ email: 'admin@test.com', password: 'secret123' });
+    const res = await agent.get('/admin');
+    expect(res.headers['cache-control']).not.toBe('no-store');
+  });
+});
+
 describe('POST /login', () => {
   it('shows error for unknown email', async () => {
     const res = await request(app)
