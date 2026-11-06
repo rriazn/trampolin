@@ -150,10 +150,10 @@ test('head judge skips an attempt and the round advances without the panel being
   await expect(page.getByRole('heading', { name: 'Round completed' })).toBeVisible();
 
   // head judge stays logged in since the leaderboard requires a logged-in user
-  // every attempt was skipped, not scored, so the leaderboard shows both athletes with no score
+  // every attempt was skipped, which counts as 0, so the leaderboard shows both athletes with a total of 0
   await page.goto(`/leaderboard/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}`);
   await expect(page.locator('tbody tr')).toHaveCount(2);
-  await expect(page.locator('.lb-score')).toHaveCount(0);
+  await expect(page.locator('.lb-score')).toHaveText(['0.000', '0.000']);
 });
 
 // Local Panel's execution role uses per_judge aggregation, combining each judge's own total rather than each trick across judges
