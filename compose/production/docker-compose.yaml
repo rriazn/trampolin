@@ -2,7 +2,8 @@ services:
   init-data:
     image: tramposcore:latest
     user: root
-    command: chown -R 1000:1000 /app/src/data
+    # fix the volume owner, then create or upgrade the database as the node user so its files stay owned by node
+    command: sh -c "chown -R 1000:1000 /app/src/data && su node -s /bin/sh -c 'node src/migrate.js'"
     volumes:
       - ./data:/app/src/data
     restart: "no"
