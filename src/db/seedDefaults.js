@@ -4,7 +4,7 @@ const JUDGE_ROLES = [
   { key: 'difficulty',              name: 'Difficulty',                granularity: 'element', is_deduction: 0, max_value: null, score_min: 0, score_max: null },
   { key: 'time_of_flight',          name: 'Time of Flight',            granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },
   { key: 'horizontal_displacement', name: 'Horizontal Displacement',   granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },
-  { key: 'head_judge',              name: 'Head Judge (Penalties)',    granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: 10 },
+  { key: 'head_judge',              name: 'Head Judge (Penalties)',    granularity: 'attempt', is_deduction: 0, max_value: null, score_min: 0, score_max: null },
   // synchro: one execution role per trampoline, S is either the device mark or per-skill deductions
   { key: 'execution_t1',            name: 'Execution Trampoline 1',    granularity: 'element', is_deduction: 1, max_value: 10,   score_min: 0, score_max: 0.5, has_landing: 1 },
   { key: 'execution_t2',            name: 'Execution Trampoline 2',    granularity: 'element', is_deduction: 1, max_value: 10,   score_min: 0, score_max: 0.5, has_landing: 1 },

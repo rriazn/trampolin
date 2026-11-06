@@ -36,8 +36,8 @@ test.describe('when logged in as referee', () => {
     await expect(page.locator('.page-hero p').getByText('Championship · Group A')).toBeVisible();
   });
 
-  test('shows a "Back" button', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Back/ })).toBeVisible();
+  test('shows a "Back to dashboard" button', async ({ page }) => {
+    await expect(page.getByRole('link', { name: 'Back to dashboard' })).toBeVisible();
   });
 
   // Current attempt (round starts on Bob's first attempt)
@@ -73,9 +73,31 @@ test.describe('when logged in as referee', () => {
 
   // Back button
 
-  test('"Back" button navigates to the referee dashboard', async ({ page }) => {
-    await page.getByRole('link', { name: /Back/ }).click();
+  test('"Back to dashboard" button navigates to the referee dashboard', async ({ page }) => {
+    await page.getByRole('link', { name: 'Back to dashboard' }).click();
     await page.waitForURL('/referee');
+  });
+
+  // Next and back
+
+  test('shows a "Next" button once the judge has saved their score', async ({ page }) => {
+    await expect(page.getByTestId('next-athlete')).toBeVisible();
+  });
+
+  test('"Next" shows the waiting message, which survives a refresh', async ({ page }) => {
+    await page.getByTestId('next-athlete').click();
+    await expect(page.getByText('Wait for the head judge to unlock the next athlete, then refresh.')).toBeVisible();
+    await expect(page.locator('input[name=score]')).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByText('Wait for the head judge to unlock the next athlete, then refresh.')).toBeVisible();
+  });
+
+  test('"Back" on the waiting screen returns to the scoring form', async ({ page }) => {
+    await page.getByTestId('next-athlete').click();
+    await page.getByTestId('waiting').getByRole('button', { name: 'Back' }).click();
+    await expect(page.locator('input[name=score]')).toHaveValue('9.2');
+    await expect(page.getByTestId('next-athlete')).toBeVisible();
   });
 
   // Score submission

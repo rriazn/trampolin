@@ -16,6 +16,8 @@ function runMigrations(db) {
   addColumnIfMissing(db, 'sportsmen', 'partner_birth_year', 'INTEGER');
   addColumnIfMissing(db, 'groups', 'starting_group_id', 'INTEGER REFERENCES starting_groups(id) ON DELETE SET NULL');
   addColumnIfMissing(db, 'groups', 'starting_group_position', 'INTEGER');
+  // the head judge penalty has no maximum, older dbs were seeded with 10
+  db.prepare("UPDATE judge_roles SET score_max = NULL WHERE key = 'head_judge' AND score_max = 10").run();
 }
 
 module.exports = { addColumnIfMissing, runMigrations };

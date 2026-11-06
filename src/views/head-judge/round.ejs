@@ -116,7 +116,7 @@
   <form method="POST" action="/head-judge/competitions/<%= round.competition_id %>/groups/<%= round.group_id %>/rounds/<%= round.id %>/score" class="d-flex flex-wrap gap-2 align-items-center">
     <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
     <input type="number" name="score"
-           value="<%= headJudgeScore !== null ? Math.round(headJudgeScore * 10) : '' %>"
+           value="<%= headJudgeScore !== null ? Math.round(headJudgeScore * 10) : 0 %>"
            min="<%= Math.round(headJudgeAssignment.score_min * 10) %>" <% if (headJudgeAssignment.score_max !== null) { %>max="<%= Math.round(headJudgeAssignment.score_max * 10) %>"<% } %>
            step="1" inputmode="numeric" class="form-control score-input" aria-labelledby="penalty-heading"
            placeholder="<%= Math.round(headJudgeAssignment.score_min * 10) %>–<%= headJudgeAssignment.score_max !== null ? Math.round(headJudgeAssignment.score_max * 10) : '∞' %>" required>

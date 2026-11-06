@@ -8,7 +8,7 @@
       <p data-testid="starting-group"><%= t('common:startingGroup.label') %>: <%= startingGroup.name %> &nbsp;·&nbsp; <%= startingGroup.groups.map(g => g.name).join(', ') %></p>
       <% } %>
     </div>
-    <a href="/referee" class="btn btn-outline-secondary btn-touch"><%= t('common:actions.back') %></a>
+    <a href="/referee" class="btn btn-outline-secondary btn-touch"><%= t('referee:round.backToDashboard') %></a>
   </div>
 </div>
 
@@ -22,6 +22,15 @@
 <div class="card p-5 text-center text-muted">
   <h2 class="h5"><%= t('referee:round.noAssignmentTitle') %></h2>
   <p class="mb-0 small"><%= t('referee:round.noAssignmentBody') %></p>
+</div>
+<% } else if (state === 'waiting') { %>
+<div class="card p-5 text-center" data-testid="waiting">
+  <h2 class="h5"><%= t('referee:round.waitingTitle') %></h2>
+  <p class="mb-3 text-muted"><%= t('referee:round.waitingBody') %></p>
+  <form method="POST" action="/referee/back">
+    <input type="hidden" name="attemptId" value="<%= attemptId %>">
+    <button class="btn btn-outline-secondary btn-touch"><%= t('common:actions.back') %></button>
+  </form>
 </div>
 <% } else { %>
 <div class="card p-4 mb-4">
@@ -123,6 +132,12 @@
   <% } %>
 </div>
 <% }) %>
+<% if (canNext) { %>
+<form method="POST" action="/referee/next" class="mb-4">
+  <input type="hidden" name="attemptId" value="<%= attempt.attempt_id %>">
+  <button class="btn btn-primary btn-touch w-100" data-testid="next-athlete"><%= t('referee:round.next') %> <i class="bi bi-arrow-right"></i></button>
+</form>
+<% } %>
 <% } %>
 </div>
 <%- include('../partials/footer') %>

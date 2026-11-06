@@ -12,4 +12,8 @@ router.post('/score', refereeController.postScore);
 
 router.post('/score/elements', refereeController.postElementScores);
 
+router.post('/next', refereeController.postNext);
+
+router.post('/back', refereeController.postBack);
+
 module.exports = router;

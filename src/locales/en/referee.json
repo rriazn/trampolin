@@ -19,9 +19,15 @@
     "currentValue": "Current {{name}} value:",
     "partialNote": "(partial — not every judge has submitted yet)",
     "partialLinesNote": "(partial — not every line has been scored yet)",
+    "waitingTitle": "Waiting for the next athlete",
+    "waitingBody": "Wait for the head judge to unlock the next athlete, then refresh.",
+    "backToDashboard": "Back to dashboard",
+    "next": "Next",
     "notApplicable": "No skills were performed for this attempt — this role does not apply."
   },
   "errors": {
+    "notCurrentAttempt": "This is not the current athlete any more.",
+    "scoresMissing": "Please save all your scores first.",
     "forbidden": "Forbidden",
     "wrongGranularityAttempt": "This role is scored per trick, not per attempt.",
     "wrongGranularityElement": "This role is scored per attempt, not per trick.",

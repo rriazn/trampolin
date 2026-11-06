@@ -35,6 +35,10 @@ describe('seed defaults: judge roles', () => {
     });
   });
 
+  it('seeds the head judge penalty without a maximum', () => {
+    expect(role('head_judge').score_max).toBeNull();
+  });
+
   it('upgrades has_landing on an existing execution role that predates the flag', () => {
     db.prepare("UPDATE judge_roles SET has_landing=0 WHERE key='execution'").run();
 

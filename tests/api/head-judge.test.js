@@ -453,6 +453,14 @@ describe('POST .../score (inline head_judge penalty)', () => {
     expect(saved).toBeUndefined();
   });
 
+  it('accepts a penalty above 10 points because there is no maximum', async () => {
+    const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
+      .type('form').send({ attemptId: data.attempt1Id, score: '150' });
+    expect(res.status).toBe(302);
+    const saved = db.prepare('SELECT score FROM scores WHERE attempt_id=? AND panel_assignment_id=?').get(data.attempt1Id, staff.headJudgeAssignmentId);
+    expect(saved.score).toBe(15);
+  });
+
   it('saves a valid score and redirects back to the head-judge control page, not /referee', async () => {
     const res = await agent.post(`/head-judge/competitions/${data.competitionId}/groups/${data.groupId}/rounds/${data.roundId}/score`)
       .type('form').send({ attemptId: data.attempt1Id, score: '3' });

@@ -19,9 +19,15 @@
     "currentValue": "Aktueller Wert für {{name}}:",
     "partialNote": "(unvollständig — nicht jeder Kampfrichter hat eine Wertung abgegeben)",
     "partialLinesNote": "(unvollständig — nicht jede Zeile wurde bewertet)",
+    "waitingTitle": "Warten auf den nächsten Athleten",
+    "waitingBody": "Warten Sie, bis der Wettkampfleiter den nächsten Athleten freigibt, und aktualisieren Sie dann die Seite.",
+    "backToDashboard": "Zurück zum Dashboard",
+    "next": "Weiter",
     "notApplicable": "Keine Elemente wurden in diesem Versuch gezeigt."
   },
   "errors": {
+    "notCurrentAttempt": "Dies ist nicht mehr der aktuelle Athlet.",
+    "scoresMissing": "Bitte speichern Sie zuerst alle Ihre Wertungen.",
     "forbidden": "Zugriff verweigert",
     "wrongGranularityAttempt": "Diese Rolle wertet pro Element, nicht pro Versuch.",
     "wrongGranularityElement": "Diese Rolle wertet pro Versuch, nicht pro Element.",

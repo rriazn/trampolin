@@ -82,7 +82,9 @@ of participation, one page per athlete (see [Certificates](#certificates)).
 - **Head judges** run a round day-of: staffing checks, attempt sequencing, and resolving scoring
   issues as they come up.
 - **Referees** are the judges - they log in on their own device and submit scores for whichever
-  role (Execution, Difficulty, etc.) they've been assigned on the panel.
+  role (Execution, Difficulty, etc.) they've been assigned on the panel. Once all their scores for an
+  athlete are saved they can press Next, which shows a "wait for the head judge, then refresh" screen
+  (with a Back button) until the head judge unlocks the next athlete.
 - **Viewers** get read-only access to leaderboards for all active rounds - useful for a screen at
   the venue, or for coaches and athletes following along without needing judging permissions.
 
