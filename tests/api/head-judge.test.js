@@ -397,14 +397,20 @@ describe('POST .../skip then a late score for the skipped attempt', () => {
     expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
   });
 
-  it('keeps the attempt skipped when the head judge goes back and saves a penalty', async () => {
+  it('removes the skipped flag when the head judge goes back to the attempt', async () => {
     await agent.post(hjUrl(data, 'back')).type('form').send({});
-    await agent.post(hjUrl(data, 'score')).type('form').send({ attemptId: data.attempt1Id, score: '3' });
-    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
+    expect(db.prepare('SELECT current_attempt_id FROM rounds WHERE id=?').get(data.roundId).current_attempt_id).toBe(data.attempt1Id);
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('pending');
   });
 
-  it('does not offer the skipped attempt again after the following athlete', async () => {
+  it('keeps counting a penalty saved after the skipped flag was removed', async () => {
+    await agent.post(hjUrl(data, 'score')).type('form').send({ attemptId: data.attempt1Id, score: '3' });
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('pending');
+  });
+
+  it('skipping the attempt again marks it skipped and does not offer it after the following athlete', async () => {
     await agent.post(hjUrl(data, 'skip')).type('form').send({});
+    expect(db.prepare('SELECT status FROM attempts WHERE id=?').get(data.attempt1Id).status).toBe('skipped');
     expect(db.prepare('SELECT current_attempt_id FROM rounds WHERE id=?').get(data.roundId).current_attempt_id).toBe(data.attempt2Id);
     await agent.post(hjUrl(data, 'skip')).type('form').send({});
     const round = db.prepare('SELECT status, current_attempt_id FROM rounds WHERE id=?').get(data.roundId);

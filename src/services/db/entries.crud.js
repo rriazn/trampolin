@@ -148,6 +148,11 @@ exports.updateAttemptSkippedDB = (attemptId) => {
     db.prepare("UPDATE attempts SET status='skipped' WHERE id=?").run(attemptId);
 };
 
+// the head judge went back to a skipped attempt, so it is scored again
+exports.clearAttemptSkippedDB = (attemptId) => {
+    db.prepare("UPDATE attempts SET status='pending' WHERE id=? AND status='skipped'").run(attemptId);
+};
+
 exports.deleteEntryDB = (entryId, roundId) => {
     db.prepare('DELETE FROM entries WHERE id=? AND round_id=?').run(entryId, roundId);
 };
