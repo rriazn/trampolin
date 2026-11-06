@@ -177,6 +177,20 @@ test.describe('execution judge: checkbox deductions', () => {
     expect(box.height).toBeGreaterThanOrEqual(44);
   });
 
+  test('all deduction options have the same size, whatever their label', async ({ page }) => {
+    const sizes = await page.locator('.score-option').evaluateAll(els => els.map(el => {
+      const box = el.getBoundingClientRect();
+      return `${Math.round(box.width)}x${Math.round(box.height)}`;
+    }));
+    expect(sizes.length).toBeGreaterThan(1);
+    expect(new Set(sizes).size).toBe(1);
+  });
+
+  test('the label of a deduction option fits inside its box', async ({ page }) => {
+    const overflowing = await page.locator('.score-option').evaluateAll(els => els.filter(el => el.scrollWidth > el.clientWidth).length);
+    expect(overflowing).toBe(0);
+  });
+
   test('does not show a landing line when the attempt has only 1 trick', async ({ page }) => {
     await expect(page.getByText('Landing')).not.toBeVisible();
   });

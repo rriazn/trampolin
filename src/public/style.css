@@ -676,7 +676,9 @@ summary:focus-visible,
   display: inline-flex;
   align-items: center;
   gap: .5rem;
-  min-width: 3.5rem;
+  /* one fixed size, so the box does not depend on the label (0, 0.1, 1) */
+  flex: none;
+  width: 5.25rem;
   min-height: 2.75rem;
   margin: 0;
   padding: 0 .9rem;
