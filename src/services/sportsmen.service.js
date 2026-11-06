@@ -1,3 +1,5 @@
+const { LANGUAGES, loadNamespace } = require('../locales');
+
 const optionalText = (value) => String(value ?? '').trim() || null;
 
 const optionalInt = (value) => {
@@ -6,10 +8,7 @@ const optionalInt = (value) => {
 };
 
 // short gender labels per language, keyed by the stored value (m or f)
-const GENDER_ABBREVIATIONS = {
-    en: require('../locales/en/admin.json').sportsmen.genderAbbr,
-    de: require('../locales/de/admin.json').sportsmen.genderAbbr,
-};
+const GENDER_ABBREVIATIONS = Object.fromEntries(LANGUAGES.map(lng => [lng, loadNamespace(lng, 'admin').sportsmen.genderAbbr]));
 exports.genderAbbreviation = (gender, lng) => (GENDER_ABBREVIATIONS[lng] || GENDER_ABBREVIATIONS.en)[gender] || '';
 
 // stored value for every abbreviation of every language, the stored values m and f always work

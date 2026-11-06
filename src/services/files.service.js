@@ -8,6 +8,7 @@ const { getGroupByCompetitionAbbreviation } = require("./db/groups.crud");
 const { getCompetitionById } = require("./db/competitions.crud");
 const { parseSportsmanInput, genderAbbreviation } = require("./sportsmen.service");
 const { normalizeRole } = require("./users.service");
+const { LANGUAGES, loadNamespace } = require("../locales");
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -81,10 +82,7 @@ exports.parseUsersXlsx = async (buffer) => {
     return { created, skipped, truncated };
 };
 
-const EXCEL_LOCALES = {
-    en: require("../locales/en/admin.json").sportsmen.excel,
-    de: require("../locales/de/admin.json").sportsmen.excel,
-};
+const EXCEL_LOCALES = Object.fromEntries(LANGUAGES.map(lng => [lng, loadNamespace(lng, 'admin').sportsmen.excel]));
 const LEGACY_YEAR_HEADERS = ['birthyear', 'birth year', 'birth_year'];
 
 const excelLabels = (lng) => EXCEL_LOCALES[lng] || EXCEL_LOCALES.en;
