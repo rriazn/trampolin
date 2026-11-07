@@ -371,3 +371,127 @@ describe('certificates routes', () => {
     });
   });
 });
+
+describe('starting lists routes', () => {
+  let cup;
+  let otherCup;
+  let emptyCup;
+  const roundUrl = (compId, groupId, roundId) => `/admin/competitions/${compId}/groups/${groupId}/rounds/${roundId}/documents/starting-list`;
+  const allUrl = (compId) => `/admin/competitions/${compId}/documents/starting-lists`;
+  const flash = async (compId) => (await admin.get(`/admin/competitions/${compId}/documents`)).text;
+
+  // one group with a round that has an athlete and a round without entries
+  function seedStartingListCompetition(name) {
+    const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run(name, 'active');
+    const group = db.prepare('INSERT INTO groups (name, competition_id, abbreviation) VALUES (?, ?, ?)').run('Open', comp.lastInsertRowid, 'OP');
+    const full = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Final', 1);
+    const empty = db.prepare('INSERT INTO rounds (group_id, name, round_order) VALUES (?, ?, ?)').run(group.lastInsertRowid, 'Extra', 2);
+    const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Alice', comp.lastInsertRowid, group.lastInsertRowid);
+    db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(full.lastInsertRowid, sp.lastInsertRowid, 1);
+    return { comp: Number(comp.lastInsertRowid), group: Number(group.lastInsertRowid), full: Number(full.lastInsertRowid), empty: Number(empty.lastInsertRowid) };
+  }
+
+  beforeAll(() => {
+    cup = seedStartingListCompetition('Start Cup');
+    otherCup = seedStartingListCompetition('Other Start Cup');
+    const comp = db.prepare('INSERT INTO competitions (name, status) VALUES (?, ?)').run('Empty Start Cup', 'active');
+    emptyCup = Number(comp.lastInsertRowid);
+  });
+
+  describe('GET /admin/competitions/:id/groups/:gid/rounds/:rid/documents/starting-list', () => {
+    const entriesUrl = (c) => `/admin/competitions/${c.comp}/groups/${c.group}/rounds/${c.empty}/entries`;
+
+    it('returns 403 when unauthenticated and for a referee', async () => {
+      expect((await request(app).get(roundUrl(cup.comp, cup.group, cup.full))).status).toBe(403);
+      expect((await referee.get(roundUrl(cup.comp, cup.group, cup.full))).status).toBe(403);
+    });
+
+    it('returns 404 for an unknown competition, a group or a round of another competition', async () => {
+      expect((await admin.get(roundUrl(999999, cup.group, cup.full))).status).toBe(404);
+      expect((await admin.get(roundUrl(cup.comp, otherCup.group, otherCup.full))).status).toBe(404);
+      expect((await admin.get(roundUrl(cup.comp, cup.group, otherCup.full))).status).toBe(404);
+      expect((await admin.get(roundUrl(cup.comp, cup.group, 999999))).status).toBe(404);
+    });
+
+    it('sends the PDF named after the competition, the group and the round', async () => {
+      const res = await admin.get(roundUrl(cup.comp, cup.group, cup.full)).buffer(true).parse(binary);
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('application/pdf');
+      expect(res.headers['content-disposition']).toBe('attachment; filename="starting-list-start-cup-open-final.pdf"');
+      expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('redirects back to the entries page with an error for a round without entries', async () => {
+      const res = await admin.get(roundUrl(cup.comp, cup.group, cup.empty));
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe(entriesUrl(cup));
+      expect((await admin.get(entriesUrl(cup))).text).toContain('This round has no competitors yet');
+    });
+
+    it('no longer accepts a POST', async () => {
+      expect((await admin.post(roundUrl(cup.comp, cup.group, cup.full))).status).toBe(404);
+    });
+  });
+
+  describe('POST /admin/competitions/:id/documents/starting-lists', () => {
+    it('returns 403 for a referee and 404 for an unknown competition', async () => {
+      expect((await referee.post(allUrl(cup.comp))).status).toBe(403);
+      expect((await admin.post(allUrl(999999))).status).toBe(404);
+    });
+
+    it('sends one PDF with every round that has entries', async () => {
+      const res = await admin.post(allUrl(cup.comp)).buffer(true).parse(binary);
+      expect(res.status).toBe(200);
+      expect(res.headers['content-disposition']).toBe('attachment; filename="starting-lists-start-cup.pdf"');
+      expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('redirects with an error when no round has entries', async () => {
+      const res = await admin.post(allUrl(emptyCup));
+      expect(res.status).toBe(302);
+      expect(await flash(emptyCup)).toContain('No round has competitors yet');
+    });
+  });
+
+  describe('POST /admin/competitions/:id/documents/starting-lists/preview', () => {
+    const url = () => `${allUrl(cup.comp)}/preview`;
+
+    it('returns 403 for a referee and 404 for an unknown competition', async () => {
+      expect((await referee.post(url())).status).toBe(403);
+      expect((await admin.post(`${allUrl(999999)}/preview`)).status).toBe(404);
+    });
+
+    it('renders the uploaded template with the sample data inline', async () => {
+      const res = await admin.post(url()).attach('template', Buffer.from('#let d = json("starting-lists.json")\n#d.labels.title'), 'mine.typ')
+        .buffer(true).parse(binary);
+      expect(res.status).toBe(200);
+      expect(res.headers['content-disposition']).toContain('inline');
+      expect(res.body.subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('redirects with an error when no file is chosen', async () => {
+      const res = await admin.post(url());
+      expect(res.status).toBe(302);
+      expect(await flash(cup.comp)).toContain('Choose a .typ template file first');
+    });
+
+    it('redirects with the Typst error when the template is broken', async () => {
+      await admin.post(url()).attach('template', Buffer.from('#let x = '), 'broken.typ');
+      expect(await flash(cup.comp)).toContain('expected expression');
+    });
+  });
+
+  describe('GET /admin/competitions/:id/documents/starting-lists/template', () => {
+    it('downloads the default template', async () => {
+      const res = await admin.get(`${allUrl(cup.comp)}/template`);
+      expect(res.status).toBe(200);
+      expect(res.headers['content-disposition']).toContain('attachment; filename="starting-lists-template.typ"');
+      expect(res.text).toContain('json("starting-lists.json")');
+    });
+
+    it('returns 403 for a referee and 404 for an unknown competition', async () => {
+      expect((await referee.get(`${allUrl(cup.comp)}/template`)).status).toBe(403);
+      expect((await admin.get(`${allUrl(999999)}/template`)).status).toBe(404);
+    });
+  });
+});

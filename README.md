@@ -308,6 +308,43 @@ Roles and what ends up where, as defined by the panel (`src/db/seedDefaults.js`)
 | `synchronisation_skill` (per skill) | `tricks` | S |
 | time of flight, horizontal displacement, `synchronisation` (device), head judge | none, `summary` only | T, H, S, P |
 
+## Starting lists
+
+The starting list of one round is the **Starting list (PDF)** button on the round's entries page
+(`starting-list-<competition>-<group>-<round>.pdf`, always the built-in design). The **Starting lists** card
+on the Documents page makes **Download all**, one PDF with one page per round
+(`starting-lists-<competition>.pdf`), group by group in name order and the rounds of a group in round order.
+Both work at any time, whatever the status of the competition or the round.
+
+- Competitors are listed in the start order of the round, numbered 1, 2, 3 even when the stored start
+  order has gaps. Each row shows the name, club, birth year and routine.
+- Rounds without competitors have no button and are left out of **Download all**.
+- Synchro: a pair is one row, with the partner's name, club and year below the athlete's.
+- Starting groups: every member round gets its own page in its own start order, with a note naming the
+  starting group. There is no combined page.
+- The Documents card takes an optional `.typ` template for **Download all**, with **Preview template** and
+  **Default template**, exactly like the results list (see [Custom templates](#custom-templates), same rules and sandbox). The data file
+  is `starting-lists.json`, the sample is `src/templates/starting-lists/sample-starting-lists.json`.
+
+### Data contract (`starting-lists.json`, version 1)
+
+The download of one round and **Download all** use the same shape, one round is a `rounds` list of one.
+All values are strings or `null`, except `version` and `position`, the template does no logic beyond layout.
+
+```text
+version          1
+generatedAt      "07.11.2026 18:30" (de) or "2026-11-07 18:30"
+labels           title, group, round, startingGroup, position, name, club, birthYear, routine
+competition      { name, date (02.10.2026 in de, as entered otherwise, or null), type ("individual" | "synchro") }
+rounds[]         { group, round, startingGroup, competitors }
+  group          { name, abbreviation }
+  round          { name }
+  startingGroup  name of the starting group the group runs in, or null
+  competitors[]  { position, name, club, birthYear, routine, partner }
+    position     1, 2, 3 in start order
+    partner      { name, club, birthYear } or null           synchro only
+```
+
 ## Certificates
 
 The **Certificates** card on the Documents page makes one PDF per group with one certificate page per

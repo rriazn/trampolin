@@ -78,6 +78,13 @@ exports.formatTimestamp = (now, lng) => {
     return lng === 'de' ? `${day} ${time}` : `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${time}`;
 };
 
+// 2026-10-02 as 02.10.2026 in German, unchanged otherwise
+exports.formatDate = (date, lng) => {
+    if (!date) return null;
+    const [year, month, day] = date.split('-');
+    return lng === 'de' && day ? `${day}.${month}.${year}` : date;
+};
+
 // one row per element role: a deduction per trick, or each judge's own total
 function buildRow(slot, entry, letter, labelByAssignment, lng) {
     if (slot.aggregation === 'per_judge') {

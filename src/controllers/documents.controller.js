@@ -1,10 +1,12 @@
 const { getCompetitionById } = require('../services/db/competitions.crud');
 const { getGroupById } = require('../services/db/groups.crud');
+const { getRoundById } = require('../services/db/rounds.crud');
 const { renderNotFound } = require('../services/errors.service');
 const { fileNameSlug } = require('../services/helpers/admin.helpers');
 const { buildResultsData, buildLabels } = require('../services/results.service');
 const { readUploadedPdfTemplate, compileOverlay, buildExampleTemplate, MAX_PDF_TEMPLATE_BYTES, MARKER_KEYS } = require('../services/pdf-template.service');
 const { groupReadiness, groupReadinessFor, buildCertificatesData, buildCertificateLabels } = require('../services/certificates.service');
+const { hasStartingLists, buildStartingListLabels, buildRoundStartingList, buildAllStartingLists } = require('../services/starting-lists.service');
 const {
     compilePdf, readUploadedTemplate, readDefaultTemplate, readSampleData, TemplateError, MAX_TEMPLATE_BYTES,
 } = require('../services/pdf.service');
@@ -13,18 +15,18 @@ const { receiveUpload } = require('../middleware/upload');
 
 const documentsUrl = (req) => `/admin/competitions/${req.params.id}/documents`;
 
-const flashAndReturn = (req, res, message) => {
+const flashAndReturn = (req, res, message, url = documentsUrl(req)) => {
     req.session.flash = { error: message };
-    res.redirect(documentsUrl(req));
+    res.redirect(url);
 };
 
 // a broken template is shown to the admin, any other error is a real failure
-const flashTemplateError = (req, res, err) => {
+const flashTemplateError = (req, res, err, url) => {
     if (!(err instanceof TemplateError)) throw err;
     const message = err.line
         ? req.t('results:errors.compileError', { line: err.line, column: err.column, message: err.message, interpolation: { escapeValue: false } })
         : err.message;
-    flashAndReturn(req, res, message);
+    flashAndReturn(req, res, message, url);
 };
 
 const sendPdf = (res, pdf, disposition) => {
@@ -45,6 +47,7 @@ exports.getDocuments = (req, res) => {
     res.render('admin/documents', {
         competition,
         groups: groupReadiness(competition),
+        hasStartingLists: hasStartingLists(competition),
         markers: MARKER_KEYS.map(key => `{{${key}}}`).join(', '),
     });
 };
@@ -84,6 +87,73 @@ exports.downloadResultsTemplate = (req, res) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="default-template.typ"');
     res.send(readDefaultTemplate());
+};
+
+const STARTING_LISTS_OPTIONS = { dataFile: 'starting-lists.json' };
+
+// linked from the entries page of the round, always the built-in design
+exports.downloadRoundStartingList = async (req, res) => {
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    const group = getGroupById(req.params.gid);
+    if (!group || group.competition_id !== competition.id)
+        return renderNotFound(res, req.t('errors:notFound.group'));
+    const round = getRoundById(req.params.rid);
+    if (!round || round.group_id !== group.id)
+        return renderNotFound(res, req.t('errors:notFound.round'));
+
+    const entriesUrl = `/admin/competitions/${competition.id}/groups/${group.id}/rounds/${round.id}/entries`;
+    const data = buildRoundStartingList(competition, group, round, req.t, req.language);
+    if (data.rounds[0].competitors.length === 0)
+        return flashAndReturn(req, res, req.t('startingLists:errors.noEntries'), entriesUrl);
+
+    try {
+        const pdf = await compilePdf(readDefaultTemplate('starting-lists'), data, req.t, STARTING_LISTS_OPTIONS);
+        const name = `starting-list-${fileNameSlug(competition.name, 'competition')}-${fileNameSlug(group.name, 'group')}-${fileNameSlug(round.name, 'round')}`;
+        sendPdf(res, pdf, `attachment; filename="${name}.pdf"`);
+    } catch (err) {
+        flashTemplateError(req, res, err, entriesUrl);
+    }
+};
+
+exports.downloadAllStartingLists = async (req, res) => {
+    const competition = getCompetitionById(req.params.id);
+    if (!competition)
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+
+    const data = buildAllStartingLists(competition, req.t, req.language);
+    if (data.rounds.length === 0)
+        return flashAndReturn(req, res, req.t('startingLists:errors.noRounds'));
+
+    try {
+        const source = req.file ? readUploadedTemplate(req.file, req.t) : readDefaultTemplate('starting-lists');
+        const pdf = await compilePdf(source, data, req.t, STARTING_LISTS_OPTIONS);
+        sendPdf(res, pdf, `attachment; filename="starting-lists-${fileNameSlug(competition.name, 'competition')}.pdf"`);
+    } catch (err) {
+        flashTemplateError(req, res, err);
+    }
+};
+
+// renders the uploaded template with the sample data in the requesting admin's language
+exports.previewStartingListsTemplate = async (req, res) => {
+    if (!getCompetitionById(req.params.id))
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    try {
+        const source = readUploadedTemplate(req.file, req.t);
+        const data = { ...readSampleData('starting-lists'), labels: buildStartingListLabels(req.t) };
+        sendPdf(res, await compilePdf(source, data, req.t, STARTING_LISTS_OPTIONS), 'inline; filename="starting-lists-preview.pdf"');
+    } catch (err) {
+        flashTemplateError(req, res, err);
+    }
+};
+
+exports.downloadStartingListsTemplate = (req, res) => {
+    if (!getCompetitionById(req.params.id))
+        return renderNotFound(res, req.t('errors:notFound.competition'));
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="starting-lists-template.typ"');
+    res.send(readDefaultTemplate('starting-lists'));
 };
 
 // reads the optional PDF template upload of the certificates card, a too large file becomes a flash instead of a server error

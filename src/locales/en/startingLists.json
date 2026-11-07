@@ -1,0 +1,22 @@
+{
+  "labels": {
+    "title": "Starting list",
+    "group": "Group",
+    "round": "Round",
+    "startingGroup": "Starting group",
+    "position": "No.",
+    "name": "Name",
+    "club": "Club",
+    "birthYear": "Year",
+    "routine": "Routine"
+  },
+  "errors": {
+    "noEntries": "This round has no competitors yet"
+  },
+  "ui": {
+    "templateLabel": "Custom template (.typ, optional)",
+    "downloadAll": "Download all",
+    "preview": "Preview template",
+    "defaultTemplate": "Default template"
+  }
+}

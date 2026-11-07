@@ -155,3 +155,41 @@ test.describe('certificates card', () => {
     await expect(preview).toBeDisabled();
   });
 });
+
+test.describe('starting lists card', () => {
+  async function openStartingLists(page, request) {
+    const { competitionId } = await (await request.post('/test/seed/certificates')).json();
+    await loginAsAdmin(page);
+    await page.goto(`/admin/competitions/${competitionId}/documents`);
+    return { card: page.locator('#document-starting-lists'), competitionId };
+  }
+
+  test('offers only the download of all starting lists, the rounds are on their entries pages', async ({ page, request }) => {
+    const { card, competitionId } = await openStartingLists(page, request);
+    await expect(card.getByRole('heading', { name: 'Starting lists (PDF)', level: 2 })).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Download all' })).toBeEnabled();
+    await expect(card.getByRole('button', { name: 'Download', exact: true })).toHaveCount(0);
+    await expect(card.locator('li')).toHaveCount(0);
+    await expect(card.getByRole('link', { name: 'Default template' })).toHaveAttribute('href', `/admin/competitions/${competitionId}/documents/starting-lists/template`);
+    await expect(card.locator('input[name=template]')).toHaveAttribute('accept', '.typ');
+  });
+
+  test('says so instead of offering a download when no round has competitors', async ({ page, request }) => {
+    await request.post('/test/seed');
+    await loginAsAdmin(page);
+    await openDocuments(page, 'Winter Cup');
+    const card = page.locator('#document-starting-lists');
+    await expect(card.getByText('No round has competitors yet.')).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Download all' })).toHaveCount(0);
+  });
+
+  test('keeps the preview disabled until a template file is chosen', async ({ page, request }) => {
+    const { card } = await openStartingLists(page, request);
+    const preview = card.getByRole('button', { name: 'Preview template' });
+    await expect(preview).toBeDisabled();
+    await card.locator('input[name=template]').setInputFiles({ name: 'mine.typ', mimeType: 'text/plain', buffer: Buffer.from('= Hello') });
+    await expect(preview).toBeEnabled();
+    await card.locator('input[name=template]').setInputFiles([]);
+    await expect(preview).toBeDisabled();
+  });
+});
