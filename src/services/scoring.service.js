@@ -131,6 +131,7 @@ exports.computeAttemptScore = (panelSlots, scoresByJudgeRoleId, elementScoresByJ
         judgeRoleKey: slot.judgeRoleKey,
         name: slot.judgeRoleName,
         value: contribution,
+        roleValue,
         required: slot.judgeCount,
         isComplete: roleComplete,
         perTrick,

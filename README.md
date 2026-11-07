@@ -295,7 +295,7 @@ kind "judges"   { kind, roleKey, label, suffix, judges[] { label, value, dropped
   device mark, head judge) have no row. They only appear in `summary`.
 - `summary[]` is the last line of an attempt: `{ roleKey, label, value }` per role letter in panel
   order. Both trampolines of a synchro pair are one `E` entry and the head judge penalty is negative.
-- `final` is the attempt total, `total` of a row is what that role contributes.
+- `final` is the attempt total, `total` of a row is what that role contributes, except execution rows (`execution*`), which show 10 minus the deductions before the 0.5 synchro weight (the E summary entry still adds the weighted values).
 
 Roles and what ends up where, as defined by the panel (`src/db/seedDefaults.js`):
 
