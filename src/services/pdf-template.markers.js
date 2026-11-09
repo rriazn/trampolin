@@ -28,7 +28,15 @@ function groupLines(items) {
     return lines.map(line => ({ y: line.y, items: line.items.sort((a, b) => a.x - b.x) }));
 }
 
-// markers in text runs { str, x, y, width, size } (y is the baseline from the top), as { key, x, y, width, size } in points
+// the nearest text on the line next to a marker, as the end of the text before it and the start of the text after it, or null
+function neighbours(characters, start, end) {
+    const isText = c => c.char.trim() !== '';
+    const before = characters.slice(0, start).reverse().find(isText);
+    const after = characters.slice(end + 1).find(isText);
+    return { left: before ? before.x + before.width : null, right: after ? after.x : null };
+}
+
+// markers in text runs { str, x, y, width, size } (y is the baseline from the top), as { key, x, y, width, size, left, right } in points
 exports.findMarkers = (items) => {
     const markers = [];
     for (const line of groupLines(items)) {
@@ -39,7 +47,8 @@ exports.findMarkers = (items) => {
             const start = [...text.slice(0, match.index)].length;
             const first = characters[start];
             const last = characters[start + [...match[0]].length - 1];
-            markers.push({ key: match[1], x: first.x, y: line.y, width: last.x + last.width - first.x, size: first.size });
+            const end = start + [...match[0]].length - 1;
+            markers.push({ key: match[1], x: first.x, y: line.y, width: last.x + last.width - first.x, size: first.size, ...neighbours(characters, start, end) });
         }
     }
     return markers;

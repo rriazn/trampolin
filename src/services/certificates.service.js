@@ -52,7 +52,7 @@ exports.buildCertificatesData = (competition, group, t, lng, now = new Date()) =
         const score = formatScore(last.row.total, lng);
         const result = score === null ? noResult : {
             place: competitor.place,
-            placeText: t('certificates:labels.place', { count: competitor.place, ordinal: true }),
+            placeText: t('certificates:labels.place', { count: competitor.place }),
             score,
             round: last.round.name,
         };

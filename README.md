@@ -355,7 +355,7 @@ every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
 - A group is **ready** when it has at least one round and all its rounds are completed, or when the
   competition is closed. A ready group without athletes cannot be downloaded and is left out of the ZIP.
 - Everyone in the group gets a page, also athletes without a score (no place and no score on the page).
-  A page shows the place (`1st place` or `1. Platz`), the total of the last round the athlete is entered
+  A page shows the place (`1.`, `2.`, ...), the total of the last round the athlete is entered
   in and the name of that round. An athlete without a total in that round gets no place and no score, even
   with a score in an earlier round, like in the results list, whose order and places are used.
 - Synchro: every athlete of a pair gets a page. It names the athlete and the club first and the partner
@@ -363,11 +363,13 @@ every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
 - **Own design as a PDF.** Design the page in Word, Canva, Google Docs or any tool, type a marker such as
   `{{name}}` where the data belongs, export a PDF and choose it in the card. For every athlete the app
   prints the data centred on each marker, on the baseline of the marker, in the size of the marker text
-  (shrunk when it would not fit the page). **Example template (PDF)** downloads a design with every
+  (shrunk when it would not fit the page). A value wider than its marker never runs into the design text on
+  the same line: after a word like "Class" it starts at the marker, before a word like "Place" it ends in front
+  of it, and it is shrunk (to half the size at most) when it still does not fit between them. **Example template (PDF)** downloads a design with every
   marker to start from, **Preview** renders the chosen PDF with sample data in a new tab (enabled when a
   PDF is chosen). The PDF is used for that one download only and is never stored.
 - Markers: `{{name}}`, `{{club}}`, `{{partner}}`, `{{partnerClub}}`, `{{partnerLine}}` ("together with ...",
-  empty for single athletes), `{{place}}` (`1st place`, empty without a score), `{{score}}`, `{{round}}`,
+  empty for single athletes), `{{place}}` (`1.`, empty without a score), `{{score}}`, `{{round}}`,
   `{{group}}`, `{{competition}}`, `{{date}}`. `{{name}}` is required, an unknown marker is rejected and
   named in the error.
 - Rules for the PDF (checked by the app): at most 5 MB, exactly one page that is not rotated, readable
@@ -397,6 +399,6 @@ group            { name, abbreviation }
 certificates[]   { name, club, partner, place, placeText, score, round }
   partner        { name, club } or null                      synchro only, the other athlete of the pair
   place          number or null                              shared ties 1, 1, 3, null without a score
-  placeText      "1st place" | "1. Platz" | null
+  placeText      "1." | null                                 the place number followed by a dot, same in every language
   score, round   total and name of the last round the athlete has a score in, or null
 ```
