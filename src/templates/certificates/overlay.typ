@@ -35,11 +35,10 @@
 #let certificate(c) = {
   // the marker text of the design is covered, so put markers on plain areas
   for m in layout.markers {
-    // the box stays off the design text next to the marker
-    let x0 = if m.left != none { calc.max(m.x - 1, m.left) } else { m.x - 1 }
-    let x1 = if m.right != none { calc.min(m.x + m.width + 1, m.right) } else { m.x + m.width + 1 }
-    place(top + left, dx: x0 * 1pt, dy: (m.y - m.size * 0.85 - 1) * 1pt,
-      rect(width: (x1 - x0) * 1pt, height: (m.size * 1.15 + 2) * 1pt, fill: white, stroke: none))
+    // the box is a little wider than the marker, the tip of a brace can stick out of the measured width
+    let pad = calc.max(1, m.size * 0.12)
+    place(top + left, dx: (m.x - pad) * 1pt, dy: (m.y - m.size * 0.85 - 1) * 1pt,
+      rect(width: (m.width + 2 * pad) * 1pt, height: (m.size * 1.15 + 2) * 1pt, fill: white, stroke: none))
   }
   for m in layout.markers {
     let v = value(c, m.key)
