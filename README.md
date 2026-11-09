@@ -295,7 +295,7 @@ kind "judges"   { kind, roleKey, label, suffix, judges[] { label, value, dropped
   device mark, head judge) have no row. They only appear in `summary`.
 - `summary[]` is the last line of an attempt: `{ roleKey, label, value }` per role letter in panel
   order. Both trampolines of a synchro pair are one `E` entry and the head judge penalty is negative.
-- `final` is the attempt total, `total` of a row is what that role contributes.
+- `final` is the attempt total, `total` of a row is what that role contributes, except execution rows (`execution*`), which show 10 minus the deductions before the 0.5 synchro weight (the E summary entry still adds the weighted values).
 
 Roles and what ends up where, as defined by the panel (`src/db/seedDefaults.js`):
 
@@ -308,6 +308,43 @@ Roles and what ends up where, as defined by the panel (`src/db/seedDefaults.js`)
 | `synchronisation_skill` (per skill) | `tricks` | S |
 | time of flight, horizontal displacement, `synchronisation` (device), head judge | none, `summary` only | T, H, S, P |
 
+## Starting lists
+
+The starting list of one round is the **Starting list (PDF)** button on the round's entries page
+(`starting-list-<competition>-<group>-<round>.pdf`, always the built-in design). The **Starting lists** card
+on the Documents page makes **Download all**, one PDF with one page per round
+(`starting-lists-<competition>.pdf`), group by group in name order and the rounds of a group in round order.
+Both work at any time, whatever the status of the competition or the round.
+
+- Competitors are listed in the start order of the round, numbered 1, 2, 3 even when the stored start
+  order has gaps. Each row shows the name, club, birth year and routine.
+- Rounds without competitors have no button and are left out of **Download all**.
+- Synchro: a pair is one row, with the partner's name, club and year below the athlete's.
+- Starting groups: every member round gets its own page in its own start order, with a note naming the
+  starting group. There is no combined page.
+- The Documents card takes an optional `.typ` template for **Download all**, with **Preview template** and
+  **Default template**, exactly like the results list (see [Custom templates](#custom-templates), same rules and sandbox). The data file
+  is `starting-lists.json`, the sample is `src/templates/starting-lists/sample-starting-lists.json`.
+
+### Data contract (`starting-lists.json`, version 1)
+
+The download of one round and **Download all** use the same shape, one round is a `rounds` list of one.
+All values are strings or `null`, except `version` and `position`, the template does no logic beyond layout.
+
+```text
+version          1
+generatedAt      "07.11.2026 18:30" (de) or "2026-11-07 18:30"
+labels           title, group, round, startingGroup, position, name, club, birthYear, routine
+competition      { name, date (02.10.2026 in de, as entered otherwise, or null), type ("individual" | "synchro") }
+rounds[]         { group, round, startingGroup, competitors }
+  group          { name, abbreviation }
+  round          { name }
+  startingGroup  name of the starting group the group runs in, or null
+  competitors[]  { position, name, club, birthYear, routine, partner }
+    position     1, 2, 3 in start order
+    partner      { name, club, birthYear } or null           synchro only
+```
+
 ## Certificates
 
 The **Certificates** card on the Documents page makes one PDF per group with one certificate page per
@@ -318,7 +355,7 @@ every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
 - A group is **ready** when it has at least one round and all its rounds are completed, or when the
   competition is closed. A ready group without athletes cannot be downloaded and is left out of the ZIP.
 - Everyone in the group gets a page, also athletes without a score (no place and no score on the page).
-  A page shows the place (`1st place` or `1. Platz`), the total of the last round the athlete is entered
+  A page shows the place (`1.`, `2.`, ...), the total of the last round the athlete is entered
   in and the name of that round. An athlete without a total in that round gets no place and no score, even
   with a score in an earlier round, like in the results list, whose order and places are used.
 - Synchro: every athlete of a pair gets a page. It names the athlete and the club first and the partner
@@ -326,11 +363,13 @@ every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
 - **Own design as a PDF.** Design the page in Word, Canva, Google Docs or any tool, type a marker such as
   `{{name}}` where the data belongs, export a PDF and choose it in the card. For every athlete the app
   prints the data centred on each marker, on the baseline of the marker, in the size of the marker text
-  (shrunk when it would not fit the page). **Example template (PDF)** downloads a design with every
+  (shrunk when it would not fit the page). A value wider than its marker never runs into the design text on
+  the same line: after a word like "Class" it starts at the marker, before a word like "Place" it ends in front
+  of it, and it is shrunk (to half the size at most) when it still does not fit between them. **Example template (PDF)** downloads a design with every
   marker to start from, **Preview** renders the chosen PDF with sample data in a new tab (enabled when a
   PDF is chosen). The PDF is used for that one download only and is never stored.
 - Markers: `{{name}}`, `{{club}}`, `{{partner}}`, `{{partnerClub}}`, `{{partnerLine}}` ("together with ...",
-  empty for single athletes), `{{place}}` (`1st place`, empty without a score), `{{score}}`, `{{round}}`,
+  empty for single athletes), `{{place}}` (`1.`, empty without a score), `{{score}}`, `{{round}}`,
   `{{group}}`, `{{competition}}`, `{{date}}`. `{{name}}` is required, an unknown marker is rejected and
   named in the error.
 - Rules for the PDF (checked by the app): at most 5 MB, exactly one page that is not rotated, readable
@@ -360,6 +399,6 @@ group            { name, abbreviation }
 certificates[]   { name, club, partner, place, placeText, score, round }
   partner        { name, club } or null                      synchro only, the other athlete of the pair
   place          number or null                              shared ties 1, 1, 3, null without a score
-  placeText      "1st place" | "1. Platz" | null
+  placeText      "1." | null                                 the place number followed by a dot, same in every language
   score, round   total and name of the last round the athlete has a score in, or null
 ```

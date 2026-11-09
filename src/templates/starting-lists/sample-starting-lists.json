@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-07 18:30",
+  "labels": {
+    "title": "Starting list",
+    "group": "Group",
+    "round": "Round",
+    "startingGroup": "Starting group",
+    "position": "No.",
+    "name": "Name",
+    "club": "Club",
+    "birthYear": "Year",
+    "routine": "Routine"
+  },
+  "competition": { "name": "Spring Cup 2026", "date": "2026-10-02", "type": "individual" },
+  "rounds": [
+    {
+      "group": { "name": "Women 15-16", "abbreviation": "W1516" },
+      "round": { "name": "Qualification" },
+      "startingGroup": null,
+      "competitors": [
+        { "position": 1, "name": "Anna Schmidt", "club": "TSV München", "birthYear": "2010", "routine": "W11", "partner": null },
+        { "position": 2, "name": "Berta Wagner", "club": null, "birthYear": null, "routine": null, "partner": null },
+        { "position": 3, "name": "Clara Hofmann", "club": "SV Hamburg", "birthYear": "2011", "routine": "W12", "partner": null }
+      ]
+    },
+    {
+      "group": { "name": "Synchro Open", "abbreviation": "SO" },
+      "round": { "name": "Final" },
+      "startingGroup": "Morning block",
+      "competitors": [
+        {
+          "position": 1, "name": "Leon Weber", "club": "TSV München", "birthYear": "2008", "routine": "M8",
+          "partner": { "name": "Emma Fischer", "club": "SV Hamburg", "birthYear": "2009" }
+        },
+        {
+          "position": 2, "name": "Jonas Becker", "club": "TV Köln", "birthYear": "2007", "routine": null,
+          "partner": { "name": "Paul Krüger", "club": null, "birthYear": null }
+        }
+      ]
+    }
+  ]
+}

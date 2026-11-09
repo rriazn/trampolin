@@ -1,0 +1,22 @@
+{
+  "labels": {
+    "title": "Startliste",
+    "group": "Gruppe",
+    "round": "Durchgang",
+    "startingGroup": "Startgruppe",
+    "position": "Nr.",
+    "name": "Name",
+    "club": "Verein",
+    "birthYear": "Jahrgang",
+    "routine": "Übung"
+  },
+  "errors": {
+    "noEntries": "Dieser Durchgang hat noch keine Teilnehmer"
+  },
+  "ui": {
+    "templateLabel": "Eigene Vorlage (.typ, optional)",
+    "downloadAll": "Alle herunterladen",
+    "preview": "Vorlage testen",
+    "defaultTemplate": "Standardvorlage"
+  }
+}

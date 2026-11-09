@@ -78,6 +78,16 @@ exports.formatTimestamp = (now, lng) => {
     return lng === 'de' ? `${day} ${time}` : `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${time}`;
 };
 
+// 2026-10-02 as 02.10.2026 in German, unchanged otherwise
+exports.formatDate = (date, lng) => {
+    if (!date) return null;
+    const [year, month, day] = date.split('-');
+    return lng === 'de' && day ? `${day}.${month}.${year}` : date;
+};
+
+// execution rows show 10 minus the deductions, the 0.5 per trampoline weight only applies in the E summary
+const rowTotal = (slot, entry) => (slot.judgeRoleKey.startsWith('execution') ? entry.roleValue : entry.value);
+
 // one row per element role: a deduction per trick, or each judge's own total
 function buildRow(slot, entry, letter, labelByAssignment, lng) {
     if (slot.aggregation === 'per_judge') {
@@ -92,7 +102,7 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
                 value: exports.formatScore(pj.value, lng),
                 dropped: !kept.has(i),
             })),
-            total: exports.formatScore(entry.value, lng),
+            total: exports.formatScore(rowTotal(slot, entry), lng),
         };
     }
     const format = (item) => (item ? exports.formatScore(item.value, lng) : null);
@@ -102,7 +112,7 @@ function buildRow(slot, entry, letter, labelByAssignment, lng) {
         landing: format(entry.perTrick.find(p => p.isLanding)),
         bonus: format(entry.perTrick.find(p => p.isBonus)),
         missingSkill: format(entry.perTrick.find(p => p.isMissingSkill)),
-        total: exports.formatScore(entry.value, lng),
+        total: exports.formatScore(rowTotal(slot, entry), lng),
     };
 }
 

@@ -27,15 +27,18 @@
   else if key == "date" { d.competition.date }
 }
 
-// text wider than the page minus the margin on each side is made smaller, and text is kept inside the margins
+// text is kept inside the margins and next to the design text on its line, and made smaller when it does not fit between them
 #let margin = 15mm
-#let max-width = layout.page.width * 1pt - 2 * margin
+#let page-width = layout.page.width * 1pt
+#let min-scale = 0.5
 
 #let certificate(c) = {
   // the marker text of the design is covered, so put markers on plain areas
   for m in layout.markers {
-    place(top + left, dx: (m.x - 1) * 1pt, dy: (m.y - m.size * 0.85 - 1) * 1pt,
-      rect(width: (m.width + 2) * 1pt, height: (m.size * 1.15 + 2) * 1pt, fill: white, stroke: none))
+    // the box is a little wider than the marker, the tip of a brace can stick out of the measured width
+    let pad = calc.max(1, m.size * 0.12)
+    place(top + left, dx: (m.x - pad) * 1pt, dy: (m.y - m.size * 0.85 - 1) * 1pt,
+      rect(width: (m.width + 2 * pad) * 1pt, height: (m.size * 1.15 + 2) * 1pt, fill: white, stroke: none))
   }
   for m in layout.markers {
     let v = value(c, m.key)
@@ -43,12 +46,15 @@
       context {
         let size = m.size * 1pt
         let edges = (top-edge: "baseline", bottom-edge: "baseline")
+        // text before the marker keeps the value at the marker start, text after it ends the value a space before it
+        let lower = if m.left != none { m.x * 1pt } else { margin }
+        let upper = if m.right != none { m.right * 1pt - size * 0.3 } else { page-width - margin }
         let width = measure(text(size: size, ..edges, v)).width
-        let fitted = if width > max-width { size * (max-width / width) } else { size }
-        let body = text(size: fitted, ..edges, v)
+        let scale = calc.max(min-scale, calc.min(1, (upper - lower) / width))
+        let body = text(size: size * scale, ..edges, v)
         let width = measure(body).width
-        // centred on the marker, moved inside the margins when it would cross them
-        let dx = calc.min(calc.max((m.x + m.width / 2) * 1pt - width / 2, margin), layout.page.width * 1pt - margin - width)
+        // centred on the marker, moved between the limits when it would cross them
+        let dx = calc.max(lower, calc.min((m.x + m.width / 2) * 1pt - width / 2, upper - width))
         // the baseline of the text on the baseline of the marker
         place(top + left, dx: dx, dy: m.y * 1pt, body)
       }

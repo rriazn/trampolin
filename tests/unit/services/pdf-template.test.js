@@ -129,7 +129,7 @@ describe('example template and overlay', { timeout: 30000 }, () => {
     const pages = await pagesOf(pdf);
     expect(pages).toHaveLength(sample().certificates.length);
     expect(pages[0]).toContain('Anna Example');
-    expect(pages[0]).toContain('1st place');
+    expect(pages[0]).toContain('1.');
     expect(pages[1]).toContain('Berta Beispiel');
     // a pair names the partner in the partner line
     expect(pages[1]).toContain('together with Clara Beispiel');
@@ -165,6 +165,29 @@ describe('example template and overlay', { timeout: 30000 }, () => {
     // 15 mm margin is about 42.5 points, the page is 200 points wide
     expect(left).toBeGreaterThan(42);
     expect(right).toBeLessThan(200 - 42);
+  });
+
+  it('keeps a value wider than its marker off the design text before and after it', async () => {
+    const source = '#place(top + left, dx: 10pt, dy: 10pt)[#text(size: 12pt)[\\{\\{name\\}\\}]]\n'
+      + '#place(top + left, dx: 30pt, dy: 50pt)[#text(size: 12pt)[Class \\{\\{group\\}\\}]]\n'
+      + '#place(top + left, dx: 30pt, dy: 70pt)[#text(size: 12pt)[the \\{\\{round\\}\\} end]]';
+    const template = await readUploadedPdfTemplate(upload(await make(source)), t);
+    const data = sample();
+    data.group = { ...data.group, name: 'Junior Women Championship' };
+    data.certificates = [{ ...data.certificates[0], round: 'Qualification Final' }];
+    const pdfjs = await importModule('pdfjs-dist/legacy/build/pdf.mjs');
+    const page = await (await pdfjs.getDocument({ data: new Uint8Array(await compileOverlay(data, template, t)) }).promise).getPage(1);
+    const items = (await page.getTextContent()).items.filter(i => i.str.trim() && !/[{}]/.test(i.str));
+    const find = (text) => items.find(i => i.str.includes(text));
+    const start = (item) => item.transform[4];
+    const end = (item) => item.transform[4] + item.width;
+    const marker = (key) => template.layout.markers.find(m => m.key === key);
+    // the value starts after the word before it and ends before the word after it
+    expect(marker('group').left).toBeGreaterThan(30);
+    expect(start(find('Junior'))).toBeGreaterThanOrEqual(marker('group').left);
+    expect(marker('round').right).toBeGreaterThan(marker('round').x);
+    expect(start(find('Qualification'))).toBeGreaterThanOrEqual(marker('round').left);
+    expect(end(find('Final'))).toBeLessThanOrEqual(marker('round').right);
   });
 
   it('explains a PDF that Typst cannot embed without pointing at the internal template', async () => {

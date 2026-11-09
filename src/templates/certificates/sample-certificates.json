@@ -13,9 +13,9 @@
   "competition": { "name": "City Championships 2026", "date": "2026-10-03" },
   "group": { "name": "Juniors", "abbreviation": "JUN" },
   "certificates": [
-    { "name": "Anna Example", "club": "TSV Sample", "partner": null, "place": 1, "placeText": "1st place", "score": "41.25", "round": "Final" },
-    { "name": "Berta Beispiel", "club": "TV Muster", "partner": { "name": "Clara Beispiel", "club": "TV Muster" }, "place": 2, "placeText": "2nd place", "score": "39.8", "round": "Final" },
-    { "name": "Clara Beispiel", "club": "TV Muster", "partner": { "name": "Berta Beispiel", "club": "TV Muster" }, "place": 2, "placeText": "2nd place", "score": "39.8", "round": "Final" },
+    { "name": "Anna Example", "club": "TSV Sample", "partner": null, "place": 1, "placeText": "1.", "score": "41.25", "round": "Final" },
+    { "name": "Berta Beispiel", "club": "TV Muster", "partner": { "name": "Clara Beispiel", "club": "TV Muster" }, "place": 2, "placeText": "2.", "score": "39.8", "round": "Final" },
+    { "name": "Clara Beispiel", "club": "TV Muster", "partner": { "name": "Berta Beispiel", "club": "TV Muster" }, "place": 2, "placeText": "2.", "score": "39.8", "round": "Final" },
     { "name": "Dora Demo", "club": null, "partner": null, "place": null, "placeText": null, "score": null, "round": null }
   ]
 }

@@ -1,7 +1,7 @@
 const { getGroupsByCompetition } = require("./db/groups.crud");
 const { getRoundsByGroup } = require("./db/rounds.crud");
 const { getSportsmenByGroup, getSportsmenById } = require("./db/sportsmen.crud");
-const { rankGroupCompetitors, formatScore, formatTimestamp } = require("./results.service");
+const { rankGroupCompetitors, formatScore, formatTimestamp, formatDate } = require("./results.service");
 
 const CERTIFICATES_VERSION = 1;
 const LABEL_KEYS = ['title', 'participation', 'group', 'score', 'round', 'with', 'date'];
@@ -29,13 +29,6 @@ exports.groupReadiness = (competition) => getGroupsByCompetition(competition.id)
 // every fixed text of the document in the language of t, the ordinal place text is built per certificate
 exports.buildCertificateLabels = (t) => Object.fromEntries(LABEL_KEYS.map(key => [key, t(`certificates:labels.${key}`)]));
 
-// 2026-10-02 as 02.10.2026 in German, unchanged otherwise
-const formatDate = (date, lng) => {
-    if (!date) return null;
-    const [year, month, day] = date.split('-');
-    return lng === 'de' && day ? `${day}.${month}.${year}` : date;
-};
-
 // one page per athlete, the athlete first and the partner second
 function pagesOf(sportsman, result) {
     const own = { name: sportsman.name, club: sportsman.club || null };
@@ -59,7 +52,7 @@ exports.buildCertificatesData = (competition, group, t, lng, now = new Date()) =
         const score = formatScore(last.row.total, lng);
         const result = score === null ? noResult : {
             place: competitor.place,
-            placeText: t('certificates:labels.place', { count: competitor.place, ordinal: true }),
+            placeText: t('certificates:labels.place', { count: competitor.place }),
             score,
             round: last.round.name,
         };
