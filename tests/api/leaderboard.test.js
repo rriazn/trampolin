@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createApp, seedLeaderboardData, assignJudge, getUserIdByEmail, loginAdmin, db } from './helpers/createApp.js';
 import bcrypt from 'bcryptjs';
@@ -109,10 +109,17 @@ describe('GET /leaderboard with real panel scores', () => {
   });
 });
 
-describe('GET /leaderboard with per_judge execution aggregation (local panel)', () => {
+describe('GET /leaderboard with per_judge execution aggregation', () => {
   let compId, grpId, rndId;
+  const localExecutionSlot = "judge_role_id = (SELECT id FROM judge_roles WHERE key='execution') AND panel_template_id = (SELECT id FROM panel_templates WHERE key='local')";
+
+  afterAll(() => {
+    db.prepare(`UPDATE panel_template_slots SET aggregation='per_trick' WHERE ${localExecutionSlot}`).run();
+  });
 
   beforeAll(() => {
+    // the seeded local panel scores per trick, so the slot is switched to per_judge for this test
+    db.prepare(`UPDATE panel_template_slots SET aggregation='per_judge' WHERE ${localExecutionSlot}`).run();
     const localPanel = db.prepare("SELECT id FROM panel_templates WHERE key='local'").get();
     const comp = db.prepare('INSERT INTO competitions (name, status, panel_template_id) VALUES (?, ?, ?)')
       .run('Local Scored Cup', 'active', localPanel.id);
@@ -123,22 +130,23 @@ describe('GET /leaderboard with per_judge execution aggregation (local panel)', 
     rndId = round.lastInsertRowid;
     const sp = db.prepare('INSERT INTO sportsmen (name, competition_id, group_id) VALUES (?, ?, ?)').run('Dana', compId, grpId);
     const entry = db.prepare('INSERT INTO entries (round_id, sportsman_id, start_order) VALUES (?, ?, ?)').run(rndId, sp.lastInsertRowid, 1);
-    // element_count 10 so each judge's own final score is elementCount(10) - deduction, matching
-    // the worked example (6.9/6.7/6.8/6.5); the deduction is stashed on trick 1 only, which is
-    // fine since computeAttemptScore treats unset tricks as 0 either way
+    // element_count 10 so each judge's own final score is elementCount(10) - deduction
     const attempt = db.prepare('INSERT INTO attempts (entry_id, attempt_number, element_count) VALUES (?, ?, ?)').run(entry.lastInsertRowid, 1, 10);
     const attemptId = attempt.lastInsertRowid;
 
     const roleIds = Object.fromEntries(db.prepare('SELECT id,key FROM judge_roles').all().map(r => [r.key, r.id]));
     const hash = bcrypt.hashSync('secret', 10);
-    // 4 execution judges give personal finals 6.9, 6.7, 6.8, 6.5, drop high/low, sum the rest -> 13.5
-    const deductions = [3.1, 3.3, 3.2, 3.5];
-    deductions.forEach((ded, i) => {
+    // personal finals 9.0, 9.6, 9.6, 9.8: drop high/low, sum the rest -> 19.2
+    // per trick it would be 20 - (0.1 + 0.2 + 0.1 + 0.2) = 19.4, so the two modes differ here
+    const deductions = [[1.0, 0], [0, 0.4], [0.2, 0.2], [0.1, 0.1]];
+    deductions.forEach((perTrick, i) => {
       db.prepare('INSERT INTO users (name,email,password_hash,role) VALUES (?,?,?,?)').run(`Local Exec ${i}`, `localexec${i}@test.com`, hash, 'referee');
       const userId = getUserIdByEmail(`localexec${i}@test.com`);
       const assignmentId = assignJudge(compId, roleIds.execution, userId);
-      db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,1,?)')
-        .run(attemptId, assignmentId, roleIds.execution, ded);
+      perTrick.forEach((ded, t) => {
+        db.prepare('INSERT INTO element_scores (attempt_id, panel_assignment_id, judge_role_id, element_number, value) VALUES (?,?,?,?,?)')
+          .run(attemptId, assignmentId, roleIds.execution, t + 1, ded);
+      });
     });
   });
 
@@ -146,6 +154,7 @@ describe('GET /leaderboard with per_judge execution aggregation (local panel)', 
     const res = await agent.get(`/leaderboard/competitions/${compId}/groups/${grpId}/rounds/${rndId}`);
     expect(res.status).toBe(200);
     expect(res.text).toContain('Dana');
-    expect(res.text).toContain('13.500');
+    expect(res.text).toContain('19.200');
+    expect(res.text).not.toContain('19.400');
   });
 });
