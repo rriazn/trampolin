@@ -11,7 +11,8 @@
     "routine": "Routine"
   },
   "errors": {
-    "noEntries": "This round has no competitors yet"
+    "noEntries": "This round has no competitors yet",
+    "noRounds": "No round has competitors yet"
   },
   "ui": {
     "templateLabel": "Custom template (.typ, optional)",

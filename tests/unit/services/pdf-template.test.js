@@ -190,6 +190,22 @@ describe('example template and overlay', { timeout: 30000 }, () => {
     expect(end(find('Final'))).toBeLessThanOrEqual(marker('round').right);
   });
 
+  it('lets a value use the room next to far away design text and prints a blank value', async () => {
+    // "Hi" is far left of the marker on the same line, a long name may still grow to the left of the marker start
+    const source = '#place(top + left, dx: 20pt, dy: 30pt)[#text(size: 12pt)[Hi]]\n'
+      + '#place(top + left, dx: 100pt, dy: 30pt)[#text(size: 12pt)[\\{\\{name\\}\\}]]\n'
+      + '#place(top + left, dx: 20pt, dy: 70pt)[#text(size: 12pt)[\\{\\{club\\}\\}]]';
+    const template = await readUploadedPdfTemplate(upload(await make(source)), t);
+    const data = sample();
+    data.certificates = [{ ...data.certificates[0], name: 'Anna Katharina Schmidt', club: ' ' }];
+    const pdfjs = await importModule('pdfjs-dist/legacy/build/pdf.mjs');
+    const page = await (await pdfjs.getDocument({ data: new Uint8Array(await compileOverlay(data, template, t)) }).promise).getPage(1);
+    const items = (await page.getTextContent()).items.filter(i => i.str.trim() && !/[{}]/.test(i.str));
+    const name = items.find(i => i.str.includes('Anna'));
+    expect(name.transform[4]).toBeLessThan(template.layout.markers.find(m => m.key === 'name').x);
+    expect(name.transform[4]).toBeGreaterThan(template.layout.markers.find(m => m.key === 'name').left);
+  });
+
   it('explains a PDF that Typst cannot embed without pointing at the internal template', async () => {
     // PDF/A-4 is PDF 2.0, which pdf.js reads but Typst refuses as an image
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pdf-a4-test-'));

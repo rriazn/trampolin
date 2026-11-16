@@ -46,8 +46,8 @@ exports.findMarkers = (items) => {
             // match.index counts UTF-16 units, the characters are code points
             const start = [...text.slice(0, match.index)].length;
             const first = characters[start];
-            const last = characters[start + [...match[0]].length - 1];
             const end = start + [...match[0]].length - 1;
+            const last = characters[end];
             markers.push({ key: match[1], x: first.x, y: line.y, width: last.x + last.width - first.x, size: first.size, ...neighbours(characters, start, end) });
         }
     }

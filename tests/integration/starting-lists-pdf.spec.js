@@ -40,8 +40,8 @@ test('admin downloads all starting lists of a starting group, one page per round
 
   const { text, pages } = await pdfText(fs.readFileSync(await download.path()));
   expect(pages).toBe(2);
-  expect(text).toContain('Junior – Qualifications');
-  expect(text).toContain('Youth – Qualifications');
+  expect(text).toContain('Group: Junior · Round: Qualifications');
+  expect(text).toContain('Group: Youth · Round: Qualifications');
   expect(text.match(/Starting group: Block 1/g)).toHaveLength(2);
   // groups in name order, each in its own start order
   const order = ['Leon Weber', 'Emma Fischer', 'Anna Klein', 'Mia Braun'].map(name => text.indexOf(name));

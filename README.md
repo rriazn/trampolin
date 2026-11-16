@@ -334,6 +334,7 @@ All values are strings or `null`, except `version` and `position`, the template 
 ```text
 version          1
 generatedAt      "07.11.2026 18:30" (de) or "2026-11-07 18:30"
+lang             "de" | "en", the language of the document, for `#set text(lang: ...)`
 labels           title, group, round, startingGroup, position, name, club, birthYear, routine
 competition      { name, date (02.10.2026 in de, as entered otherwise, or null), type ("individual" | "synchro") }
 rounds[]         { group, round, startingGroup, competitors }
@@ -364,7 +365,7 @@ every ready group into one ZIP (`certificates-<competition>.zip`, PDFs named
   `{{name}}` where the data belongs, export a PDF and choose it in the card. For every athlete the app
   prints the data centred on each marker, on the baseline of the marker, in the size of the marker text
   (shrunk when it would not fit the page). A value wider than its marker never runs into the design text on
-  the same line: after a word like "Class" it starts at the marker, before a word like "Place" it ends in front
+  the same line: after a word like "Class" it starts a space after it (and never left of the page margin), before a word like "Place" it ends in front
   of it, and it is shrunk (to half the size at most) when it still does not fit between them. **Example template (PDF)** downloads a design with every
   marker to start from, **Preview** renders the chosen PDF with sample data in a new tab (enabled when a
   PDF is chosen). The PDF is used for that one download only and is never stored.

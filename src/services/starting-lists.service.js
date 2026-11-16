@@ -7,6 +7,9 @@ const { formatTimestamp, formatDate } = require('./results.service');
 const STARTING_LISTS_VERSION = 1;
 const LABEL_KEYS = ['title', 'group', 'round', 'startingGroup', 'position', 'name', 'club', 'birthYear', 'routine'];
 
+// the page language of the template, only the languages of the app are known
+exports.startingListLang = (lng) => (lng === 'de' ? 'de' : 'en');
+
 const yearText = (year) => (year === null || year === undefined ? null : String(year));
 
 // the documents card offers the download only when some round has competitors
@@ -40,6 +43,7 @@ const roundListOf = ({ group, round, entries }) => ({
 const buildStartingListsData = (competition, rounds, t, lng, now) => ({
     version: STARTING_LISTS_VERSION,
     generatedAt: formatTimestamp(now, lng),
+    lang: exports.startingListLang(lng),
     labels: exports.buildStartingListLabels(t),
     competition: { name: competition.name, date: formatDate(competition.date, lng), type: competition.type },
     rounds: rounds.map(roundListOf),

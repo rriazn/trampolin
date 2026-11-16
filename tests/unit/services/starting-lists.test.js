@@ -51,6 +51,7 @@ describe('buildRoundStartingList', () => {
     expect(data).toMatchObject({
       version: 1,
       generatedAt: '07.11.2026 18:30',
+      lang: 'de',
       competition: { name: comp.name, date: '02.10.2026', type: 'individual' },
     });
     expect(data.rounds).toHaveLength(1);

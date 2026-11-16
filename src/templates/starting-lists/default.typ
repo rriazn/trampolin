@@ -11,7 +11,7 @@
     #d.competition.name #h(1fr) #d.generatedAt #h(1fr) #counter(page).display()
   ],
 )
-#set text(font: "Lato", size: 10pt, lang: "en")
+#set text(font: "Lato", size: 10pt, lang: d.lang)
 
 // a missing value prints as an empty cell
 #let value(v) = if v == none [] else [#v]
@@ -24,7 +24,7 @@
   v(2pt)
   text(size: 18pt, weight: "bold")[#l.title]
   v(4pt)
-  text(size: 13pt, weight: "bold")[#r.group.name – #r.round.name]
+  text(size: 13pt, weight: "bold")[#l.group: #r.group.name · #l.round: #r.round.name]
   if r.startingGroup != none {
     v(2pt)
     text(size: 10pt)[#l.startingGroup: #r.startingGroup]

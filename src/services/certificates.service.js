@@ -26,7 +26,7 @@ exports.groupReadinessFor = (competition, group) => {
 
 exports.groupReadiness = (competition) => getGroupsByCompetition(competition.id).map(group => exports.groupReadinessFor(competition, group));
 
-// every fixed text of the document in the language of t, the ordinal place text is built per certificate
+// every fixed text of the document in the language of t, the place text is built per certificate
 exports.buildCertificateLabels = (t) => Object.fromEntries(LABEL_KEYS.map(key => [key, t(`certificates:labels.${key}`)]));
 
 // one page per athlete, the athlete first and the partner second

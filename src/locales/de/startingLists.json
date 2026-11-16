@@ -11,7 +11,8 @@
     "routine": "Übung"
   },
   "errors": {
-    "noEntries": "Dieser Durchgang hat noch keine Teilnehmer"
+    "noEntries": "Dieser Durchgang hat noch keine Teilnehmer",
+    "noRounds": "Noch kein Durchgang hat Teilnehmer"
   },
   "ui": {
     "templateLabel": "Eigene Vorlage (.typ, optional)",

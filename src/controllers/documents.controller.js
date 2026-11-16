@@ -6,7 +6,7 @@ const { fileNameSlug } = require('../services/helpers/admin.helpers');
 const { buildResultsData, buildLabels } = require('../services/results.service');
 const { readUploadedPdfTemplate, compileOverlay, buildExampleTemplate, MAX_PDF_TEMPLATE_BYTES, MARKER_KEYS } = require('../services/pdf-template.service');
 const { groupReadiness, groupReadinessFor, buildCertificatesData, buildCertificateLabels } = require('../services/certificates.service');
-const { hasStartingLists, buildStartingListLabels, buildRoundStartingList, buildAllStartingLists } = require('../services/starting-lists.service');
+const { hasStartingLists, startingListLang, buildStartingListLabels, buildRoundStartingList, buildAllStartingLists } = require('../services/starting-lists.service');
 const {
     compilePdf, readUploadedTemplate, readDefaultTemplate, readSampleData, TemplateError, MAX_TEMPLATE_BYTES,
 } = require('../services/pdf.service');
@@ -141,7 +141,7 @@ exports.previewStartingListsTemplate = async (req, res) => {
         return renderNotFound(res, req.t('errors:notFound.competition'));
     try {
         const source = readUploadedTemplate(req.file, req.t);
-        const data = { ...readSampleData('starting-lists'), labels: buildStartingListLabels(req.t) };
+        const data = { ...readSampleData('starting-lists'), lang: startingListLang(req.language), labels: buildStartingListLabels(req.t) };
         sendPdf(res, await compilePdf(source, data, req.t, STARTING_LISTS_OPTIONS), 'inline; filename="starting-lists-preview.pdf"');
     } catch (err) {
         flashTemplateError(req, res, err);

@@ -85,8 +85,8 @@ exports.formatDate = (date, lng) => {
     return lng === 'de' && day ? `${day}.${month}.${year}` : date;
 };
 
-// execution rows show 10 minus the deductions, the 0.5 per trampoline weight only applies in the E summary
-const rowTotal = (slot, entry) => (slot.judgeRoleKey.startsWith('execution') ? entry.roleValue : entry.value);
+// execution roles (the ones with a landing line) show 10 minus the deductions, the 0.5 per trampoline weight only applies in the E summary
+const rowTotal = (slot, entry) => (slot.hasLanding && entry.roleValue !== undefined ? entry.roleValue : entry.value);
 
 // one row per element role: a deduction per trick, or each judge's own total
 function buildRow(slot, entry, letter, labelByAssignment, lng) {

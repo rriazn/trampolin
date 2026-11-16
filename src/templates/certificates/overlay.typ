@@ -27,7 +27,7 @@
   else if key == "date" { d.competition.date }
 }
 
-// text is kept inside the margins and next to the design text on its line, and made smaller when it does not fit between them
+// text is kept inside the margins and clear of the design text next to it on its line, and made smaller when it does not fit between them
 #let margin = 15mm
 #let page-width = layout.page.width * 1pt
 #let min-scale = 0.5
@@ -46,11 +46,12 @@
       context {
         let size = m.size * 1pt
         let edges = (top-edge: "baseline", bottom-edge: "baseline")
-        // text before the marker keeps the value at the marker start, text after it ends the value a space before it
-        let lower = if m.left != none { m.x * 1pt } else { margin }
-        let upper = if m.right != none { m.right * 1pt - size * 0.3 } else { page-width - margin }
+        // the value starts a space after the text before the marker and ends a space before the text after it
+        let lower = if m.left != none { calc.max(margin, m.left * 1pt + size * 0.3) } else { margin }
+        let upper = if m.right != none { calc.min(page-width - margin, m.right * 1pt - size * 0.3) } else { page-width - margin }
         let width = measure(text(size: size, ..edges, v)).width
-        let scale = calc.max(min-scale, calc.min(1, (upper - lower) / width))
+        // a value without width (only spaces) is printed as it is
+        let scale = if width > 0pt { calc.max(min-scale, calc.min(1, (upper - lower) / width)) } else { 1 }
         let body = text(size: size * scale, ..edges, v)
         let width = measure(body).width
         // centred on the marker, moved between the limits when it would cross them
