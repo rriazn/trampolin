@@ -34,7 +34,7 @@ const PANEL_TEMPLATES = [
     description: 'Simplified panel for local competitions without electronic timing/displacement equipment: 4 execution, 1 difficulty, 1 head judge (penalties).',
     slots: [
       // per_judge: each judge sums their own deductions first, then drop 1 high/1 low across those totals
-      { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1, aggregation: 'per_judge' },
+      { role: 'execution',  judge_count: 4, drop_high: 1, drop_low: 1, combine: 'sum', multiplier: 1,  sort_order: 1 },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1,  sort_order: 2 },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, sort_order: 3 },
     ],
@@ -89,7 +89,7 @@ const PANEL_TEMPLATES = [
       { role: 'execution_t2',          judge_count: 2, drop_high: 0, drop_low: 0, combine: 'mean', multiplier: 0.5, sort_order: 2 },
       { role: 'difficulty',            judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum',  multiplier: 1,   sort_order: 3 },
       // (skills - deductions) x 2 gives the S mark of at most 20
-      { role: 'synchronisation_skill', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum',  multiplier: 2,   sort_order: 4 },
+      { role: 'synchronisation_skill', judge_count: 2, drop_high: 0, drop_low: 0, combine: 'mean',  multiplier: 2,   sort_order: 4 },
       { role: 'head_judge',            judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum',  multiplier: -1,  sort_order: 5 },
     ],
   },
