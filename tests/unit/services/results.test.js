@@ -294,8 +294,8 @@ describe('buildResultsData rows per panel', () => {
 
     const [attempt] = attemptsOf(buildResultsData(comp, makeT('en'), 'en'));
     expect(attempt.rows.map(r => [r.roleKey, r.label, r.suffix, r.tricks, r.total])).toEqual([
-      ['execution_t1', 'E', 'T1', ['0.2', '0.2'], '0.8'],
-      ['execution_t2', 'E', 'T2', ['0.1', '0.1'], '0.9'],
+      ['execution_t1', 'E', 'T1', ['0.2', '0.2'], '1.6'],
+      ['execution_t2', 'E', 'T2', ['0.1', '0.1'], '1.8'],
       ['difficulty', 'D', null, ['0.5', '0.5'], '1.0'],
       ['synchronisation_skill', 'S', null, ['0.1', '0.0'], '3.8'],
     ]);

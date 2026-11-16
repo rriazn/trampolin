@@ -8,7 +8,7 @@ const run = (str, x, width, y = 100, size = 12) => ({ str, x, y, width, size });
 describe('findMarkers', () => {
   it('finds a marker in one run with its position and size', () => {
     const [marker] = findMarkers([run('{{name}}', 20, 40)]);
-    expect(marker).toEqual({ key: 'name', x: 20, y: 100, width: 40, size: 12 });
+    expect(marker).toEqual({ key: 'name', x: 20, y: 100, width: 40, size: 12, left: null, right: null });
   });
 
   it('finds a marker that is split over several runs on the same baseline', () => {
@@ -27,6 +27,12 @@ describe('findMarkers', () => {
     expect(marker.key).toBe('name');
     expect(marker.x).toBeCloseTo(20, 5);
     expect(marker.width).toBeCloseTo(80, 5);
+  });
+
+  it('reads the end of the text before a marker and the start of the text after it', () => {
+    // the words are 10 points per character, the space between them is a gap wider than a word gap
+    const [marker] = findMarkers([run('Class', 0, 50), run('{{group}}', 60, 90), run('Place', 200, 50)]);
+    expect(marker).toMatchObject({ key: 'group', x: 60, left: 50, right: 200 });
   });
 
   it('ignores lines without markers and reads markers on several lines', () => {

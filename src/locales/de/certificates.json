@@ -5,10 +5,7 @@
     "group": "Gruppe",
     "score": "Punkte",
     "round": "Durchgang",
-    "place_ordinal_one": "{{count}}. Platz",
-    "place_ordinal_two": "{{count}}. Platz",
-    "place_ordinal_few": "{{count}}. Platz",
-    "place_ordinal_other": "{{count}}. Platz",
+    "place": "{{count}}.",
     "with": "gemeinsam mit",
     "date": "Datum"
   },

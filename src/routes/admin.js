@@ -62,6 +62,14 @@ router.post('/competitions/:id/documents/results/preview', documentsController.r
 
 router.get('/competitions/:id/documents/results/template', documentsController.downloadResultsTemplate);
 
+router.get('/competitions/:id/groups/:gid/rounds/:rid/documents/starting-list', documentsController.downloadRoundStartingList);
+
+router.post('/competitions/:id/documents/starting-lists', documentsController.receiveTemplate, documentsController.downloadAllStartingLists);
+
+router.post('/competitions/:id/documents/starting-lists/preview', documentsController.receiveTemplate, documentsController.previewStartingListsTemplate);
+
+router.get('/competitions/:id/documents/starting-lists/template', documentsController.downloadStartingListsTemplate);
+
 router.post('/competitions/:id/groups/:gid/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadGroupCertificates);
 
 router.post('/competitions/:id/documents/certificates', documentsController.receiveCertificateTemplate, documentsController.downloadAllCertificates);

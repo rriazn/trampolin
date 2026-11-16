@@ -89,6 +89,11 @@
       "description": "Alle Runden jedes Teilnehmers, gruppenweise, mit einer Kampfrichterseite am Ende.",
       "availableWhenClosed": "Verfügbar, sobald der Wettkampf abgeschlossen ist."
     },
+    "startingLists": {
+      "title": "Startlisten (PDF)",
+      "description": "Die Teilnehmer jedes Durchgangs in Startreihenfolge, mit Verein, Jahrgang und Übung, eine Seite pro Durchgang. Durchgänge einer Startgruppe bekommen eine eigene Seite mit Hinweis. Die Startliste eines einzelnen Durchgangs gibt es auf der Teilnehmerseite des Durchgangs.",
+      "noEntries": "Noch kein Durchgang hat Teilnehmer."
+    },
     "certificates": {
       "title": "Urkunden (PDF)",
       "description": "Eine Urkundenseite pro Teilnehmer, als PDF pro Gruppe oder als ZIP aller Gruppen. Eine Gruppe ist bereit, sobald alle ihre Durchgänge abgeschlossen sind. Gestalten Sie die Seite in Word, Canva o. ä., markieren Sie die Stellen für die Daten und laden Sie sie als PDF hoch.",
@@ -207,6 +212,7 @@
     "randomize": "Zufällig anordnen",
     "confirmRandomize": "Reihenfolge aller Athleten in dieser Runde zufällig anordnen?",
     "leaderboard": "Wertungsliste",
+    "startingList": "Startliste (PDF)",
     "noEntries": "Noch keine Teilnahmen. Fügen Sie unten Athleten hinzu.",
     "table": { "startOrder": "Startnummer", "athlete": "Athlet", "club": "Verein", "routine": "Übung", "attempts": "Versuche" },
     "attemptsCount_one": "{{count}} Versuch",

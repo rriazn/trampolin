@@ -33,7 +33,7 @@ app.use(session({
 }));
 app.use(checkSessionValidity);
 
-const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors', 'results', 'certificates'];
+const NAMESPACES = ['common', 'login', 'admin', 'referee', 'headJudge', 'leaderboard', 'viewer', 'errors', 'results', 'certificates', 'startingLists'];
 const loadNamespaces = (lng) => Object.fromEntries(
   NAMESPACES.map(ns => [ns, require(`./locales/${lng}/${ns}.json`)])
 );

@@ -79,6 +79,14 @@ test.describe('when logged in as admin', () => {
     await expect(page.getByRole('link', { name: /Leaderboard/ })).toBeVisible();
   });
 
+  test('has a starting list link that downloads the PDF of this round', async ({ page }) => {
+    const link = page.getByRole('link', { name: 'Starting list (PDF)' });
+    await expect(link).toHaveAttribute('href', `/admin/competitions/${seed.competitionId}/groups/${seed.groupId}/rounds/${seed.roundId}/documents/starting-list`);
+    const downloading = page.waitForEvent('download');
+    await link.click();
+    expect((await downloading).suggestedFilename()).toMatch(/^starting-list-.*\.pdf$/);
+  });
+
   // Button actions
 
   test('clicking the Leaderboard link opens it in a new tab', async ({ page }) => {
@@ -280,5 +288,15 @@ test.describe('when a previous round exists with scores', () => {
     const options = page.locator('select[name=sportsman_id] option');
     await expect(options.nth(0)).toContainText('#1');
     await expect(options.nth(1)).toContainText('#2');
+  });
+});
+
+test.describe('round without entries', () => {
+  test('offers no starting list', async ({ page, request }) => {
+    const { competitionId, groupAId, roundAId } = await (await request.post('/test/seed/multi-group')).json();
+    await loginAsAdmin(page);
+    await page.goto(`/admin/competitions/${competitionId}/groups/${groupAId}/rounds/${roundAId}/entries`);
+    await expect(page.getByRole('heading', { name: 'Entries' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Starting list (PDF)' })).toHaveCount(0);
   });
 });

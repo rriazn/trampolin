@@ -35,6 +35,26 @@
     <% } %>
   </div>
 
+  <% const startingListsUrl = `/admin/competitions/${competition.id}/documents/starting-lists`; %>
+  <div class="card p-4 mb-3 document-card" id="document-starting-lists">
+    <h2 class="h5 mb-1"><%= t('admin:documents.startingLists.title') %></h2>
+    <p class="text-muted small mb-3"><%= t('admin:documents.startingLists.description') %></p>
+    <form method="POST" action="<%= startingListsUrl %>" enctype="multipart/form-data" class="starting-lists-form">
+      <label class="form-label small" for="starting-lists-template"><%= t('startingLists:ui.templateLabel') %></label>
+      <input type="file" id="starting-lists-template" name="template" accept=".typ" aria-describedby="starting-lists-preview-hint" class="form-control form-control-sm mb-2">
+      <% if (hasStartingLists) { %>
+      <button type="submit" class="btn btn-sm btn-brand me-1"><%= t('startingLists:ui.downloadAll') %></button>
+      <% } else { %>
+      <p class="text-muted small mb-2"><%= t('admin:documents.startingLists.noEntries') %></p>
+      <% } %>
+      <button type="submit" formaction="<%= startingListsUrl %>/preview" formtarget="_blank" class="btn btn-sm btn-outline-secondary preview-button" disabled><%= t('startingLists:ui.preview') %></button>
+      <div class="form-text preview-hint" id="starting-lists-preview-hint"><%= t('admin:documents.previewHint') %></div>
+      <div class="small">
+        <a class="link-touch" href="<%= startingListsUrl %>/template"><%= t('startingLists:ui.defaultTemplate') %></a>
+      </div>
+    </form>
+  </div>
+
   <% const certificatesUrl = `/admin/competitions/${competition.id}/documents/certificates`; %>
   <div class="card p-4 mb-3 document-card" id="document-certificates">
     <h2 class="h5 mb-1"><%= t('admin:documents.certificates.title') %></h2>
@@ -77,7 +97,7 @@
 </div>
 <script>
   // the preview only runs when a template file is chosen
-  document.querySelectorAll('.results-form, .certificates-form').forEach((form) => {
+  document.querySelectorAll('.results-form, .starting-lists-form, .certificates-form').forEach((form) => {
     const files = form.querySelectorAll('input[type=file]');
     const preview = form.querySelector('.preview-button');
     const hint = form.querySelector('.preview-hint');

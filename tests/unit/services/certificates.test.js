@@ -123,9 +123,9 @@ describe('buildCertificatesData', () => {
 
     const data = buildCertificatesData(comp, group, realT('en'), 'en', NOW);
     expect(data.certificates.map(x => [x.name, x.place, x.placeText, x.score, x.round])).toEqual([
-      ['Berta', 1, '1st place', '-0.2', 'Final'],
-      ['Clara', 1, '1st place', '-0.2', 'Final'],
-      ['Anna', 3, '3rd place', '-0.1', 'Qualifying'],
+      ['Berta', 1, '1.', '-0.2', 'Final'],
+      ['Clara', 1, '1.', '-0.2', 'Final'],
+      ['Anna', 3, '3.', '-0.1', 'Qualifying'],
       ['Dora', null, null, null, null],
       ['Eva', null, null, null, null],
     ]);
@@ -141,15 +141,15 @@ describe('buildCertificatesData', () => {
     expect(only).toMatchObject({ score: '-0.3', round: 'Qualifying', place: 1 });
   });
 
-  it('formats scores and ordinals for the language', () => {
+  it('formats scores and places for the language', () => {
     const { comp, group, compete } = setup();
     const round = makeRound(group.id, { name: 'Finale' });
     ['Anna', 'Berta', 'Clara', 'Dora'].forEach((name, i) => compete(round, makeSportsman(comp.id, group.id, name), i + 1, 0.1 * (i + 1)));
     const de = buildCertificatesData(comp, group, realT('de'), 'de', NOW).certificates;
-    expect(de.map(x => x.placeText)).toEqual(['1. Platz', '2. Platz', '3. Platz', '4. Platz']);
+    expect(de.map(x => x.placeText)).toEqual(['1.', '2.', '3.', '4.']);
     expect(de[1].score).toBe('-0,2');
     const en = buildCertificatesData(comp, group, realT('en'), 'en', NOW).certificates;
-    expect(en.map(x => x.placeText)).toEqual(['1st place', '2nd place', '3rd place', '4th place']);
+    expect(en.map(x => x.placeText)).toEqual(['1.', '2.', '3.', '4.']);
   });
 
   it('gives each athlete of a synchro pair a page naming themselves first', () => {
@@ -163,8 +163,8 @@ describe('buildCertificatesData', () => {
 
     const { certificates } = buildCertificatesData(comp, group, realT('en'), 'en', NOW);
     expect(certificates).toEqual([
-      { name: 'Anna', club: 'Club A', partner: { name: 'Berta', club: 'Club B' }, place: 1, placeText: '1st place', score: '-0.2', round: 'Final' },
-      { name: 'Berta', club: 'Club B', partner: { name: 'Anna', club: 'Club A' }, place: 1, placeText: '1st place', score: '-0.2', round: 'Final' },
+      { name: 'Anna', club: 'Club A', partner: { name: 'Berta', club: 'Club B' }, place: 1, placeText: '1.', score: '-0.2', round: 'Final' },
+      { name: 'Berta', club: 'Club B', partner: { name: 'Anna', club: 'Club A' }, place: 1, placeText: '1.', score: '-0.2', round: 'Final' },
       { name: 'Clara', club: null, partner: { name: 'Dora', club: null }, place: null, placeText: null, score: null, round: null },
       { name: 'Dora', club: null, partner: { name: 'Clara', club: null }, place: null, placeText: null, score: null, round: null },
     ]);

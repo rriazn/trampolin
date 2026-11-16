@@ -82,7 +82,7 @@ test('admin downloads the certificates of the finished group with a page per ath
   expect(filename).toBe('certificates-spring-championship-junior.pdf');
   const { pages, text } = await readPdf(buffer);
   expect(pages).toBe(2);
-  for (const expected of ['Certificate', 'Spring Championship', 'Leon Weber', 'TSV München', 'Emma Fischer', 'SV Hamburg', '1st place', '4.1', 'Qualifications']) {
+  for (const expected of ['Certificate', 'Spring Championship', 'Leon Weber', 'TSV München', 'Emma Fischer', 'SV Hamburg', '1.', '4.1', 'Qualifications']) {
     expect(text).toContain(expected);
   }
   // the sample data is only for previews and must never leak into a real PDF
@@ -109,7 +109,7 @@ test('admin downloads the example template and uses it as a PDF template', async
   const { buffer } = await download(page, card.locator('li', { hasText: 'Junior' }).getByRole('button', { name: 'Download' }));
   const { pages, text } = await readPdf(buffer);
   expect(pages).toBe(2);
-  for (const expected of ['Spring Championship', 'Leon Weber', 'TSV München', 'Emma Fischer', '1st place', '4.1']) {
+  for (const expected of ['Spring Championship', 'Leon Weber', 'TSV München', 'Emma Fischer', '1.', '4.1']) {
     expect(text).toContain(expected);
   }
 });
