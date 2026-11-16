@@ -92,7 +92,7 @@ describe('seed defaults: panel templates', () => {
       { role: 'execution_t1', judge_count: 2, drop_high: 0, drop_low: 0, combine: 'mean', multiplier: 0.5, shared_assignment_group: null, aggregation: 'per_trick' },
       { role: 'execution_t2', judge_count: 2, drop_high: 0, drop_low: 0, combine: 'mean', multiplier: 0.5, shared_assignment_group: null, aggregation: 'per_trick' },
       { role: 'difficulty', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 1, shared_assignment_group: null, aggregation: 'per_trick' },
-      { role: 'synchronisation_skill', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: 2, shared_assignment_group: null, aggregation: 'per_trick' },
+      { role: 'synchronisation_skill', judge_count: 2, drop_high: 0, drop_low: 0, combine: 'mean', multiplier: 2, shared_assignment_group: null, aggregation: 'per_trick' },
       { role: 'head_judge', judge_count: 1, drop_high: 0, drop_low: 0, combine: 'sum', multiplier: -1, shared_assignment_group: null, aggregation: 'per_trick' },
     ]);
   });

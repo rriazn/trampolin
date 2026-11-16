@@ -78,17 +78,17 @@ describe('local_synchro scoring', () => {
     execution_t1: elements(repeat([0.1, 0.3], 10), [0.1, 0.1]),
     execution_t2: elements(repeat([0, 0], 10), [0, 0]),
     difficulty: elements(repeat([0.5], 10)),
-    // ten deductions of 0.1 from the single per-skill synchronisation judge
-    synchronisation_skill: elements(repeat([0.1], 10)),
+    // ten skills, the two synchronisation judges deduct 0.1 and 0.3 so the mean is 0.2
+    synchronisation_skill: elements(repeat([0.1, 0.3], 10)),
   };
 
   it('averages the per-trampoline means and scores S as (skills - deductions) x 2 with no landing line', () => {
     const result = scoreSynchro('local_synchro', localElements, { head_judge: [0] });
 
     expect(value(result, 'execution_t1') + value(result, 'execution_t2')).toBeCloseTo(8.95);
-    expect(value(result, 'synchronisation_skill')).toBeCloseTo((10 - 1) * 2);
+    expect(value(result, 'synchronisation_skill')).toBeCloseTo((10 - 2) * 2);
     expect(result.breakdown.find(b => b.judgeRoleKey === 'synchronisation_skill').perTrick).toHaveLength(10);
-    expect(result.total).toBeCloseTo(8.95 + 5 + 18);
+    expect(result.total).toBeCloseTo(8.95 + 5 + 16);
     expect(result.isComplete).toBe(true);
   });
 
@@ -97,7 +97,7 @@ describe('local_synchro scoring', () => {
       execution_t1: elements(repeat([0, 0], 6)),
       execution_t2: elements(repeat([0, 0], 6)),
       difficulty: elements(repeat([0.5], 6)),
-      synchronisation_skill: elements(repeat([0.1], 6)),
+      synchronisation_skill: elements(repeat([0.1, 0.1], 6)),
     };
     const result = scoreSynchro('local_synchro', six, { head_judge: [0] }, 6);
 

@@ -8,6 +8,17 @@ import {
 } from './testHelpers.js';
 const { formatScore, buildLabels, buildJudgeIndex, buildResultsData, rankGroupCompetitors, ROLE_LETTERS } = require('../../../src/services/results.service.js');
 
+// the seeded local panel scores per trick, the per judge rows need a per_judge execution slot
+function withPerJudgeExecution(fn) {
+  const where = "judge_role_id = (SELECT id FROM judge_roles WHERE key='execution') AND panel_template_id = (SELECT id FROM panel_templates WHERE key='local')";
+  db.prepare(`UPDATE panel_template_slots SET aggregation='per_judge' WHERE ${where}`).run();
+  try {
+    return fn();
+  } finally {
+    db.prepare(`UPDATE panel_template_slots SET aggregation='per_trick' WHERE ${where}`).run();
+  }
+}
+
 function assignMany(comp, roleKey, names) {
   const roleId = getJudgeRoleIds()[roleKey];
   return names.map((name) => assignJudge(comp.id, roleId, makeUser('referee', name).id));
@@ -140,7 +151,7 @@ describe('buildResultsData', () => {
       headJudge: [head, 0.3],
     });
 
-    const data = buildResultsData(comp, makeT('en'), 'en', NOW);
+    const data = withPerJudgeExecution(() => buildResultsData(comp, makeT('en'), 'en', NOW));
 
     expect(data.groups).toHaveLength(1);
     expect(data.groups[0]).toMatchObject({ name: 'Group A' });
@@ -399,7 +410,7 @@ describe('sample-results.json', () => {
     const exec = assignJudge(comp.id, roleIds.execution, makeUser('referee').id);
     const head = assignJudge(comp.id, roleIds.head_judge, makeUser('head_judge').id);
     scoreAttempt(entry.id, 1, { elementCount: 2, roleId: () => roleIds.execution, elementValues: { [exec]: [0.1, 0.2] }, headJudge: [head, 0] });
-    return buildResultsData(comp, makeT('en'), 'en');
+    return withPerJudgeExecution(() => buildResultsData(comp, makeT('en'), 'en'));
   }
 
   it('has exactly the fields the builder produces', () => {
