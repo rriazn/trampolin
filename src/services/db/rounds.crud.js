@@ -68,7 +68,7 @@ exports.getOrderedRoundGroupCompInfoUser = (userId) => {
 
 exports.getPreviousRoundInfo = (groupId, roundOrder) => {
     return db.prepare(`
-        SELECT id, name FROM rounds
+        SELECT id, name, scoring_mode FROM rounds
         WHERE group_id = ? AND round_order < ?
         ORDER BY round_order DESC LIMIT 1
     `).get(groupId, roundOrder);
