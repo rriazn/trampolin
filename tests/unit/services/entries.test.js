@@ -4,6 +4,7 @@ import {
   getJudgeRoleIds, makeUser, assignJudge, addScore,
 } from './testHelpers.js';
 const { orderAvailableByPreviousRound, randomizeEntryOrder } = require('../../../src/services/entries.service.js');
+const { getPreviousRoundInfo } = require('../../../src/services/db/rounds.crud.js');
 
 function scoreSportsmanInRound(comp, round, roleIds, hjAssignment, sportsman, score) {
   const entry = makeEntry(round.id, sportsman.id, 1);
@@ -109,6 +110,34 @@ describe('orderAvailableByPreviousRound', () => {
       expect(ranked.map(s => s.name)).toEqual(['Consistent', 'Spiky']);
       expect(ranked[0].prevRank).toBe(1);
       expect(ranked[1].prevRank).toBe(2);
+    });
+
+    it('uses the sum ranking when the previous round comes from getPreviousRoundInfo', () => {
+      const comp = makeCompetition({ panelKey: 'test' });
+      const group = makeGroup(comp.id);
+      makeRound(group.id, { order: 1, scoringMode: 'sum' });
+      const roleIds = getJudgeRoleIds();
+      const hj = makeUser('head_judge');
+      const hjAssignment = assignJudge(comp.id, roleIds.head_judge, hj.id);
+
+      const consistent = makeSportsman(comp.id, group.id, 'Consistent');
+      const spiky = makeSportsman(comp.id, group.id, 'Spiky');
+      const prevRoundRow = getPreviousRoundInfo(group.id, 2);
+      const consistentEntry = makeEntry(prevRoundRow.id, consistent.id, 1);
+      [2, 2].forEach((score, i) => {
+        const attempt = makeAttempt(consistentEntry.id, i + 1, 1);
+        addScore(attempt.id, hjAssignment, roleIds.head_judge, score);
+      });
+      const spikyEntry = makeEntry(prevRoundRow.id, spiky.id, 2);
+      [1, 5].forEach((score, i) => {
+        const attempt = makeAttempt(spikyEntry.id, i + 1, 1);
+        addScore(attempt.id, hjAssignment, roleIds.head_judge, score);
+      });
+
+      const available = [{ id: spiky.id, name: 'Spiky' }, { id: consistent.id, name: 'Consistent' }];
+      const ranked = orderAvailableByPreviousRound(comp, prevRoundRow, available);
+
+      expect(ranked.map(s => s.name)).toEqual(['Consistent', 'Spiky']);
     });
 
     // regression: reduce(fn, 0) on an empty attempts array returned 0 instead of null, ranking an unscored athlete as if they'd scored 0
